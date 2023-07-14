@@ -1,0 +1,23 @@
+{
+    "name": "MuseLab D2X Codespace",
+    "dockerFile": "Dockerfile",
+    "context": "..",
+    "customizations": {
+        "vscode": {
+            "settings": {
+                "salesforcedx-bscode-apex.java.home": "/usr/lib/jvm/java-17-openjdk-amd64",
+                "terminal.integrated.shell.linux": "/bin/bash"
+            },
+            "extensions": [
+                "salesforce.salesforcedx-vscode",
+                "CumulusCI.cci",
+                "GitHub.copilot",
+                "robocorp.robotframework-lsp",
+                "ms-python.python"
+            ]
+        }
+    },
+    "remoteEnv": {
+        "DEV_HUB_AUTH_URL": "${localEnv:DEV_HUB_AUTH_URL}"
+    }
+}
