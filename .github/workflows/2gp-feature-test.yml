@@ -7,6 +7,8 @@ on:
         required: true
       gh-email:
         required: true      
+      github-token:
+        required: true
 
 jobs:
     feature-test:
@@ -17,10 +19,10 @@ jobs:
             options: --user root
             credentials:
                 username: ${{ github.actor }}
-                password: ${{ secrets.GITHUB_TOKEN }}
+                password: ${{ secrets.github-token }}
             env:
-                DEV_HUB_AUTH_URL: "${{ secrets.DEV_HUB_AUTH_URL }}"
-                CUMULUSCI_SERVICE_github: "{ \"username\": \"${{ github.actor }}\", \"token\": \"${{ secrets.GITHUB_TOKEN }}\", \"email\": \"${{ secrets.GH_EMAIL }}\" }"
+                DEV_HUB_AUTH_URL: "${{ secrets.dev-hub-auth-url }}"
+                CUMULUSCI_SERVICE_github: "{ \"username\": \"${{ github.actor }}\", \"token\": \"${{ secrets.github-token }}\", \"email\": \"${{ secrets.gh-email }}\" }"
         steps:
             - name: Checkout
               uses: actions/checkout@v2
@@ -33,7 +35,7 @@ jobs:
               shell: bash
             - name: Set Commit Status
               env:
-                  GITHUB_TOKEN: '${{ secrets.GITHUB_TOKEN }}'
+                  GITHUB_TOKEN: '${{ secrets.github-token }}'
               run: |
                   VERSION=$(cat cumulusci-flow.log | grep -o "04t[a-zA-Z0-9]*")
                   gh api \
