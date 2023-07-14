@@ -1,5 +1,7 @@
 FROM python:3.11-slim-bookworm
 
+org.opencontainers.image.source = "https://github.com/muselab-d2x/d2x"
+
 # Install sfdx
 RUN apt-get update
 RUN apt-get upgrade -y
