@@ -31,7 +31,7 @@ COPY devhub.sh /usr/local/bin/devhub.sh
 RUN chmod +x /usr/local/bin/devhub.sh
 
 # Create d2x user
-RUN useradd -r -s /sbin/nologin -m -c "D2X User" d2x
+RUN useradd -r -m -c "D2X User" d2x
 
 # Setup PATH
 RUN echo 'export PATH=~/.local/bin:$PATH' >> /root/.bashrc
