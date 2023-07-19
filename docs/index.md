@@ -5,6 +5,7 @@ MuseLab D2X is an open source collection of processes and tools that make it eas
 D2X combines the best of CumulusCI, Salesforce CLI, GitHub Actions, and GitHub Codespaces.
 
 All D2X projects start off with batteries included such as:
+
 * CumulusCI & Salesforce DX project configuration
 * GitHub Actions CI/CD Builds
   * Feature Test
