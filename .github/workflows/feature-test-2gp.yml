@@ -31,6 +31,8 @@ jobs:
             - name: Set dev org as default org
               run: cci org default dev
             - name: Build Feature Test Package
+              env:
+                  GITHUB_TOKEN: '${{ secrets.github-token }}'
               run: cci flow run build_feature_test_package --org dev | tee cumulusci-flow.log
               shell: bash
             - name: Set Commit Status
@@ -47,6 +49,8 @@ jobs:
                     -f context='Build Feature Test Package'
               shell: bash
             - name: Run Feature Test
+              env:
+                  GITHUB_TOKEN: '${{ secrets.github-token }}'
               run: cci flow run ci_feature_2gp
             - name: Delete Scratch Org
               if: ${{ always() }}
