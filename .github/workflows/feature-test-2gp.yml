@@ -28,12 +28,12 @@ jobs:
               uses: actions/checkout@v2
             - name: Auth to DevHub
               run: /usr/local/bin/devhub.sh
-            - name: Set dev org as default org
-              run: cci org default dev
+            - name: Set feature org as default org
+              run: cci org default feature
             - name: Build Feature Test Package
               env:
                   GITHUB_TOKEN: '${{ secrets.github-token }}'
-              run: cci flow run build_feature_test_package --org dev | tee cumulusci-flow.log
+              run: cci flow run build_feature_test_package | tee cumulusci-flow.log
               shell: bash
             - name: Set Commit Status
               env:
@@ -55,5 +55,5 @@ jobs:
             - name: Delete Scratch Org
               if: ${{ always() }}
               run: |
-                cci org scratch_delete dev
+                cci org scratch_delete feature
               shell: bash
