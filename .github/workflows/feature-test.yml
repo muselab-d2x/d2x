@@ -12,7 +12,7 @@ on:
 
 jobs:
     feature-test:
-        name: "2GP Feature Test"
+        name: "Feature Test"
         runs-on: ubuntu-latest
         container:
             image: ghcr.io/muselab-d2x/d2x:latest
@@ -28,26 +28,10 @@ jobs:
               uses: actions/checkout@v2
             - name: Auth to DevHub
               run: /usr/local/bin/devhub.sh
-            - name: Set dev org as default org
-              run: cci org default dev
-            - name: Build Feature Test Package
-              run: cci flow run build_feature_test_package --org dev | tee cumulusci-flow.log
-              shell: bash
-            - name: Set Commit Status
-              env:
-                  GITHUB_TOKEN: '${{ secrets.github-token }}'
-              run: |
-                  VERSION=$(cat cumulusci-flow.log | grep -o "04t[a-zA-Z0-9]*")
-                  gh api \
-                    --method POST \
-                    -H "Accept: application/vnd.github.v3+json" \
-                    '/repos/${{ github.repository }}/statuses/${{ github.sha }}' \
-                    -f state='success' \
-                    -f description="version_id: $VERSION" \
-                    -f context='Build Feature Test Package'
-              shell: bash
+            - name: Set feature org as default org
+              run: cci org default teature
             - name: Run Feature Test
-              run: cci flow run ci_feature_2gp
+              run: cci flow run ci_feature
             - name: Delete Scratch Org
               if: ${{ always() }}
               run: |
