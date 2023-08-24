@@ -3,8 +3,15 @@ name: 2GP Feature Test
 on:
   workflow_call:
     secrets:
+      # Either dev-hub-auth-url or dev-hub-username, dev-hub-client-id, and dev-hub-private-key are required
       dev-hub-auth-url:
-        required: true
+        required: false
+      dev-hub-username:
+        required: false
+      dev-hub-client-id:
+        required: false
+      dev-hub-private-key:
+        required: false      
       gh-email:
         required: true      
       github-token:
@@ -22,6 +29,9 @@ jobs:
                 password: ${{ secrets.github-token }}
             env:
                 DEV_HUB_AUTH_URL: "${{ secrets.dev-hub-auth-url }}"
+                DEV_HUB_USERNAME: "${{ secrets.dev-hub-username }}"
+                DEV_HUB_CLIENT_ID: "${{ secrets.dev-hub-client-id }}"
+                DEV_HUB_PRIVATE_KEY: "${{ secrets.dev-hub-private-key }}"
                 CUMULUSCI_SERVICE_github: "{ \"username\": \"${{ github.actor }}\", \"token\": \"${{ secrets.github-token }}\", \"email\": \"${{ secrets.gh-email }}\" }"
         steps:
             - name: Checkout
