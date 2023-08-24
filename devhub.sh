@@ -7,15 +7,15 @@ fi
 
 if [ -z "$DEV_HUB_AUTH_URL" ]; then
     if [ -z "$DEV_HUB_USERNAME" ]; then
-        echo "DEV_HUB_USERNAME is not set. You must set either DEV_HUB_AUTH_URL or DEV_HUB_USERNAME, DEV_HUB_CLIENT_ID, and DEV_HUB_PRIVATE_KEY."
+        echo "DEV_HUB_USERNAME is not set, length is $(echo $(($(echo $DEV_HUB_USERNAME|wc -c)-1))). You must set either DEV_HUB_AUTH_URL or DEV_HUB_USERNAME, DEV_HUB_CLIENT_ID, and DEV_HUB_PRIVATE_KEY."
         exit 1
     fi
     if [ -z "$DEV_HUB_CLIENT_ID" ]; then
-        echo "DEV_HUB_CLIENT_ID is not set. You must set either DEV_HUB_AUTH_URL or DEV_HUB_USERNAME, DEV_HUB_CLIENT_ID, and DEV_HUB_PRIVATE_KEY."
+        echo "DEV_HUB_CLIENT_ID is not set, length is $(echo $(($(echo $DEV_HUB_CLIENT_ID|wc -c)-1))). You must set either DEV_HUB_AUTH_URL or DEV_HUB_USERNAME, DEV_HUB_CLIENT_ID, and DEV_HUB_PRIVATE_KEY."
         exit 1
     fi
     if [ -z "$DEV_HUB_PRIVATE_KEY" ]; then
-        echo "DEV_HUB_PRIVATE_KEY is not set. You must set either DEV_HUB_AUTH_URL or DEV_HUB_USERNAME, DEV_HUB_CLIENT_ID, and DEV_HUB_PRIVATE_KEY."
+        echo "DEV_HUB_PRIVATE_KEY is not set, length is $(echo $(($(echo $DEV_HUB_PRIVATE_KEY|wc -c)-1))). You must set either DEV_HUB_AUTH_URL or DEV_HUB_USERNAME, DEV_HUB_CLIENT_ID, and DEV_HUB_PRIVATE_KEY."
         exit 1
     fi
 
