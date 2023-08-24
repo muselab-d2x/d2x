@@ -34,7 +34,7 @@ if [ -z "$DEV_HUB_AUTH_URL" ]; then
 
     rm /tmp/dev_hub.key
 
-elif
+else
     # Authenticate using Auth URL
     echo "Authenticating to DevHub using auth url..."
 
