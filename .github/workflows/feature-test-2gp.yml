@@ -5,7 +5,7 @@ on:
     inputs:
       debug:
         required: false
-        default: false
+        default: true
         type: boolean
     secrets:
       dev-hub-auth-url:
