@@ -2,11 +2,6 @@ name: 2GP Feature Test
 
 on:
   workflow_call:
-    inputs:
-      debug:
-        required: false
-        default: true
-        type: boolean
     secrets:
       dev-hub-auth-url:
         required: true
@@ -38,15 +33,8 @@ jobs:
             - name: Build Feature Test Package
               env:
                   GITHUB_TOKEN: '${{ secrets.github-token }}'
-              run: cci flow run build_feature_test_package | tee cumulusci-flow.log
-              shell: bash
-              if: inputs.debug == "false"
-            - name: Build Feature Test Package (DEBUG)
-              env:
-                  GITHUB_TOKEN: '${{ secrets.github-token }}'
               run: cci flow run build_feature_test_package --debug | tee cumulusci-flow.log
               shell: bash
-              if: inputs.debug == "true"
             - name: Set Commit Status
               env:
                   GITHUB_TOKEN: '${{ secrets.github-token }}'
