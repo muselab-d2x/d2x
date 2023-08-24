@@ -39,7 +39,7 @@ jobs:
               env:
                   GITHUB_TOKEN: '${{ secrets.github-token }}'
               run: |
-                  VERSION=$(cat cumulusci-flow.log | grep -o -m "04t[a-zA-Z0-9]{15}")
+                  VERSION=$(cat cumulusci-flow.log | grep -o -m 1 "04t[a-zA-Z0-9]{15}")
                   gh api \
                     --method POST \
                     -H "Accept: application/vnd.github.v3+json" \
