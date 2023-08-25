@@ -49,7 +49,7 @@ jobs:
             - name: Build Feature Test Package
               env:
                   GITHUB_TOKEN: '${{ secrets.github-token }}'
-              run: cci flow run build_feature_test_package $([[ "${{ inputs.debug }}" == "true" ]] && echo " --debug") | tee cumulusci-flow.log
+              run: cci flow run build_feature_test_package --debug | tee cumulusci-flow.log
               shell: bash
             - name: Set Commit Status
               env:
