@@ -32,7 +32,7 @@ jobs:
             - name: Auth to DevHub
               run: /usr/local/bin/devhub.sh
             - name: Deploy to Packaging Org
-              run: cci task run ci_master --org packaging
+              run: cci flow run ci_master --org packaging
             - name: Build Beta Package
               run: cci flow run release_beta --org packaging
               shell: bash
