@@ -1,3 +1,5 @@
+[![Build Docker Image](https://github.com/muselab-d2x/d2x/actions/workflows/build.yml/badge.svg)](https://github.com/muselab-d2x/d2x/actions/workflows/build.yml)
+
 D2X lets teams deliver repeatable, composable Salesforce products and solutions.
 
 D2X defines a container image for Salesforce development, build, and delivery using CumulusCI and Salesforce CLI. This gives teams a cconsistent runtime environment for automation used in across the entire software product lifecycle.
