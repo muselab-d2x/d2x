@@ -48,6 +48,7 @@ else
 fi
 
 if [ -z "$PACKAGING_ORG_AUTH_URL" ]; then
+    echo "No PACKAGING_ORG_AUTH_URL set, skipping packaging org authentication."
 else
     # Authenticate using Auth URL
     echo "Authenticating to Packaging Org using auth url..."
