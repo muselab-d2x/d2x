@@ -3,7 +3,7 @@ name: Beta Test
 on:
   workflow_call:
     secrets:
-      packaging-org:
+      packaging-org-auth-url:
         required: true
       dev-hub-auth-url:
         required: true
