@@ -47,6 +47,23 @@ else
     rm /tmp/dev_hub_auth_url
 fi
 
+if [ -z "$PACKAGING_ORG_AUTH_URL" ]; then
+else
+    # Authenticate using Auth URL
+    echo "Authenticating to Packaging Org using auth url..."
+
+    # Write the PACKAGING_ORG_AUTH_URL to a file
+    echo $PACKAGING_ORG_AUTH_URL > /tmp/packaging_org_auth_url
+
+    # Authenticate the DevHub
+    sfdx org login sfdx-url -f /tmp/packaging_org_auth_url -a packaging
+
+    # Import the org to CumulusCI
+    cci org import packaging packaging
+
+    rm /tmp/packaging_org_auth_url
+fi
+
 # Ensure the force-app/main/default folder exists
 mkdir -p force-app/main/default
 
