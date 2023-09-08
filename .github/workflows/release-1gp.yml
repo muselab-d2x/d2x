@@ -1,0 +1,42 @@
+name: Beta Test
+
+on:
+  workflow_call:
+    secrets:
+      packaging-org-auth-url:
+        required: true
+      gh-email:
+        required: true      
+      github-token:
+        required: true
+
+jobs:
+    beta-test:
+        name: "Production Release"
+        runs-on: ubuntu-latest
+        container:
+            image: ghcr.io/muselab-d2x/d2x:latest
+            options: --user root
+            credentials:
+                username: ${{ github.actor }}
+                password: ${{ secrets.github-token }}
+            env:
+                PACKAGING_ORG_AUTH_URL: "${{ secrets.packaging-org-auth-url }}"
+                CUMULUSCI_SERVICE_github: "{ \"username\": \"${{ github.actor }}\", \"token\": \"${{ secrets.github-token }}\", \"email\": \"${{ secrets.gh-email }}\" }"
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v2
+            - name: Auth to DevHub
+              run: /usr/local/bin/devhub.sh
+            - name: Deploy to Packaging Org
+              run: cci flow run ci_master --org packaging
+            - name: Build Production Package
+              run: cci flow run release_production --org packaging
+              shell: bash
+            - name: Run Beta Test
+              run: cci flow run ci_release --org release
+            - name: Delete Scratch Org
+              if: ${{ always() }}
+              run: |
+                cci org scratch_delete release
+              shell: bash
