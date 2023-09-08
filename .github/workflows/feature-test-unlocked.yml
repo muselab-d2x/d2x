@@ -64,12 +64,21 @@ jobs:
                     -f description="version_id: $VERSION" \
                     -f context='Build Unlocked Test Package'
               shell: bash
-            - name: Run Feature Test
+            - name: Install Unlocked Package
               env:
                   GITHUB_TOKEN: '${{ secrets.github-token }}'
-              run: cci flow run install_unlocked_commit && \
-                   cci flow run config_apextests && \
-                   cci task run run_tests
+              run: cci flow run install_unlocked_commit
+              shell: bash
+            - name: Configure for Apex Tests
+              env:
+                  GITHUB_TOKEN: '${{ secrets.github-token }}'
+              run: cci flow run config_apextests
+              shell: bash
+            - name: Run Tests
+              env:
+                  GITHUB_TOKEN: '${{ secrets.github-token }}'
+              run: cci task run run_tests
+              shell: bash
             - name: Delete Scratch Org
               if: ${{ always() }}
               run: |
