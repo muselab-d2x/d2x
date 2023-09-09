@@ -65,6 +65,11 @@ else
     rm /tmp/packaging_org_auth_url
 fi
 
+if [ "`whoami`" == "d2x" ]; then
+    echo "Setting dev as the default org"
+    cci org default dev
+fi
+
 # Ensure the force-app/main/default folder exists
 mkdir -p force-app/main/default
 
