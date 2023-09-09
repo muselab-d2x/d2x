@@ -1,6 +1,6 @@
 #!/bin/bash
 
-if [ -f /tmp/dev_hub_authenticated ]; then
+if [ -f ~/.dev_hub_authenticated ]; then
     exit 0
 fi
 
@@ -68,4 +68,4 @@ fi
 # Ensure the force-app/main/default folder exists
 mkdir -p force-app/main/default
 
-touch /tmp/dev_hub_authenticated
+touch ~/.dev_hub_authenticated
