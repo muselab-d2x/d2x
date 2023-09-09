@@ -72,7 +72,7 @@ jobs:
             - name: Configure for Apex Tests
               env:
                   GITHUB_TOKEN: '${{ secrets.github-token }}'
-              run: cci flow run config_apextests
+              run: cci flow run config_apextest
               shell: bash
             - name: Run Tests
               env:
