@@ -32,7 +32,7 @@ if [ -z "$DEV_HUB_AUTH_URL" ]; then
         --alias DevHub \
         --set-default-dev-hub
 
-    rm /tmp/dev_hub.key
+    [[ -f /tmp/dev_hub.key ]] && rm /tmp/dev_hub.key
 
 else
     # Authenticate using Auth URL
@@ -44,7 +44,7 @@ else
     # Authenticate the DevHub
     sfdx org login sfdx-url -f /tmp/dev_hub_auth_url -a DevHub -d
 
-    rm /tmp/dev_hub_auth_url
+    [[ -f /tmp/dev_hub_auth_url ]] && rm /tmp/dev_hub_auth_url
 fi
 
 if [ -z "$PACKAGING_ORG_AUTH_URL" ]; then
@@ -62,7 +62,7 @@ else
     # Import the org to CumulusCI
     cci org import packaging packaging
 
-    rm /tmp/packaging_org_auth_url
+    [[ -f /tmp/packaging_org_auth_url ]] && rm /tmp/packaging_org_auth_url
 fi
 
 if [ "`whoami`" == "d2x" ]; then
