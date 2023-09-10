@@ -31,8 +31,8 @@ jobs:
             image: ghcr.io/muselab-d2x/d2x:latest
             options: --user root
             credentials:
-                username: ${{ github.actor }}
-                password: ${{ secrets.github-token }}
+                username: "${{ github.actor }}"
+                password: "${{ secrets.github-token }}"
             env:
                 DEV_HUB_AUTH_URL: "${{ secrets.dev-hub-auth-url }}"
                 DEV_HUB_USERNAME: "${{ secrets.dev-hub-username }}"
