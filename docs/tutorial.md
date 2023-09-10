@@ -91,9 +91,38 @@ cci task run retrieve_changes --exclude Profile:,Layout:
 
 ### Commit the changes
 
+Your Codespace is set up with both the git command line interface or Visual Studio Code's GitHub Extension if you prefer a graphical interface.
 
-### Commit your changes
+First, create a branch:
+```
+git checkout -b feature/add-field
+```
 
-# Merge
+Add the files, commit the changes, and push the new branch to GitHub:
+```
+git add force-app/
+git commit -m "Added field"
+git push --set-upstream-to feature/add-field
+```
 
-# Release
+## Feature Builds
+
+Your first feature branch commit will kick off your first Feature Test build in GitHub Actions. Click on the Actions tab at the top of your repository to view the build status.
+
+Assuming everything looks good, create a [GitHub Pull Request](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/creating-a-pull-request) to merge the `feature/add-field` branch into `main`.
+
+Then, merge the Pull Request to main to kick off your first Beta Test build.
+
+## Beta Builds
+
+New merges to the `main` branch will kick off the Beta Test build. Check the Actions tab again to monitor the status of the Beta Test build.
+
+When the Beta Test is passing, you're now ready to create a production release of the package.
+
+## Production Release
+
+Go to the Actions tab again and click on the Production Release under Workflows on the left. Then click on the Run Workflow button on the right to launch a build that will promote the latest 2GP beta version to production, create a Git tag, create a GitHub Release, and run a test of the release in a new scratch org.
+
+## Conclusion
+
+With some basic setup, your project is now configured for a fully automated product lifecycle on GitHub. Check out the [Resources](index.md#resources) section to learn more about the tools included in D2X.

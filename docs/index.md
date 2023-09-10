@@ -25,7 +25,7 @@ You've created your own GitHub repository using [D2X Launchpad](https://launchpa
 
 Head over to the [D2X Project Tutorial](tutorial.md) for next steps on finalizing your project's setup and getting started building.
 
-## References
+## Resources
 
 D2X itself doesn't require a lot of documentation. It's really about stitching together some amazingly powerful tools. Learning those tools is an important part of learning to work with D2X. The following documentation provides resouces to learn about those tools:
 
