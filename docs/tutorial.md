@@ -1,0 +1,99 @@
+# D2X Project Tutorial
+
+This tutorial assumes you've already created a D2X project repository on GitHub. If you haven't yet done that, please refer to the documentation on [Starting a D2X Project](index.md#starting-a-d2x-project).
+
+## DevHub and Packaging Org
+
+You will need access to a [Salesforce org with DevHub enabled](https://developer.salesforce.com/docs/atlas.en-us.sfdx_dev.meta/sfdx_dev/sfdx_setup_enable_devhub.htm) to run [GitHub Actions](https://docs.github.com/en/actions) builds and create scratch orgs in [GitHub Codespaces](https://docs.github.com/en/codespaces/overview).
+
+For the DevHub, it is possible to use the [Limited Access - Free](https://developer.salesforce.com/docs/atlas.en-us.sfdx_dev.meta/sfdx_dev/dev_hub_license.htm?q=limited%20access) license for the user you use in Actions and Codespaces.
+
+If you specified a namespace prefix, you will need to make sure the namespace is [registered with your DevHub](https://developer.salesforce.com/docs/atlas.en-us.sfdx_dev.meta/sfdx_dev/sfdx_dev_unlocked_pkg_create_namespace.htm?q=namespace).
+
+If you created a 1GP Managed project, you will also need admin access to a packaging org, a [Salesforce Developer Edition org with the package's namespace prefix registered](https://developer.salesforce.com/docs/atlas.en-us.pkg1_dev.meta/pkg1_dev/register_namespace_prefix.htm).
+
+### Getting an SfdxAuthUrl for an Org
+
+To do this, you can use sfdx either on your computer or via Codespaces.
+
+**via Codespaces** If you don't already have sfdx installed on your computer and connected to your DevHub, you can [use a Codespace](#launching-a-development-environment) to connect to the DevHub so you can get the sfdxAuthUrl. Simply launch a new Codespace from your D2X project repository then run: sfdx org login device --set-default-dev-hub --alias DevHub
+
+**via sfdx** Assuming you already have sfdx installed on your computer and connected to your DevHub as the alias DevHub, you should be able to get the Sfdx Auth Url (starts with force://) by running sfdx org display -o DevHub --verbose andy copying the auth url (starts with force://, ends with .salesforce.com)
+
+## GitHub Token
+
+GitHub Actions and GitHub Codespaces both generate a default API token that's limited to the current repository. D2X projects can support dependencies on other D2X project repositories via [CumulusCI's Dependency Management](https://cumulusci.readthedocs.io/en/stable/dev.html#manage-dependencies). The challenge is that the default GitHub Actions and GitHub Codespaces tokens don't have access to any other repositories for CumulusCI Dependency Management to work.
+
+The solution is to [generate a GitHub Personal Access Token](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens) and set it as the value for the `CCI_GITHUB_TOKEN` secret.
+
+## Secrets
+
+Finishing your project's configuration requires setting [GitHub Actions Secrets for the repository or organization]() and [GitHub Codespaces Secrets for your user or the organization](https://docs.github.com/en/codespaces/managing-codespaces-for-your-organization/managing-secrets-for-your-repository-and-organization-for-github-codespaces#recommended-secrets-for-a-repository).
+
+The following secrets need to be set in all projects:
+
+* `DEV_HUB_AUTH_URL`: The [SfdxAuthUrl providing access to the DevHub](#devhub-and-packaging-org)
+
+Projects with dependencies need set:
+
+* `CCI_GITHUB_TOKEN`: The [GitHub Personal Access Token providing access to repositories](#github-token)
+
+1GP Managed projects need to set:
+
+* `PACKAGING_ORG_AUTH_URL`: The [SfdxAuthUrl proving access to the packaging org](#devhub-and-packaging-org)
+
+
+
+## Develop
+
+### Launching a development environment
+
+We recommend using GitHub Codespaces as development environments for greater productivity, reduced developer tooling support burden, and security. Codespaces provides on-demand, web based VS Code instances. D2X provides a customized Codespaces image that includes all the right tooling versions and configurations.
+
+To launch a Codespace, simply click Code then select the Codespaces tab on the GitHub repository's main page.
+
+You can also use any [IDE that support the devcontainer specification](https://containers.dev/supporting).
+
+### Creating your first scratch org
+
+Assuming you have all your secrets set up correctly, you should be able to run the following command in the terminal:
+
+```
+cci flow run dev_org
+```
+
+If there are errors, you'll likely want to double check the GitHub Codespace Secrets.
+
+### Open the scratch org
+
+Open up the scratch org in a browser and make some metadata changes like adding a field:
+
+```
+cci org browser
+```
+
+### Capture your changes
+
+List changes from the scratch org:
+```
+cci task run list_changes
+```
+
+Filter down the list to remove any metadata you don't want:
+```
+cci task run list_changes --exclude Profile:,Layout:
+```
+
+Retrieve the changes:
+```
+cci task run retrieve_changes --exclude Profile:,Layout:
+```
+
+### Commit the changes
+
+
+### Commit your changes
+
+# Merge
+
+# Release
