@@ -13,11 +13,11 @@ D2X is made up of:
 * A [devcontainer](https://containers.dev) [configuration](https://github.com/muselab-d2x/d2x/tree/main/.devcontainer) for use with GitHub Codespaces or any IDE with a Devcontainers extension
 * A [project template](https://github.com/muselab-d2x/d2x-template) using [cookiecutter](https://cookiecutter.readthedocs.io)
 
+D2X is a project of [MuseLab](https://muselab.com) and was created to support our [consulting services](https://muselab.com/services] with Salesforce partners and customers. We proudly share D2X as open source with the Salesforce community as part of our goal to revolutionize and democratize Salesforce DevOps.
 
 ## Starting a D2X Project
 
-The easiest way to get started is with the D2X Launchpad application which provides a simple web interface to launching new GitHub repositories fully configured for D2X:
-[https://launchpad.muselab.com]
+The easiest way to get started is with [D2X Launchpad](https://launchpad.muselab.com) which provides a simple web interface to launching new GitHub repositories fully configured for D2X.
 
 ## Post-Launch Tutorial
 
