@@ -65,6 +65,24 @@ else
     [[ -f /tmp/packaging_org_auth_url ]] && rm /tmp/packaging_org_auth_url
 fi
 
+if [ -z "$TARGET_ORG_AUTH_URL" ]; then
+    echo "No TARGET_ORG_AUTH_URL set, skipping target org authentication."
+else
+    # Authenticate using Auth URL
+    echo "Authenticating to Target Org using auth url..."
+
+    # Write the TARGET_ORG_AUTH_URL to a file
+    echo $TARGET_ORG_AUTH_URL > /tmp/target_org_auth_url
+
+    # Authenticate the DevHub
+    sfdx org login sfdx-url -f /tmp/target_org_auth_url -a target
+
+    # Import the org to CumulusCI
+    cci org import target target
+
+    [[ -f /tmp/target_org_auth_url ]] && rm /tmp/target_org_auth_url
+fi
+
 if [ "`whoami`" == "d2x" ]; then
     echo "Setting dev as the default org"
     cci org default dev
