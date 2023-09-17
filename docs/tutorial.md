@@ -28,7 +28,7 @@ The solution is to [generate a GitHub Personal Access Token](https://docs.github
 
 ## Secrets
 
-Finishing your project's configuration requires setting [GitHub Actions Secrets for the repository or organization]() and [GitHub Codespaces Secrets for your user or the organization](https://docs.github.com/en/codespaces/managing-codespaces-for-your-organization/managing-secrets-for-your-repository-and-organization-for-github-codespaces#recommended-secrets-for-a-repository).
+Finishing your project's configuration requires setting [GitHub Actions Secrets for the repository or organization](https://docs.github.com/en/actions/security-guides/using-secrets-in-github-actions) and .
 
 The following secrets need to be set in all projects:
 
@@ -42,7 +42,9 @@ Projects with dependencies need set:
 
 * `PACKAGING_ORG_AUTH_URL`: The [SfdxAuthUrl proving access to the packaging org](#devhub-and-packaging-org)
 
+For GitHub Actions secrets, we recommend setting the secret at the GitHub Organization level (requires a paid plan) so that it is automaticalloy shared with new repositories created with D2X Launchpad. If you don't want to set secrets at the organization level or want to use a free plan, you will have to set the GitHub Actions secrets up on each newly created repository.
 
+For GitHub Codespaces, you will be prompted to enter the secrets when you launch your first Codespace. The secrets will be saved as personal GitHub Codespaces secrets under your GitHub Account. You can read more about [GitHub Codespaces Secrets in GitHub's Documentation](https://docs.github.com/en/codespaces/managing-codespaces-for-your-organization/managing-secrets-for-your-repository-and-organization-for-github-codespaces#recommended-secrets-for-a-repository)
 
 ## Develop
 
@@ -50,7 +52,15 @@ Projects with dependencies need set:
 
 We recommend using GitHub Codespaces as development environments for greater productivity, reduced developer tooling support burden, and security. Codespaces provides on-demand, web based VS Code instances. D2X provides a customized Codespaces image that includes all the right tooling versions and configurations.
 
-To launch a Codespace, simply click Code then select the Codespaces tab on the GitHub repository's main page.
+To launch a Codespace, click on the green Code button in your repository. Then, click on the ellipse icon at to the of the dropdown and select **New with options** (do not click the Create Codespace on main button!)
+
+![Launch Codespace using New with options](assets/images/Codespaces-New-with-options.png)
+
+You should then see a form to launch a Codespace. Leave the defaults at the top and go to the **Recommended Secrets** section. If you created your CCI_GITHUB_TOKEN and DEV_HUB_AUTH_URL Codespaces secrets already, you will see checkboxes to add them to your repository. If you don't have the secrets set, you'll be given a text field to paste the secrets you collected earlier.
+
+![Launch Codespace Form's Recommended Secrets using New with options](assets/images/Codespaces-New-with-options-form.png)
+
+If you don't see this form, you likely accidentally clicked the **Create Codespace on main** button and need to create a new Codespace using  **New with options**.
 
 You can also use any [IDE that support the devcontainer specification](https://containers.dev/supporting).
 
