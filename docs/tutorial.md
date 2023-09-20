@@ -34,6 +34,8 @@ The following secrets need to be set in all projects:
 
 * `DEV_HUB_AUTH_URL`: The [SfdxAuthUrl providing access to the DevHub](#devhub-and-packaging-org)
 
+* `GH_EMAIL`: The GitHub user account email to be associated with the workflows.
+
 Projects with dependencies need set:
 
 * `CCI_GITHUB_TOKEN`: The [GitHub Personal Access Token providing access to repositories](#github-token)
