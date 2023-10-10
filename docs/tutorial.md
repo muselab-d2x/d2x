@@ -114,7 +114,7 @@ Add the files, commit the changes, and push the new branch to GitHub:
 ```
 git add force-app/
 git commit -m "Added field"
-git push --set-upstream-to feature/add-field
+git push --set-upstream origin feature/add-field
 ```
 
 ## Feature Builds
