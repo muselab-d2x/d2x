@@ -79,8 +79,13 @@ jobs:
                   GITHUB_TOKEN: '${{ secrets.github-token }}'
               run: cci task run run_tests
               shell: bash
-            - name: Delete Scratch Org
+            - name: Save Scratch Org
               if: ${{ always() }}
               run: |
-                cci org scratch_delete feature
+                cci org github_export ${{ github.sha }}_feature feature
               shell: bash
+            #- name: Delete Scratch Org
+            #  if: ${{ always() }}
+            #  run: |
+            #    cci org scratch_delete feature
+            #  shell: bash
