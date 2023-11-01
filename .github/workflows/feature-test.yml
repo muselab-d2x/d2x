@@ -45,5 +45,5 @@ jobs:
             - name: Delete Scratch Org
               if: ${{ always() }}
               run: |
-                cci org scratch_delete dev
+                cci org scratch_delete feature
               shell: bash
