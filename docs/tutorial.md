@@ -28,7 +28,7 @@ The solution is to [generate a GitHub Personal Access Token](https://docs.github
 
 ## Secrets
 
-Finishing your project's configuration requires setting [GitHub Actions Secrets for the repository or organization](https://docs.github.com/en/actions/security-guides/using-secrets-in-github-actions) and .
+Finishing your project's configuration requires setting [GitHub Actions Secrets for the repository or organization](https://docs.github.com/en/actions/security-guides/using-secrets-in-github-actions).
 
 The following secrets need to be set in all projects:
 
@@ -44,7 +44,7 @@ Projects with dependencies need set:
 
 * `PACKAGING_ORG_AUTH_URL`: The [SfdxAuthUrl proving access to the packaging org](#devhub-and-packaging-org)
 
-For GitHub Actions secrets, we recommend setting the secret at the GitHub Organization level (requires a paid plan) so that it is automaticalloy shared with new repositories created with D2X Launchpad. If you don't want to set secrets at the organization level or want to use a free plan, you will have to set the GitHub Actions secrets up on each newly created repository.
+For GitHub Actions secrets, we recommend setting the secret at the GitHub Organization level (this requires a paid plan) so that it is automatically shared with new repositories created with D2X Launchpad. If you don't want to set secrets at the organization level or want to use a free plan, you will have to set the GitHub Actions secrets up on each newly created repository.
 
 For GitHub Codespaces, you will be prompted to enter the secrets when you launch your first Codespace. The secrets will be saved as personal GitHub Codespaces secrets under your GitHub Account. You can read more about [GitHub Codespaces Secrets in GitHub's Documentation](https://docs.github.com/en/codespaces/managing-codespaces-for-your-organization/managing-secrets-for-your-repository-and-organization-for-github-codespaces#recommended-secrets-for-a-repository)
 
