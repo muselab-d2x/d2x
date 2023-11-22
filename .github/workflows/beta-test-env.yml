@@ -2,6 +2,10 @@ name: Beta Test
 
 on:
   workflow_call:
+    inputs:
+      env-name:
+        required: true
+        type: string
     secrets:
       packaging-org-auth-url:
         required: true
@@ -16,7 +20,7 @@ jobs:
     beta-test:
         name: "Beta Test"
         runs-on: ubuntu-latest
-        environment: 1GP Packaging
+        environment: ${{ inputs.env-name }}
         container:
             image: ghcr.io/muselab-d2x/d2x:latest
             options: --user root
