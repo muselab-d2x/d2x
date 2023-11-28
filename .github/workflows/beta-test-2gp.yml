@@ -30,6 +30,8 @@ jobs:
               run: /usr/local/bin/devhub.sh
             - name: Set default org
               run: cci org default beta
+            - name: Install Dependencies for Resolution
+              run: cci flow run dependencies
             - name: Build Beta Package
               run: cci flow run release_2gp_beta
               shell: bash
