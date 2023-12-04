@@ -6,6 +6,10 @@ on:
       env-name:
         required: true
         type: string
+      debug:
+        required: false
+        default: false
+        type: boolean
     secrets:
       packaging-org-auth-url:
         required: true
@@ -37,9 +41,9 @@ jobs:
             - name: Auth to DevHub
               run: /usr/local/bin/devhub.sh
             - name: Deploy to Packaging Org
-              run: cci flow run ci_master --org packaging
+              run: cci flow run ci_master --org packaging $([[ "${{ inputs.debug }}" == "true" ]] && echo " --debug")
             - name: Build Beta Package
-              run: cci flow run release_beta --org packaging
+              run: cci flow run release_beta --org packaging $([[ "${{ inputs.debug }}" == "true" ]] && echo " --debug")
               shell: bash
             - name: Run Beta Test
               run: cci flow run ci_beta --org beta
