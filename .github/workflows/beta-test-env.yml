@@ -5,6 +5,7 @@ on:
     inputs:
       env-name:
         required: true
+        default: 1GP Packaging Beta
         type: string
       debug:
         required: false
