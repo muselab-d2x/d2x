@@ -1,0 +1,54 @@
+name: Release 2GP
+
+on:
+  workflow_call:
+    inputs:
+      env-name:
+        required: true
+        type: string
+        default: DevHub Production
+      debug:
+        required: false
+        default: false
+        type: boolean
+    secrets:
+      dev-hub-auth-url:
+        required: true
+      gh-email:
+        required: true      
+      github-token:
+        required: true
+
+jobs:
+    beta-test:
+        name: "Release 2GP"
+        runs-on: ubuntu-latest
+        environment: ${{ inputs.env-name }}
+        container:
+            image: ghcr.io/muselab-d2x/d2x:latest
+            options: --user root
+            credentials:
+                username: ${{ github.actor }}
+                password: ${{ secrets.github-token }}
+            env:
+                DEV_HUB_AUTH_URL: "${{ secrets.dev-hub-auth-url }}"
+                CUMULUSCI_SERVICE_github: "{ \"username\": \"${{ github.actor }}\", \"token\": \"${{ secrets.github-token }}\", \"email\": \"${{ secrets.gh-email }}\" }"
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v2
+            - name: Auth to DevHub
+              run: /usr/local/bin/devhub.sh
+            - name: Set default org
+              run: cci org default release
+            - name: Install Dependencies for Resolution
+              run: cci flow run dependencies $([[ "${{ inputs.debug }}" == "true" ]] && echo " --debug")
+            - name: Promote Latest Beta
+              run: cci flow run release_2gp_production $([[ "${{ inputs.debug }}" == "true" ]] && echo " --debug")
+              shell: bash
+            - name: Run Release Test
+              run: cci flow run ci_release
+            - name: Delete Scratch Org
+              if: ${{ always() }}
+              run: |
+                cci org scratch_delete release
+              shell: bash
