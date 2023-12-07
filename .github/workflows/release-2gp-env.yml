@@ -4,7 +4,7 @@ on:
   workflow_call:
     inputs:
       env-name:
-        required: true
+        required: false
         type: string
         default: DevHub Production
       debug:
