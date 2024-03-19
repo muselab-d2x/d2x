@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - cumulusci-next
+  workflow_dispatch:
 
 jobs:
   build:
