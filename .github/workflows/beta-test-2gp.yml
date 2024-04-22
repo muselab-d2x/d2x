@@ -59,7 +59,7 @@ jobs:
           pip install requests
 
       - name: Extract Information
-        run: python3 scripts/log_package_info.py
+        run: /usr/local/bin/scripts/log_package_info.py
 
       - name: Run Beta Test
         run: cci flow run custom_install_beta -o install_managed_beta__password ${{ env.MAP_MANAGED_KEY }}
