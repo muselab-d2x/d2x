@@ -28,13 +28,16 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
 
-      - name: Install pwgen
+      - name: Install pwgen and jq
         run: |
           apt-get update
-          apt-get install -y pwgen
+          apt-get install -y pwgen jq
 
       - name: Generate install Key
-        run: echo "MAP_MANAGED_KEY=$(pwgen 15 1)" >> $GITHUB_ENV
+        run: echo "NEW_INSTALL_KEY=$(pwgen 15 1)" >> $GITHUB_ENV
+
+      - name: Get Dependency Install Keys
+        run: echo "MAP_MANAGED_KEY=$(curl https://qekae5pu5jwysp7qcn7eh6cozu0yyvum.lambda-url.ca-central-1.on.aws/latest/map_managed\?auth-token\=sjkldfjklsdjklfasjlkdf | jq -r '.installationKey')" >> $GITHUB_ENV
 
       - name: Auth to DevHub
         run: /usr/local/bin/devhub.sh
@@ -46,7 +49,7 @@ jobs:
         run: cci flow run dependencies
 
       - name: Build Beta Package
-        run: cci flow run release_2gp_beta -o create_package_version__install_key ${{ env.MAP_MANAGED_KEY }} > create-package-output.txt
+        run: cci flow run release_2gp_beta -o create_package_version__install_key ${{ env.NEW_INSTALL_KEY }} > create-package-output.txt
         shell: bash
 
       - name: setup python
