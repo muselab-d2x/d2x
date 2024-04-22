@@ -40,6 +40,17 @@ jobs:
                 DEV_HUB_PRIVATE_KEY: "${{ secrets.dev-hub-private-key }}"
                 CUMULUSCI_SERVICE_github: "{ \"username\": \"${{ github.actor }}\", \"token\": \"${{ secrets.github-token }}\", \"email\": \"${{ secrets.gh-email }}\" }"
         steps:
+            - name: Install jq
+              run: |
+                apt-get update
+                apt-get install -y jq
+
+            - name: Get Dependency Install Keys
+              run: echo "MAP_MANAGED_KEY=$(curl https://qekae5pu5jwysp7qcn7eh6cozu0yyvum.lambda-url.ca-central-1.on.aws/latest/map_managed\?auth-token\=sjkldfjklsdjklfasjlkdf | jq -r '.installationKey')" >> $GITHUB_ENV
+
+            - name: list env vars
+              run: cat $GITHUB_ENV
+
             - name: Checkout
               uses: actions/checkout@v4
             - name: Auth to DevHub
