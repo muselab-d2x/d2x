@@ -6,39 +6,63 @@ on:
       dev-hub-auth-url:
         required: true
       gh-email:
-        required: true      
+        required: true
       github-token:
         required: true
 
 jobs:
-    beta-test:
-        name: "Beta Test 2GP"
-        runs-on: ubuntu-latest
-        container:
-            image: ghcr.io/muselab-d2x/d2x:latest
-            options: --user root
-            credentials:
-                username: "${{ github.actor }}"
-                password: "${{ secrets.github-token }}"
-            env:
-                DEV_HUB_AUTH_URL: "${{ secrets.dev-hub-auth-url }}"
-                CUMULUSCI_SERVICE_github: "{ \"username\": \"${{ github.actor }}\", \"token\": \"${{ secrets.github-token }}\", \"email\": \"${{ secrets.gh-email }}\" }"
-        steps:
-            - name: Checkout
-              uses: actions/checkout@v2
-            - name: Auth to DevHub
-              run: /usr/local/bin/devhub.sh
-            - name: Set default org
-              run: cci org default beta
-            - name: Install Dependencies for Resolution
-              run: cci flow run dependencies
-            - name: Build Beta Package
-              run: cci flow run release_2gp_beta
-              shell: bash
-            - name: Run Beta Test
-              run: cci flow run ci_beta
-            - name: Delete Scratch Org
-              if: ${{ always() }}
-              run: |
-                cci org scratch_delete beta
-              shell: bash
+  beta-test:
+    name: "Beta Test 2GP"
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/muselab-d2x/d2x:latest
+      options: --user root
+      credentials:
+        username: "${{ github.actor }}"
+        password: "${{ secrets.github-token }}"
+      env:
+        DEV_HUB_AUTH_URL: "${{ secrets.dev-hub-auth-url }}"
+        CUMULUSCI_SERVICE_github: '{ "username": "${{ github.actor }}", "token": "${{ secrets.github-token }}", "email": "${{ secrets.gh-email }}" }'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Install pwgen
+        run: |
+          apt-get update
+          apt-get install -y pwgen
+
+      - name: Generate install Key
+        run: echo "MAP_MANAGED_KEY=$(pwgen 15 1)" >> $GITHUB_ENV
+
+      - name: Auth to DevHub
+        run: /usr/local/bin/devhub.sh
+
+      - name: Set default org
+        run: cci org default beta
+
+      - name: Install Dependencies for Resolution
+        run: cci flow run dependencies
+
+      - name: Build Beta Package
+        run: cci flow run release_2gp_beta -o create_package_version__install_key ${{ env.MAP_MANAGED_KEY }} > map_managed.txt
+        shell: bash
+
+      - name: Extract Information
+        run: |
+          cat map_managed.txt
+          echo "Package Version ID: $(grep -oP 'Package Version Id: \K.*' map_managed.txt)" >> package_details.txt
+          echo "Package Name: $(grep -oP 'Package Name: \K.*' map_managed.txt)" >> package_details.txt
+          echo "Ancestor ID: $(grep -oP 'Ancestor Id: \K.*' map_managed.txt)" >> package_details.txt
+          echo "Release Tag: $(grep -oP 'Release Tag: \K.*' map_managed.txt)" >> package_details.txt
+          echo "Version Number: $(grep -oP 'Version Number: \K.*' map_managed.txt)" >> package_details.txt
+
+      - name: Run Beta Test
+        run: cci flow run custom_install_beta -o install_managed_beta__password ${{ env.MAP_MANAGED_KEY }}
+
+      - name: Delete Scratch Org
+        if: ${{ always() }}
+        run: |
+          cci org scratch_delete beta
+        shell: bash
