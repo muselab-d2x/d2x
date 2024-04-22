@@ -46,17 +46,21 @@ jobs:
         run: cci flow run dependencies
 
       - name: Build Beta Package
-        run: cci flow run release_2gp_beta -o create_package_version__install_key ${{ env.MAP_MANAGED_KEY }} > map_managed.txt
+        run: cci flow run release_2gp_beta -o create_package_version__install_key ${{ env.MAP_MANAGED_KEY }} > create-package-output.txt
         shell: bash
+
+      - name: setup python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.8
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install requests
 
       - name: Extract Information
         run: |
-          cat map_managed.txt
-          echo "Package Version ID: $(grep -oP 'Package Version Id: \K.*' map_managed.txt)" >> package_details.txt
-          echo "Package Name: $(grep -oP 'Package Name: \K.*' map_managed.txt)" >> package_details.txt
-          echo "Ancestor ID: $(grep -oP 'Ancestor Id: \K.*' map_managed.txt)" >> package_details.txt
-          echo "Release Tag: $(grep -oP 'Release Tag: \K.*' map_managed.txt)" >> package_details.txt
-          echo "Version Number: $(grep -oP 'Version Number: \K.*' map_managed.txt)" >> package_details.txt
+          python3 scripts/log_package_info.py
 
       - name: Run Beta Test
         run: cci flow run custom_install_beta -o install_managed_beta__password ${{ env.MAP_MANAGED_KEY }}
