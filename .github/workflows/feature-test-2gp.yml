@@ -46,7 +46,7 @@ jobs:
                 apt-get install -y jq
 
             - name: Get Dependency Install Keys
-              run: echo "MAP_MANAGED_KEY=$(curl https://2ufsouhjolan4taktsec4q22ym0jvxga.lambda-url.ca-central-1.on.aws/latest/map_managed?auth-token=sjkldfjklsdjklfasjlkdf | jq -r '.installationKey')" >> $GITHUB_ENV
+              run: echo "MAP_MANAGED_KEY=$(curl "${secrets.pkg-ver-url}/latest/map_managed?auth-token=${secrets.pkg-ver-auth}"| jq -r '.installationKey')" >> $GITHUB_ENV
 
             - name: list env vars
               run: cat $GITHUB_ENV
