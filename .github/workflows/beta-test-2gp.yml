@@ -37,7 +37,7 @@ jobs:
         run: echo "NEW_INSTALL_KEY=$(pwgen 15 1)" >> $GITHUB_ENV
 
       - name: Get Dependency Install Keys
-        run: echo "MAP_MANAGED_KEY=$(curl https://qekae5pu5jwysp7qcn7eh6cozu0yyvum.lambda-url.ca-central-1.on.aws/latest/map_managed\?auth-token\=sjkldfjklsdjklfasjlkdf | jq -r '.installationKey')" >> $GITHUB_ENV
+        run: echo "MAP_MANAGED_KEY=$(curl https://2ufsouhjolan4taktsec4q22ym0jvxga.lambda-url.ca-central-1.on.aws/latest/map_managed?auth-token=sjkldfjklsdjklfasjlkdf | jq -r '.installationKey')"
 
       - name: Auth to DevHub
         run: /usr/local/bin/devhub.sh
@@ -87,7 +87,7 @@ jobs:
                     packageName = line.strip().split(':')[-1].strip()
                 if line.find('tag:') != -1:
                     releaseTag = line.strip().split(':')[-1].strip()
-            url = 'https://qekae5pu5jwysp7qcn7eh6cozu0yyvum.lambda-url.ca-central-1.on.aws/info'
+            url = 'https://2ufsouhjolan4taktsec4q22ym0jvxga.lambda-url.ca-central-1.on.aws/info'
             json = {
                 'packageName': packageName,
                 'releaseTag': releaseTag,
