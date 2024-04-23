@@ -108,7 +108,7 @@ jobs:
             f.close()
 
       - name: Run Beta Test
-        run: cci flow run custom_install_beta -o install_managed_beta__password ${{ env.MAP_MANAGED_KEY }}
+        run: cci flow run custom_install_beta -o install_managed_beta__password ${{ env.NEW_INSTALL_KEY }}
 
       - name: Delete Scratch Org
         if: ${{ always() }}
