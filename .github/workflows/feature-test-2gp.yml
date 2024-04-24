@@ -7,7 +7,7 @@ on:
         required: false
         default: false
         type: boolean
-          
+
     secrets:
       # Either dev-hub-auth-url or dev-hub-username, dev-hub-client-id, and dev-hub-private-key are required
       dev-hub-auth-url:
@@ -17,70 +17,70 @@ on:
       dev-hub-client-id:
         required: false
       dev-hub-private-key:
-        required: false      
+        required: false
       gh-email:
-        required: true      
+        required: true
       github-token:
         required: true
 
 jobs:
-    feature-test:
-        name: "2GP Feature Test"
-        runs-on: ubuntu-latest
-        container:
-            image: ghcr.io/muselab-d2x/d2x:latest
-            options: --user root
-            credentials:
-                username: "${{ github.actor }}"
-                password: "${{ secrets.github-token }}"
-            env:
-                DEV_HUB_AUTH_URL: "${{ secrets.dev-hub-auth-url }}"
-                DEV_HUB_USERNAME: "${{ secrets.dev-hub-username }}"
-                DEV_HUB_CLIENT_ID: "${{ secrets.dev-hub-client-id }}"
-                DEV_HUB_PRIVATE_KEY: "${{ secrets.dev-hub-private-key }}"
-                CUMULUSCI_SERVICE_github: "{ \"username\": \"${{ github.actor }}\", \"token\": \"${{ secrets.github-token }}\", \"email\": \"${{ secrets.gh-email }}\" }"
-        steps:
-            - name: Install jq
-              run: |
-                apt-get update
-                apt-get install -y jq
+  feature-test:
+    name: "2GP Feature Test"
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/ClearRisk/d2x:latest
+      options: --user root
+      credentials:
+        username: "${{ github.actor }}"
+        password: "${{ secrets.github-token }}"
+      env:
+        DEV_HUB_AUTH_URL: "${{ secrets.dev-hub-auth-url }}"
+        DEV_HUB_USERNAME: "${{ secrets.dev-hub-username }}"
+        DEV_HUB_CLIENT_ID: "${{ secrets.dev-hub-client-id }}"
+        DEV_HUB_PRIVATE_KEY: "${{ secrets.dev-hub-private-key }}"
+        CUMULUSCI_SERVICE_github: '{ "username": "${{ github.actor }}", "token": "${{ secrets.github-token }}", "email": "${{ secrets.gh-email }}" }'
+    steps:
+      - name: Install jq
+        run: |
+          apt-get update
+          apt-get install -y jq
 
-            - name: Get Dependency Install Keys
-              run: echo "MAP_MANAGED_KEY=$(curl https://2ufsouhjolan4taktsec4q22ym0jvxga.lambda-url.ca-central-1.on.aws/latest/map_managed?auth-token=sjkldfjklsdjklfasjlkdf | jq -r '.installationKey')"
+      - name: Get Dependency Install Keys
+        run: echo "MAP_MANAGED_KEY=$(curl https://2ufsouhjolan4taktsec4q22ym0jvxga.lambda-url.ca-central-1.on.aws/latest/map_managed?auth-token=sjkldfjklsdjklfasjlkdf | jq -r '.installationKey')"
 
-            - name: list env vars
-              run: cat $GITHUB_ENV
+      - name: list env vars
+        run: cat $GITHUB_ENV
 
-            - name: Checkout
-              uses: actions/checkout@v4
-            - name: Auth to DevHub
-              run: /usr/local/bin/devhub.sh
-            - name: Set feature org as default org
-              run: cci org default feature
-            - name: Build Feature Test Package
-              env:
-                  GITHUB_TOKEN: '${{ secrets.github-token }}'
-              run: cci flow run build_feature_test_package $([[ "${{ inputs.debug }}" == "true" ]] && echo " --debug") | tee cumulusci-flow.log
-              shell: bash
-            - name: Set Commit Status
-              env:
-                  GITHUB_TOKEN: '${{ secrets.github-token }}'
-              run: |
-                  VERSION=$(cat cumulusci-flow.log | grep -o -E -m 1 "04t[a-zA-Z0-9]{15}")
-                  gh api \
-                    --method POST \
-                    -H "Accept: application/vnd.github.v3+json" \
-                    '/repos/${{ github.repository }}/statuses/${{ github.sha }}' \
-                    -f state='success' \
-                    -f description="version_id: $VERSION" \
-                    -f context='Build Feature Test Package'
-              shell: bash
-            - name: Run Feature Test
-              env:
-                  GITHUB_TOKEN: '${{ secrets.github-token }}'
-              run: cci flow run ci_feature_2gp
-            - name: Delete Scratch Org
-              if: ${{ always() }}
-              run: |
-                cci org scratch_delete feature
-              shell: bash
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Auth to DevHub
+        run: /usr/local/bin/devhub.sh
+      - name: Set feature org as default org
+        run: cci org default feature
+      - name: Build Feature Test Package
+        env:
+          GITHUB_TOKEN: "${{ secrets.github-token }}"
+        run: cci flow run build_feature_test_package $([[ "${{ inputs.debug }}" == "true" ]] && echo " --debug") | tee cumulusci-flow.log
+        shell: bash
+      - name: Set Commit Status
+        env:
+          GITHUB_TOKEN: "${{ secrets.github-token }}"
+        run: |
+          VERSION=$(cat cumulusci-flow.log | grep -o -E -m 1 "04t[a-zA-Z0-9]{15}")
+          gh api \
+            --method POST \
+            -H "Accept: application/vnd.github.v3+json" \
+            '/repos/${{ github.repository }}/statuses/${{ github.sha }}' \
+            -f state='success' \
+            -f description="version_id: $VERSION" \
+            -f context='Build Feature Test Package'
+        shell: bash
+      - name: Run Feature Test
+        env:
+          GITHUB_TOKEN: "${{ secrets.github-token }}"
+        run: cci flow run ci_feature_2gp
+      - name: Delete Scratch Org
+        if: ${{ always() }}
+        run: |
+          cci org scratch_delete feature
+        shell: bash
