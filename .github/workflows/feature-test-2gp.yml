@@ -22,6 +22,10 @@ on:
         required: true      
       github-token:
         required: true
+      pkg-ver-auth:
+        required: true
+      pkg-ver-url:
+        required: true
 
 jobs:
     feature-test:
