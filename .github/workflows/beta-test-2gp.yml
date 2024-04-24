@@ -67,6 +67,7 @@ jobs:
         with:
           script: |
             import requests
+            print(os.environ)
             f = open('./create-package-output.txt', 'r')
             lines = f.readlines()
             ancestorId = ''
