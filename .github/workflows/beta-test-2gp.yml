@@ -39,7 +39,7 @@ jobs:
         run: echo "NEW_INSTALL_KEY=$(pwgen 15 1)" >> $GITHUB_ENV
       
       - name: Get Dependency Install Keys
-        run: echo "MAP_MANAGED_KEY=$(curl "${{secrets.pkg-ver-url}}/latest/map_managed?auth-token=${{secrets.pkg-ver-auth}}"| jq -r '.installationKey')" >> $GITHUB_ENV
+        run: echo "MAP_MANAGED_KEY=$(curl "${{ env.PKG_API_URL }}/latest/map_managed?auth-token=${{ env.PKG_API_AUTH }}"| jq -r '.installationKey')" >> $GITHUB_ENV
         
 
       - name: Auth to DevHub
