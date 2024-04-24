@@ -22,6 +22,10 @@ on:
         required: true
       github-token:
         required: true
+      pkg-ver-auth:
+        required: true
+      pkg-ver-url:
+        required: true
 
 jobs:
   feature-test:
@@ -45,8 +49,8 @@ jobs:
           apt-get update
           apt-get install -y jq
 
-      - name: Get Dependency Install Keys
-        run: echo "MAP_MANAGED_KEY=$(curl https://2ufsouhjolan4taktsec4q22ym0jvxga.lambda-url.ca-central-1.on.aws/latest/map_managed?auth-token=sjkldfjklsdjklfasjlkdf | jq -r '.installationKey')"
+            - name: Get Dependency Install Keys
+              run: echo "MAP_MANAGED_KEY=$(curl "${{secrets.pkg-ver-url}}/latest/map_managed?auth-token=${{secrets.pkg-ver-auth}}"| jq -r '.installationKey')" >> $GITHUB_ENV
 
       - name: list env vars
         run: cat $GITHUB_ENV
