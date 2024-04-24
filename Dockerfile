@@ -1,6 +1,6 @@
 FROM python:3.11-slim-bookworm
 
-LABEL org.opencontainers.image.source = "https://github.com/muselab-d2x/d2x"
+LABEL org.opencontainers.image.source = "https://github.com/clearrisk/d2x"
 
 # Install sfdx
 RUN apt-get update
