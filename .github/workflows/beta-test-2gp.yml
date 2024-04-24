@@ -19,7 +19,7 @@ jobs:
     name: "Beta Test 2GP"
     runs-on: ubuntu-latest
     container:
-      image: ghcr.io/ClearRisk/d2x:latest
+      image: ghcr.io/clearrisk/d2x:latest
       options: --user root
       credentials:
         username: "${{ github.actor }}"
@@ -45,7 +45,7 @@ jobs:
 
       - name: Generate install Key
         run: echo "NEW_INSTALL_KEY=$(pwgen 15 1)" >> $GITHUB_ENV
-      
+
       - name: Get Dependency Install Keys
         run: echo "MAP_MANAGED_KEY=$(curl "${{ env.PKG_API_URL }}latest/map_managed?auth-token=${{ env.PKG_API_AUTH }}"| jq -r '.installationKey')" >> $GITHUB_ENV
 
