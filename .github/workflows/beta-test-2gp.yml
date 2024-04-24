@@ -99,6 +99,8 @@ jobs:
                 if line.find('tag:') != -1:
                     releaseTag = line.strip().split(':')[-1].strip()
             url = os.environ['PKG_API_URL'] + '/info'
+            print('Posting to URL')
+            print(url)
             json = {
                 'packageName': packageName,
                 'releaseTag': releaseTag,
