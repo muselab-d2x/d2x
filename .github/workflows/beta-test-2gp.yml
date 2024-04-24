@@ -46,6 +46,12 @@ jobs:
       - name: Generate install Key
         run: echo "NEW_INSTALL_KEY=$(pwgen 15 1)" >> $GITHUB_ENV
 
+      - name: Generate deps.txt
+        run: echo n | cci task run update_dependencies --interactive True | tee deps.txt
+
+      - name: Get Auth keys
+        run: curl -G {{ env.PKG_API_URL }}keys\?auth-token\={{ env.PKG_API_AUTH }} --data-urlencode "input=$(cat deps.txt)" | tee $GITHUB_ENV
+
       - name: Get Dependency Install Keys
         run: echo "MAP_MANAGED_KEY=$(curl "${{ env.PKG_API_URL }}latest/map_managed?auth-token=${{ env.PKG_API_AUTH }}"| jq -r '.installationKey')" >> $GITHUB_ENV
 
