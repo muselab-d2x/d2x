@@ -56,7 +56,7 @@ jobs:
         run: cci org default beta
 
       - name: Install Dependencies for Resolution
-        run: cci flow run custom_dependencies
+        run: cci flow run dependencies
 
       - name: Build Beta Package
         run: cci flow run release_2gp_beta -o create_package_version__install_key ${{ env.NEW_INSTALL_KEY }} > create-package-output.txt
