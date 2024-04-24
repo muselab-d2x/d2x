@@ -21,6 +21,8 @@ jobs:
         username: "${{ github.actor }}"
         password: "${{ secrets.github-token }}"
       env:
+        PKG_API_URL: "${{ secrets.pkg-ver-url }}"
+        PKG_API_AUTH: "${{ secrets.pkg-ver-auth }}"
         DEV_HUB_AUTH_URL: "${{ secrets.dev-hub-auth-url }}"
         CUMULUSCI_SERVICE_github: '{ "username": "${{ github.actor }}", "token": "${{ secrets.github-token }}", "email": "${{ secrets.gh-email }}" }'
 
@@ -35,7 +37,7 @@ jobs:
 
       - name: Generate install Key
         run: echo "NEW_INSTALL_KEY=$(pwgen 15 1)" >> $GITHUB_ENV
-
+      
       - name: Get Dependency Install Keys
         run: echo "MAP_MANAGED_KEY=$(curl "${{secrets.pkg-ver-url}}/latest/map_managed?auth-token=${{secrets.pkg-ver-auth}}"| jq -r '.installationKey')" >> $GITHUB_ENV
         
