@@ -1,3 +1,5 @@
+import requests
+print(os.environ)
 f = open('./create-package-output.txt', 'r')
 lines = f.readlines()
 ancestorId = ''
@@ -19,7 +21,9 @@ for line in lines:
         packageName = line.strip().split(':')[-1].strip()
     if line.find('tag:') != -1:
         releaseTag = line.strip().split(':')[-1].strip()
-url = 'https://qekae5pu5jwysp7qcn7eh6cozu0yyvum.lambda-url.ca-central-1.on.aws/info'
+url = os.environ['PKG_API_URL'] + 'info'
+print('Posting to URL')
+print(url)
 json = {
     'packageName': packageName,
     'releaseTag': releaseTag,
@@ -32,9 +36,9 @@ json = {
 print('Input')
 print(json)
 res = requests.post(url, json=json, headers={
-    'auth-token': 'sjkldfjklsdjklfasjlkdf',
+    'auth-token': os.environ['PKG_API_AUTH'],
     "Content-Type": "application/json; charset=utf-8"
 })
-print('Response')
-print(res.json())
+print('Response Code')
+print(res.status_code)
 f.close()
