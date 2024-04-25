@@ -62,7 +62,7 @@ jobs:
         run: echo n | cci task run update_dependencies --interactive True --org beta | tee deps.txt
 
       - name: Get Auth keys
-        run: curl -G "${{ env.PKG_API_URL }}keys?auth-token=${{ env.PKG_API_AUTH }}"" --data-urlencode "input=$(cat deps.txt)" | tee $GITHUB_ENV
+        run: curl -G "${{ env.PKG_API_URL }}keys?auth-token=${{ env.PKG_API_AUTH }}" --data-urlencode "input=$(cat deps.txt)" | tee $GITHUB_ENV
 
       - name: Install Dependencies for Resolution
         run: cci flow run dependencies
