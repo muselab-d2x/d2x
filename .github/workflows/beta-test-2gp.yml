@@ -52,8 +52,8 @@ jobs:
       - name: Auth to DevHub
         run: /usr/local/bin/devhub.sh
 
-      - name: Set default org
-        run: cci org default beta
+      - name: Set Default Org Type
+        run: cci org scratch beta beta
 
       - name: Generate deps.txt
         run: echo n | cci task run update_dependencies --interactive True | tee deps.txt
@@ -62,7 +62,8 @@ jobs:
         run: curl -G "${{ env.PKG_API_URL }}keys?auth-token=${{ env.PKG_API_AUTH }}"" --data-urlencode "input=$(cat deps.txt)" | tee $GITHUB_ENV
 
       - name: Install Dependencies for Resolution
-        run: cci flow run dependencies -o update_dependencies__resolution_strategy preproduction
+        run: cci flow run dependencies
+      #-o update_dependencies__resolution_strategy preproduction
 
       - name: Build Beta Package
         run: cci flow run release_2gp_beta -o create_package_version__install_key ${{ env.NEW_INSTALL_KEY }} | tee create-package-output.txt
@@ -81,7 +82,8 @@ jobs:
         run: python /usr/local/bin/log_package.py
 
       - name: Run Beta Test
-        run: cci flow run custom_install_beta -o update_dependencies__resolution_strategy preproduction -o install_managed_beta__password ${{ env.NEW_INSTALL_KEY }}
+        run: cci flow run custom_install_beta
+        #-o update_dependencies__resolution_strategy preproduction -o install_managed_beta__password ${{ env.NEW_INSTALL_KEY }}
 
       - name: Delete Scratch Org
         if: ${{ always() }}
