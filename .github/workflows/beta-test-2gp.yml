@@ -54,9 +54,15 @@ jobs:
 
       - name: Set Default Org Type
         run: cci org scratch beta beta
+      
+      - name: Set default org
+        run: cci org default beta
+      
+      -- name: Make Beta Scratch Org
+        run: 
 
       - name: Generate deps.txt
-        run: echo n | cci task run update_dependencies --interactive True | tee deps.txt
+        run: echo n | cci task run update_dependencies --interactive True --org beta | tee deps.txt
 
       - name: Get Auth keys
         run: curl -G "${{ env.PKG_API_URL }}keys?auth-token=${{ env.PKG_API_AUTH }}"" --data-urlencode "input=$(cat deps.txt)" | tee $GITHUB_ENV
