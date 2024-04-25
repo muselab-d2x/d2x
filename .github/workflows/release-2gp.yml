@@ -9,13 +9,17 @@ on:
         required: true
       github-token:
         required: true
+      pkg-ver-auth:
+        required: true
+      pkg-ver-url:
+        required: true
 
 jobs:
   beta-test:
     name: "Release 2GP"
     runs-on: ubuntu-latest
     container:
-      image: ghcr.io/ClearRisk/d2x:latest
+      image: ghcr.io/clearrisk/d2x:latest
       options: --user root
       credentials:
         username: ${{ github.actor }}
@@ -28,13 +32,37 @@ jobs:
         uses: actions/checkout@v4
       - name: Auth to DevHub
         run: /usr/local/bin/devhub.sh
+
+      - name: Set Default Org Type
+        run: cci org scratch release release
+
       - name: Set default org
         run: cci org default release
+
+      - name: Put API url in env
+        run: echo "PKG_API_URL=${{ secrets.pkg-ver-url }}" >> $GITHUB_ENV
+
+      - name: Put API auth in env
+        run: echo "PKG_API_AUTH=${{ secrets.pkg-ver-auth }}" >> $GITHUB_ENV
+
+      # - name: Generate install Key
+      #   run: echo "NEW_INSTALL_KEY=$(pwgen 15 1)" >> $GITHUB_ENV
+
+      - name: Generate deps.txt
+        run: echo n | cci task run update_dependencies --interactive True --org beta | tee deps.txt
+
+      - name: Get Auth keys
+        run: curl -G "${{ env.PKG_API_URL }}keys?auth-token=${{ env.PKG_API_AUTH }}" --data-urlencode "input=$(cat deps.txt)" | tee $GITHUB_ENV
+
       - name: Install Dependencies for Resolution
         run: cci flow run dependencies
       - name: Promote Latest Beta
-        run: cci flow run release_2gp_production
+        run: cci flow run release_2gp_production | tee release2gp.txt
         shell: bash
+
+      - name: Get Install Key For Release 2GP
+        run:
+
       - name: Run Release Test
         run: cci flow run ci_release
       - name: Delete Scratch Org
