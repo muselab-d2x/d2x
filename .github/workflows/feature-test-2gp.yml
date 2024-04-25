@@ -49,8 +49,17 @@ jobs:
           apt-get update
           apt-get install -y jq
 
-      - name: Get Dependency Install Keys
-        run: echo "MAP_MANAGED_KEY=$(curl "${{secrets.pkg-ver-url}}latest/map_managed?auth-token=${{secrets.pkg-ver-auth}}"| jq -r '.installationKey')" >> $GITHUB_ENV
+      - name: Set Default Org Type
+        run: cci org scratch feature feature
+
+      - name: Set default org
+        run: cci org default feature
+
+      - name: Generate deps.txt
+        run: echo n | cci task run update_dependencies --interactive True --org feature | tee deps.txt
+
+      - name: Get Auth keys
+        run: curl -G "${{ env.PKG_API_URL }}keys?auth-token=${{ env.PKG_API_AUTH }}" --data-urlencode "input=$(cat deps.txt)" | tee $GITHUB_ENV
 
       - name: list env vars
         run: cat $GITHUB_ENV
@@ -59,8 +68,6 @@ jobs:
         uses: actions/checkout@v4
       - name: Auth to DevHub
         run: /usr/local/bin/devhub.sh
-      - name: Set feature org as default org
-        run: cci org default feature
       - name: Build Feature Test Package
         env:
           GITHUB_TOKEN: "${{ secrets.github-token }}"
