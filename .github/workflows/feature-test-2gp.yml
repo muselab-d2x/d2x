@@ -49,6 +49,12 @@ jobs:
           apt-get update
           apt-get install -y jq
 
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Auth to DevHub
+        run: /usr/local/bin/devhub.sh
+
       - name: Set Default Org Type
         run: cci org scratch feature feature
 
@@ -63,11 +69,6 @@ jobs:
 
       - name: list env vars
         run: cat $GITHUB_ENV
-
-      - name: Checkout
-        uses: actions/checkout@v4
-      - name: Auth to DevHub
-        run: /usr/local/bin/devhub.sh
       - name: Build Feature Test Package
         env:
           GITHUB_TOKEN: "${{ secrets.github-token }}"
