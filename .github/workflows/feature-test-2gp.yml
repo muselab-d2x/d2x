@@ -61,6 +61,12 @@ jobs:
       - name: Set default org
         run: cci org default feature
 
+      - name: Put API url in env
+        run: echo "PKG_API_URL=${{ secrets.pkg-ver-url }}" >> $GITHUB_ENV
+
+      - name: Put API auth in env
+        run: echo "PKG_API_AUTH=${{ secrets.pkg-ver-auth }}" >> $GITHUB_ENV
+
       - name: Generate deps.txt
         run: echo n | cci task run update_dependencies --interactive True --org feature | tee deps.txt
 
