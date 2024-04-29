@@ -29,6 +29,7 @@ RUN pip install --no-cache-dir --upgrade pip pip-tools \
 # Copy devhub auth script and make it executable
 COPY devhub.sh /usr/local/bin/devhub.sh
 COPY ./scripts/log_package.py /usr/local/bin/log_package.py
+COPY ./scripts/extract_failed.py /usr/local/bin/extract_failed.py
 RUN chmod +x /usr/local/bin/devhub.sh
 
 # Create d2x user
