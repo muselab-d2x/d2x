@@ -36,8 +36,8 @@ jobs:
           apt-get update
           apt-get install -y pwgen jq
 
-      - name: Generate install Key
-        run: echo "NEW_INSTALL_KEY=$(pwgen 15 1)" >> $GITHUB_ENV
+      # - name: Generate install Key
+      #   run: echo "NEW_INSTALL_KEY=$(pwgen 15 1)" >> $GITHUB_ENV
 
       - name: Auth to DevHub
         run: /usr/local/bin/devhub.sh
