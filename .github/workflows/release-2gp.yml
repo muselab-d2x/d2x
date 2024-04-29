@@ -87,7 +87,8 @@ jobs:
       - name: Extract Failed
         run: |
           RESULT=$(python /usr/local/bin/extract_failed.py)
-          curl $RESULT >> $GITHUB_ENV
+          curl $RESULT | tee $GITHUB_ENV
+
       - name: Get install key for package
         run: curl -G "${{ env.PKG_API_URL }}promote-key?auth-token=${{ env.PKG_API_AUTH }}" --data-urlencode "input=$(cat release2gp.txt)" | tee $GITHUB_ENV
 
