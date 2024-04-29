@@ -79,9 +79,6 @@ jobs:
           python -m pip install --upgrade pip
           pip install requests
 
-      - name: Log Package to API
-        run: python /usr/local/bin/log_package.py
-
       - name: Get install key for package
         run: curl -G "${{ env.PKG_API_URL }}promote-key?auth-token=${{ env.PKG_API_AUTH }}" --data-urlencode "input=$(cat release2gp.txt)" | tee $GITHUB_ENV
 
