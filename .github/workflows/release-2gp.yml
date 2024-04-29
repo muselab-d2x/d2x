@@ -67,7 +67,7 @@ jobs:
         run: cci flow run dependencies
 
       - name: Promote Latest Beta
-        run: cci flow run release_2gp_production -o promote_package_version__install_key ${{ env.NEW_INSTALL_KEY }} | tee release2gp.txt
+        run: cci flow run release_2gp_production -o promote_package_version__install_key ${{ env.PKG_INSTALL_KEY }} | tee release2gp.txt
         shell: bash
 
       - name: setup python
