@@ -38,6 +38,7 @@ jobs:
         username: "${{ github.actor }}"
         password: "${{ secrets.github-token }}"
       env:
+        CR_PKG_KEY: "c5453a48ab3d0739d82b9038bbaae045"
         DEV_HUB_AUTH_URL: "${{ secrets.dev-hub-auth-url }}"
         DEV_HUB_USERNAME: "${{ secrets.dev-hub-username }}"
         DEV_HUB_CLIENT_ID: "${{ secrets.dev-hub-client-id }}"
@@ -61,24 +62,22 @@ jobs:
       - name: Set default org
         run: cci org default feature
 
-      - name: Put API url in env
-        run: echo "PKG_API_URL=${{ secrets.pkg-ver-url }}" >> $GITHUB_ENV
+      # - name: Put API url in env
+      #   run: echo "PKG_API_URL=${{ secrets.pkg-ver-url }}" >> $GITHUB_ENV
 
-      - name: Put API auth in env
-        run: echo "PKG_API_AUTH=${{ secrets.pkg-ver-auth }}" >> $GITHUB_ENV
+      # - name: Put API auth in env
+      #   run: echo "PKG_API_AUTH=${{ secrets.pkg-ver-auth }}" >> $GITHUB_ENV
 
-      - name: Generate deps.txt
-        run: echo n | cci task run update_dependencies --interactive True --org feature | tee deps.txt
+      # - name: Generate deps.txt
+      #   run: echo n | cci task run update_dependencies --interactive True --org feature | tee deps.txt
 
-      - name: Get Auth keys
-        run: curl -G "${{ env.PKG_API_URL }}keys?auth-token=${{ env.PKG_API_AUTH }}" --data-urlencode "input=$(cat deps.txt)" | tee $GITHUB_ENV
+      # - name: Get Auth keys
+      #   run: curl -G "${{ env.PKG_API_URL }}keys?auth-token=${{ env.PKG_API_AUTH }}" --data-urlencode "input=$(cat deps.txt)" | tee $GITHUB_ENV
 
-      - name: list env vars
-        run: cat $GITHUB_ENV
       - name: Build Feature Test Package
         env:
           GITHUB_TOKEN: "${{ secrets.github-token }}"
-        run: cci flow run build_feature_test_package $([[ "${{ inputs.debug }}" == "true" ]] && echo " --debug") | tee cumulusci-flow.log
+        run: cci flow run build_feature_test_package -o create_package_version__install_key ${{ env.CR_PKG_KEY }} $([[ "${{ inputs.debug }}" == "true" ]] && echo " --debug") | tee cumulusci-flow.log
         shell: bash
       - name: Set Commit Status
         env:
@@ -96,7 +95,7 @@ jobs:
       - name: Run Feature Test
         env:
           GITHUB_TOKEN: "${{ secrets.github-token }}"
-        run: cci flow run ci_feature_2gp
+        run: cci flow run ci_feature_2gp -o install_managed_password ${{ env.CR_PKG_KEY }}
       - name: Delete Scratch Org
         if: ${{ always() }}
         run: |
