@@ -90,7 +90,8 @@ jobs:
           curl $RESULT | tee $GITHUB_ENV
 
       - name: Promote Latest Beta (will not fail)
-        run: cci flow run release_2gp_production -o promote_package_version__install_key ${{ env.PKG_INSTALL_KEY }} | tee release2gp.txt
+        run: cci flow run release_2gp_production | tee release2gp.txt
+        # -o promote_package_version__install_key ${{ env.PKG_INSTALL_KEY }}
         shell: bash
 
       # - name: Get install key for package
