@@ -85,7 +85,7 @@ jobs:
         run: python /usr/local/bin/log_package.py
 
       - name: Run Beta Test
-        run: cci flow run ci_beta
+        run: cci flow run custom_install_beta
         # -o install_managed_beta__password ${{ env.NEW_INSTALL_KEY }}
 
       - name: Delete Scratch Org
