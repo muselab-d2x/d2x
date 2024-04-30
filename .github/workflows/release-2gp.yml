@@ -61,19 +61,19 @@ jobs:
       - name: Put API auth in env
         run: echo "PKG_API_AUTH=${{ secrets.pkg-ver-auth }}" >> $GITHUB_ENV
 
-      - name: Generate deps.txt
-        run: echo n | cci task run update_dependencies --interactive True --org release | tee deps.txt
+      # - name: Generate deps.txt
+      #   run: echo n | cci task run update_dependencies --interactive True --org release | tee deps.txt
 
-      - name: Get Auth keys
-        run: curl -G "${{ env.PKG_API_URL }}keys?auth-token=${{ env.PKG_API_AUTH }}" --data-urlencode "input=$(cat deps.txt)" | tee $GITHUB_ENV
+      # - name: Get Auth keys
+      #   run: curl -G "${{ env.PKG_API_URL }}keys?auth-token=${{ env.PKG_API_AUTH }}" --data-urlencode "input=$(cat deps.txt)" | tee $GITHUB_ENV
 
       - name: Install Dependencies for Resolution
         run: cci flow run dependencies
 
-      - name: Promote Latest Beta (will fail)
-        run: cci flow run release_2gp_production -o promote_package_version__install_key fafa | grep "Resolved to version:" | tee failed.txt
-        continue-on-error: true
-        shell: bash
+      # - name: Promote Latest Beta (will fail)
+      #   run: cci flow run release_2gp_production-o promote_package_version__install_key fafa | grep "Resolved to version:" | tee failed.txt
+      #   continue-on-error: true
+      #   shell: bash
 
       - name: setup python
         uses: actions/setup-python@v2
@@ -91,7 +91,8 @@ jobs:
           curl $RESULT | tee $GITHUB_ENV
 
       - name: Promote Latest Beta (will not fail)
-        run: cci flow run release_2gp_production -o promote_package_version__install_key ${{ env.PKG_INSTALL_KEY }} | tee release2gp.txt
+        run: cci flow run release_2gp_production | tee release2gp.txt
+        # -o promote_package_version__install_key ${{ env.PKG_INSTALL_KEY }}
         shell: bash
 
       - name: Run Release Test

@@ -43,11 +43,11 @@ jobs:
       - name: Put API auth in env
         run: echo "PKG_API_AUTH=${{ secrets.pkg-ver-auth }}" >> $GITHUB_ENV
 
-      - name: Add install key to env
-        run: echo "CR_PKG_KEY=c5453a48ab3d0739d82b9038bbaae045" >> $GITHUB_ENV
+      # - name: Add install key to env
+      #   run: echo "CR_PKG_KEY=c5453a48ab3d0739d82b9038bbaae045" >> $GITHUB_ENV
 
-      - name: New Install Key
-        run: echo "NEW_INSTALL_KEY=c5453a48ab3d0739d82b9038bbaae045" >> $GITHUB_ENV
+      # - name: New Install Key
+      #   run: echo "NEW_INSTALL_KEY=c5453a48ab3d0739d82b9038bbaae045" >> $GITHUB_ENV
 
       - name: Auth to DevHub
         run: /usr/local/bin/devhub.sh
@@ -58,17 +58,18 @@ jobs:
       - name: Set default org
         run: cci org default beta
 
-      - name: Generate deps.txt
-        run: echo n | cci task run update_dependencies --interactive True --org beta | tee deps.txt
+      # - name: Generate deps.txt
+      #   run: echo n | cci task run update_dependencies --interactive True --org beta | tee deps.txt
 
-      - name: Get Auth keys
-        run: curl -G "${{ env.PKG_API_URL }}keys?auth-token=${{ env.PKG_API_AUTH }}" --data-urlencode "input=$(cat deps.txt)" | tee $GITHUB_ENV
+      # - name: Get Auth keys
+      #   run: curl -G "${{ env.PKG_API_URL }}keys?auth-token=${{ env.PKG_API_AUTH }}" --data-urlencode "input=$(cat deps.txt)" | tee $GITHUB_ENV
 
       - name: Install Dependencies for Resolution
         run: cci flow run dependencies
 
       - name: Build Beta Package
-        run: cci flow run release_2gp_beta -o create_package_version__install_key ${{ env.NEW_INSTALL_KEY }} | tee create-package-output.txt
+        run: cci flow run release_2gp_beta | tee create-package-output.txt
+        # -o create_package_version__install_key ${{ env.NEW_INSTALL_KEY }}
         shell: bash
 
       - name: setup python
@@ -84,7 +85,8 @@ jobs:
         run: python /usr/local/bin/log_package.py
 
       - name: Run Beta Test
-        run: cci flow run custom_install_beta -o install_managed_beta__password ${{ env.NEW_INSTALL_KEY }}
+        run: cci flow run custom_install_beta
+        # -o install_managed_beta__password ${{ env.NEW_INSTALL_KEY }}
 
       - name: Delete Scratch Org
         if: ${{ always() }}
