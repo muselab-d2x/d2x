@@ -71,7 +71,7 @@ jobs:
         run: echo "PKG_API_AUTH=${{ secrets.pkg-ver-auth }}" >> $GITHUB_ENV
 
       - name: Generate deps.txt
-        run: echo n | cci task run update_dependencies --interactive True --org feature | tee deps.txt
+        run: echo n | cci task run update_dependencies --interactive True --org feature --debug | tee deps.txt
 
       - name: Get Auth keys
         run: curl -G "${{ env.PKG_API_URL }}keys?auth-token=${{ env.PKG_API_AUTH }}" --data-urlencode "input=$(cat deps.txt)" | tee out.txt
