@@ -43,11 +43,11 @@ jobs:
       - name: Put API auth in env
         run: echo "PKG_API_AUTH=${{ secrets.pkg-ver-auth }}" >> $GITHUB_ENV
 
-      - name: Generate install Key
-        run: echo "NEW_INSTALL_KEY=$(pwgen 15 1)" >> $GITHUB_ENV
+      - name: Add install key to env
+        run: echo "CR_PKG_KEY=c5453a48ab3d0739d82b9038bbaae045" >> $GITHUB_ENV
 
-      # - name: Get Dependency Install Keys
-      #   run: echo "MAP_MANAGED_KEY=$(curl "${{ env.PKG_API_URL }}latest/map_managed?auth-token=${{ env.PKG_API_AUTH }}"| jq -r '.installationKey')" >> $GITHUB_ENV
+      - name: New Install Key
+        run: echo "NEW_INSTALL_KEY=c5453a48ab3d0739d82b9038bbaae045" >> $GITHUB_ENV
 
       - name: Auth to DevHub
         run: /usr/local/bin/devhub.sh
@@ -66,7 +66,6 @@ jobs:
 
       - name: Install Dependencies for Resolution
         run: cci flow run dependencies
-      #-o update_dependencies__resolution_strategy preproduction
 
       - name: Build Beta Package
         run: cci flow run release_2gp_beta -o create_package_version__install_key ${{ env.NEW_INSTALL_KEY }} | tee create-package-output.txt
@@ -86,7 +85,6 @@ jobs:
 
       - name: Run Beta Test
         run: cci flow run custom_install_beta -o install_managed_beta__password ${{ env.NEW_INSTALL_KEY }}
-        #-o update_dependencies__resolution_strategy preproduction
 
       - name: Delete Scratch Org
         if: ${{ always() }}

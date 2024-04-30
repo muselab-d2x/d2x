@@ -44,7 +44,7 @@ jobs:
         DEV_HUB_PRIVATE_KEY: "${{ secrets.dev-hub-private-key }}"
         CUMULUSCI_SERVICE_github: '{ "username": "${{ github.actor }}", "token": "${{ secrets.github-token }}", "email": "${{ secrets.gh-email }}" }'
     steps:
-      - name: Add install to key
+      - name: Add install key to env
         run: echo "CR_PKG_KEY=c5453a48ab3d0739d82b9038bbaae045" >> $GITHUB_ENV
 
       - name: Install jq
@@ -77,7 +77,7 @@ jobs:
         run: curl -G "${{ env.PKG_API_URL }}keys?auth-token=${{ env.PKG_API_AUTH }}" --data-urlencode "input=$(cat deps.txt)" | tee out.txt
 
       - name: Set fake env vars
-        run: sed -i.bak 's/=\(.*\)/=c5453a48ab3d0739d82b9038bbaae045/g' out.txt && echo out.txt >> $GITHUB_ENV
+        run: sed -i.bak 's/=\(.*\)/=c5453a48ab3d0739d82b9038bbaae045/g' out.txt && cat out.txt >> $GITHUB_ENV
 
       - name: Build Feature Test Package
         env:
