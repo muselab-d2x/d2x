@@ -24,7 +24,7 @@ RUN apt-get install -y gh
 
 # Install CumulusCI
 RUN pip install --no-cache-dir --upgrade pip pip-tools \
-  pip --no-cache-dir install cookiecutter d2x-cli
+  pip --no-cache-dir install cookiecutter git+https://github.com/muselab-d2x/d2x-cli.git@main
 
 # Copy devhub auth script and make it executable
 COPY devhub.sh /usr/local/bin/devhub.sh
