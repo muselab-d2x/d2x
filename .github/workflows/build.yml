@@ -1,6 +1,7 @@
 name: Build Docker Image
 
 on:
+  workflow_dispatch:
   push:
     branches:
       - d2x-cli
@@ -25,8 +26,8 @@ jobs:
         with:
           context: .
           push: ${{ github.event_name == 'push' }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          #cache-from: type=gha
+          #cache-to: type=gha,mode=max
           tags: |
             ghcr.io/${{ github.repository }}:d2x-cli
             ghcr.io/${{ github.repository }}:${{ github.sha }}
