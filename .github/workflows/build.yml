@@ -30,3 +30,4 @@ jobs:
           tags: |
             ghcr.io/${{ github.repository }}:d2x-cli
             ghcr.io/${{ github.repository }}:${{ github.sha }}
+          platforms: linux/amd64,linux/arm64
