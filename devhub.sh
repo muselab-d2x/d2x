@@ -83,7 +83,7 @@ else
     [[ -f /tmp/target_org_auth_url ]] && rm /tmp/target_org_auth_url
 fi
 
-if [ "`whoami`" == "d2x" ]; then
+if [ "`whoami`" == "d2x" && -f "cumulusci.yml" ]; then
     echo "Setting dev as the default org"
     cci org default dev
 fi
