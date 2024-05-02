@@ -7,6 +7,9 @@ on:
         required: false
         default: false
         type: boolean
+      snapshot:
+        required: false
+        type: string
           
     secrets:
       # Either dev-hub-auth-url or dev-hub-username, dev-hub-client-id, and dev-hub-private-key are required

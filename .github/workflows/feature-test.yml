@@ -1,4 +1,4 @@
-name: 2GP Feature Test
+name: Feature Test
 
 on:
   workflow_call:
