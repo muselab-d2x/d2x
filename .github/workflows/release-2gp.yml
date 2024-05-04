@@ -68,7 +68,7 @@ jobs:
         run: curl -G "${{ env.PKG_API_URL }}keys?auth-token=${{ env.PKG_API_AUTH }}" --data-urlencode "input=$(cat deps.txt)" | tee $GITHUB_ENV
 
       - name: Install Dependencies for Resolution
-        run: cci flow run dependencies -o update_dependencies__resolution_strategy preproduction
+        run: cci flow run dependencies
 
       - name: Promote Latest Beta (will fail)
         run: cci flow run release_2gp_production -o promote_package_version__install_key fafa | grep "Resolved to version:" | tee failed.txt
