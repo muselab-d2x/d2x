@@ -59,13 +59,13 @@ jobs:
         run: cci org default beta
 
       - name: Generate deps.txt
-        run: echo n | cci task run update_dependencies --interactive True --org beta | tee deps.txt
+        run: echo n | cci task run update_dependencies -o resolution_strategy preproduction -o include_beta True --interactive True --org beta | tee deps.txt
 
       - name: Get Auth keys
         run: curl -G "${{ env.PKG_API_URL }}keys?auth-token=${{ env.PKG_API_AUTH }}" --data-urlencode "input=$(cat deps.txt)" | tee $GITHUB_ENV
 
       - name: Install Dependencies for Resolution
-        run: cci flow run dependencies
+        run: cci flow run dependencies -o update_dependencies__resolution_strategy preproduction -o include_beta True
       #-o update_dependencies__resolution_strategy preproduction
 
       - name: Build Beta Package
