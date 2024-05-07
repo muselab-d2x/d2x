@@ -65,7 +65,7 @@ jobs:
         run: curl -G "${{ env.PKG_API_URL }}keys?auth-token=${{ env.PKG_API_AUTH }}" --data-urlencode "input=$(cat deps.txt)" | tee $GITHUB_ENV
 
       - name: Install Dependencies for Resolution
-        run: cci flow run dependencies -o update_dependencies__resolution_strategy preproduction -o include_beta True
+        run: cci flow run dependencies
       #-o update_dependencies__resolution_strategy preproduction
 
       - name: Build Beta Package
