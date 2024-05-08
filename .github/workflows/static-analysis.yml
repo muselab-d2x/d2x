@@ -22,6 +22,7 @@ on:
 
 jobs:
   analyze:
+    name: "Static Analysis Run"
     runs-on: ubuntu-latest
     container:
       image: ghcr.io/clearrisk/d2x:latest
@@ -31,6 +32,9 @@ jobs:
         password: "${{ secrets.github-token }}"
       env:
         DEV_HUB_AUTH_URL: "${{ secrets.dev-hub-auth-url }}"
+        DEV_HUB_USERNAME: "${{ secrets.dev-hub-username }}"
+        DEV_HUB_CLIENT_ID: "${{ secrets.dev-hub-client-id }}"
+        DEV_HUB_PRIVATE_KEY: "${{ secrets.dev-hub-private-key }}"
         CUMULUSCI_SERVICE_github: '{ "username": "${{ github.actor }}", "token": "${{ secrets.github-token }}", "email": "${{ secrets.gh-email }}" }'
 
     steps:
