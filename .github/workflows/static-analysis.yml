@@ -4,13 +4,7 @@ on:
   workflow_call:
     secrets:
       dev-hub-auth-url:
-        required: false
-      dev-hub-username:
-        required: false
-      dev-hub-client-id:
-        required: false
-      dev-hub-private-key:
-        required: false
+        required: true
       gh-email:
         required: true
       github-token:
@@ -32,13 +26,11 @@ jobs:
         password: "${{ secrets.github-token }}"
       env:
         DEV_HUB_AUTH_URL: "${{ secrets.dev-hub-auth-url }}"
-        DEV_HUB_USERNAME: "${{ secrets.dev-hub-username }}"
-        DEV_HUB_CLIENT_ID: "${{ secrets.dev-hub-client-id }}"
-        DEV_HUB_PRIVATE_KEY: "${{ secrets.dev-hub-private-key }}"
         CUMULUSCI_SERVICE_github: '{ "username": "${{ github.actor }}", "token": "${{ secrets.github-token }}", "email": "${{ secrets.gh-email }}" }'
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
