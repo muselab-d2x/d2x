@@ -1,10 +1,38 @@
 name: Static Analysis
 
-on: workflow_call
+on:
+  workflow_call:
+    secrets:
+      dev-hub-auth-url:
+        required: false
+      dev-hub-username:
+        required: false
+      dev-hub-client-id:
+        required: false
+      dev-hub-private-key:
+        required: false
+      gh-email:
+        required: true
+      github-token:
+        required: true
+      pkg-ver-auth:
+        required: true
+      pkg-ver-url:
+        required: true
 
 jobs:
   analyze:
     runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/clearrisk/d2x:latest
+      options: --user root
+      credentials:
+        username: "${{ github.actor }}"
+        password: "${{ secrets.github-token }}"
+      env:
+        DEV_HUB_AUTH_URL: "${{ secrets.dev-hub-auth-url }}"
+        CUMULUSCI_SERVICE_github: '{ "username": "${{ github.actor }}", "token": "${{ secrets.github-token }}", "email": "${{ secrets.gh-email }}" }'
+
     steps:
       - uses: actions/checkout@v4
         with:
@@ -21,5 +49,3 @@ jobs:
           pmdconfig: masterRuleset.xml
           severity-threshold: 4
           strictly-enforced-rules: '[{ "engine": "pmd", "category": "Performance", "rule": "AvoidDebugStatements" }]'
-        env:
-          GITHUB_TOKEN: ${{ secrets.CCI_GITHUB_TOKEN }}
