@@ -1,0 +1,25 @@
+name: Static Analysis
+
+on: workflow_call
+
+jobs:
+  analyze:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install SFDX CLI and Scanner
+        run: |
+          npm install sfdx-cli -g
+          sfdx plugins:install @salesforce/sfdx-scanner
+
+      - name: Run SFDX Scanner - Report findings as comments
+        uses: mitchspano/sfdx-scan-pull-request@v0.1.16
+        with:
+          pmdconfig: masterRuleset.xml
+          severity-threshold: 4
+          strictly-enforced-rules: '[{ "engine": "pmd", "category": "Performance", "rule": "AvoidDebugStatements" }]'
+        env:
+          GITHUB_TOKEN: ${{ secrets.CCI_GITHUB_TOKEN }}
