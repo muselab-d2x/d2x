@@ -19,7 +19,7 @@ jobs:
     name: "Release 2GP"
     runs-on: ubuntu-latest
     container:
-      image: ghcr.io/clearrisk/d2x:latest
+      image: ghcr.io/clearrisk/d2x:next
       options: --user root
       credentials:
         username: ${{ github.actor }}
