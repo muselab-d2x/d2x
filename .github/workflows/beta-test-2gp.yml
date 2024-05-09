@@ -19,7 +19,7 @@ jobs:
     name: "Beta Test 2GP"
     runs-on: ubuntu-latest
     container:
-      image: ghcr.io/clearrisk/d2x:next
+      image: ghcr.io/clearrisk/d2x:cumulusci-next
       options: --user root
       credentials:
         username: "${{ github.actor }}"
