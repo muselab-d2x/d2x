@@ -32,7 +32,7 @@ jobs:
     name: "2GP Feature Test"
     runs-on: ubuntu-latest
     container:
-      image: ghcr.io/muselab-d2x/d2x:cumulusci-next
+      image: ghcr.io/clearrisk/d2x:latest
       options: --user root
       credentials:
         username: "${{ github.actor }}"
