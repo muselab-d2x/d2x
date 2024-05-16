@@ -92,11 +92,15 @@ jobs:
         # -o promote_package_version__install_key ${{ env.PKG_INSTALL_KEY }}
         shell: bash
 
+
       # - name: Get install key for package
       #   run: curl -G "${{ env.PKG_API_URL }}promote-key?auth-token=${{ env.PKG_API_AUTH }}" --data-urlencode "input=$(cat release2gp.txt)" | tee $GITHUB_ENV
 
       - name: Run Release Test
         run: cci flow run ci_release -o install_managed__password ${{ env.PKG_INSTALL_KEY }}
+
+      - name: Update tag to release
+        run: curl -X POST -H "Content-Type: application/json" -d "{\"versionId\": \"$(grep 'version:' ./failed.txt | sed -n 's/.*version: *\([^ ]*\) */\1/p')\"}" "${{ env.PKG_API_URL }}promote?auth-token=${{ env.PKG_API_AUTH }}"
 
       - name: Delete Scratch Org
         if: ${{ always() }}
