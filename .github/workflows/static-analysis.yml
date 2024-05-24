@@ -50,9 +50,10 @@ jobs:
         run: |
           npx sfdx scanner:run --pmdconfig masterRuleset.xml --target ".github/workflows/pmd.yml,force-app/main/default/classes/DummyClassTestMap.cls,masterRuleset.xml" --json
 
-      # - name: Run SFDX Scanner - Report findings as comments
-      #   uses: mitchspano/sfdx-scan-pull-request@v0.1.16
-      #   with:
-      #     pmdconfig: masterRuleset.xml
-      #     severity-threshold: 4
-      #     strictly-enforced-rules: '[{ "engine": "pmd", "category": "Performance", "rule": "AvoidDebugStatements" }]'
+      - name: Run SFDX Scanner - Report findings as comments
+        uses: mitchspano/sfdx-scan-pull-request@v0.1.16
+        with:
+          report-mode: comments
+          pmdconfig: masterRuleset.xml
+          severity-threshold: 4
+          strictly-enforced-rules: '[{ "engine": "pmd", "category": "Performance", "rule": "AvoidDebugStatements" }]'
