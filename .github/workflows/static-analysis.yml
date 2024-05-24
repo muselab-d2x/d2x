@@ -29,6 +29,8 @@ jobs:
         CUMULUSCI_SERVICE_github: '{ "username": "${{ github.actor }}", "token": "${{ secrets.github-token }}", "email": "${{ secrets.gh-email }}" }'
 
     steps:
+      - name: Github Be Dubious
+        run: git config --global safe.directory '*'
       - name: Checkout
         uses: actions/checkout@v4
         with:
