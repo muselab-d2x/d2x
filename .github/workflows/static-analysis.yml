@@ -29,8 +29,13 @@ jobs:
         CUMULUSCI_SERVICE_github: '{ "username": "${{ github.actor }}", "token": "${{ secrets.github-token }}", "email": "${{ secrets.gh-email }}" }'
 
     steps:
+      - uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin' # See 'Supported distributions' for available options
+          java-version: '21'
       - name: Github Be Dubious
         run: git config --global safe.directory '*'
+        
       - name: Checkout
         uses: actions/checkout@v4
         with:
