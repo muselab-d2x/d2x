@@ -46,10 +46,6 @@ jobs:
           npm install sfdx-cli -g
           sfdx plugins:install @salesforce/sfdx-scanner
 
-      - name: test
-        run: |
-          npx sfdx scanner:run --pmdconfig masterRuleset.xml --target ".github/workflows/pmd.yml,force-app/main/default/classes/DummyClassTestMap.cls,masterRuleset.xml" --json
-
       - name: Run SFDX Scanner - Report findings as comments
         uses: mitchspano/sfdx-scan-pull-request@v0.1.16
         with:
