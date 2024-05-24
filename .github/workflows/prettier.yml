@@ -1,0 +1,33 @@
+name: Static Analysis
+
+on:
+  workflow_call:
+    secrets:
+      dev-hub-auth-url:
+        required: true
+      gh-email:
+        required: true
+      github-token:
+        required: true
+      pkg-ver-auth:
+        required: true
+      pkg-ver-url:
+        required: true
+
+jobs:
+  prettier-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: '14'
+      
+      - name: Install Prettier
+        run: npm install prettier prettier-plugin-apex
+
+      - name: Check code formatting with Prettier
+        run: npx prettier --check "force-app/main/**/**/*.{cls,trigger,js,html,css}"
+        continue-on-error: true
