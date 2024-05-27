@@ -51,7 +51,7 @@ jobs:
         with:
           delete-resolved-comments: true
           report-mode: comments
-          pmdconfig: clearrisk/d2x/.github/workflows/masterRuleset.xml@main
+          pmdconfig: masterRuleset.xml@main
           severity-threshold: 4
           strictly-enforced-rules: '[{ "engine": "pmd", "category": "Performance", "rule": "AvoidDebugStatements" }]'
         env:
