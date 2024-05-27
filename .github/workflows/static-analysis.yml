@@ -51,7 +51,7 @@ jobs:
         with:
           delete-resolved-comments: true
           report-mode: comments
-          pmdconfig: masterRuleset.xml@main
+          pmdconfig: ./masterRuleset.xml
           severity-threshold: 4
           strictly-enforced-rules: '[{ "engine": "pmd", "category": "Performance", "rule": "AvoidDebugStatements" }]'
         env:
