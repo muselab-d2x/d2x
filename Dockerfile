@@ -1,6 +1,6 @@
 FROM python:3.11-slim-bookworm
 
-LABEL org.opencontainers.image.source = "https://github.com/clearrisk/d2x"
+LABEL org.opencontainers.image.source = "https://github.com/muselab-d2x/d2x"
 
 # Install sfdx
 RUN apt-get update
@@ -13,6 +13,9 @@ RUN \
 RUN apt-get install -y nodejs
 RUN npm install --global npm jq commander
 RUN npm install --global sfdx-cli --ignore-scripts
+RUN npm install --global prettier prettier-plugin-apex
+
+RUN apt-get install gcc python3-dev -y
 
 # Install Salesforce CLI plugins:
 RUN sfdx plugins:install @salesforce/sfdx-scanner
@@ -23,17 +26,11 @@ RUN echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/g
 RUN apt-get install -y gh
 
 # Install CumulusCI
-#RUN pip install --no-cache-dir --upgrade pip pip-tools \
-  #pip --no-cache-dir install cumulusci cookiecutter
-
-# Install CumulusCI
 RUN pip install --no-cache-dir --upgrade pip pip-tools \
-  pip --no-cache-dir install git+https://github.com/muselab-d2x/CumulusCI@d2x cookiecutter
+  pip --no-cache-dir install cumulusci cookiecutter
 
 # Copy devhub auth script and make it executable
 COPY devhub.sh /usr/local/bin/devhub.sh
-COPY ./scripts/log_package.py /usr/local/bin/log_package.py
-COPY ./scripts/extract_failed.py /usr/local/bin/extract_failed.py
 RUN chmod +x /usr/local/bin/devhub.sh
 
 # Create d2x user
