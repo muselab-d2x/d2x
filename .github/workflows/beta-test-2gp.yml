@@ -72,8 +72,13 @@ jobs:
         run: cci flow run release_2gp_beta -o create_package_version__install_key ${{ env.NEW_INSTALL_KEY }} | tee create-package-output.txt
         shell: bash
 
+      - name: Check environment
+        run: |
+          whoami
+          env | grep PIP
+
       - name: setup python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v5
         with:
           python-version: 3.8
       - name: Install dependencies
