@@ -4,9 +4,6 @@ if [ -f ~/.dev_hub_authenticated ]; then
     exit 0
 fi
 
-echo "Testing sfdx force org list"
-sfdx force org list
-
 if [ -z "$DEV_HUB_AUTH_URL" ]; then
     if [ -z "$DEV_HUB_USERNAME" ]; then
         echo "DEV_HUB_USERNAME is not set, length is $(echo $(($(echo $DEV_HUB_USERNAME|wc -c)-1))). You must set either DEV_HUB_AUTH_URL or DEV_HUB_USERNAME, DEV_HUB_CLIENT_ID, and DEV_HUB_PRIVATE_KEY."
@@ -59,7 +56,7 @@ else
     echo $PACKAGING_ORG_AUTH_URL > /tmp/packaging_org_auth_url
 
     # Authenticate the DevHub
-    sfdx org login sfdx-url -f /tmp/packaging_org_auth_url -a packaging
+    sf org login sfdx-url -f /tmp/packaging_org_auth_url -a packaging
 
     # Import the org to CumulusCI
     cci org import packaging packaging
