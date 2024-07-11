@@ -4,6 +4,8 @@ if [ -f ~/.dev_hub_authenticated ]; then
     exit 0
 fi
 
+#Update sfdx
+sfdx update
 
 if [ -z "$DEV_HUB_AUTH_URL" ]; then
     if [ -z "$DEV_HUB_USERNAME" ]; then
