@@ -5,6 +5,7 @@ if [ -f ~/.dev_hub_authenticated ]; then
 fi
 
 #Update sfdx
+echo "Updating sfdx"
 sfdx update
 
 if [ -z "$DEV_HUB_AUTH_URL" ]; then
