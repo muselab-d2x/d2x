@@ -4,9 +4,8 @@ if [ -f ~/.dev_hub_authenticated ]; then
     exit 0
 fi
 
-#Update sfdx
-echo "Updating sfdx"
-sfdx update
+echo "Testing sfdx force org list"
+sfdx force org list
 
 if [ -z "$DEV_HUB_AUTH_URL" ]; then
     if [ -z "$DEV_HUB_USERNAME" ]; then
