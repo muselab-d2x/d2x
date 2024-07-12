@@ -19,6 +19,7 @@ RUN apt-get install gcc python3-dev -y
 
 # Install Salesforce CLI plugins:
 RUN sfdx plugins:install @salesforce/sfdx-scanner
+RUN sfdx plugins:install @Salesforce/plugin-auth@1.4.3
 
 # Install GitHub CLI
 RUN curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | gpg --dearmor -o /usr/share/keyrings/githubcli-archive-keyring.gpg;
