@@ -84,7 +84,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          python pip install requests
+          python -m pip install requests
           pip list
 
       - name: Log Package to API
