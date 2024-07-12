@@ -12,7 +12,7 @@ RUN \
   apt-get update
 RUN apt-get install -y nodejs
 RUN npm install --global npm jq commander
-RUN npm install --global sfdx-cli --ignore-scripts
+RUN npm install --global @salesforce/cli
 RUN npm install --global prettier prettier-plugin-apex
 
 RUN apt-get install gcc python3-dev -y
