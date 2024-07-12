@@ -5,11 +5,9 @@ if [ -f ~/.dev_hub_authenticated ]; then
 fi
 
 echo "Checking which version of salesforce cli is installed"
-sf --version
-echo sf --version
-
-sf --help
-echo sf --help
+sfdx --version
+sfdx --help
+npm install --global sfdx-cli --ignore-scripts
 
 if [ -z "$DEV_HUB_AUTH_URL" ]; then
     if [ -z "$DEV_HUB_USERNAME" ]; then
@@ -48,7 +46,7 @@ else
     echo $DEV_HUB_AUTH_URL > /tmp/dev_hub_auth_url
 
     # Authenticate the DevHub
-    sf org login sfdx-url -f /tmp/dev_hub_auth_url -a DevHub -d
+    sfdx org login sfdx-url -f /tmp/dev_hub_auth_url -a DevHub -d
 
     [[ -f /tmp/dev_hub_auth_url ]] && rm /tmp/dev_hub_auth_url
 fi
@@ -63,7 +61,7 @@ else
     echo $PACKAGING_ORG_AUTH_URL > /tmp/packaging_org_auth_url
 
     # Authenticate the DevHub
-    sf org login sfdx-url -f /tmp/packaging_org_auth_url -a packaging
+    sfdx org login sfdx-url -f /tmp/packaging_org_auth_url -a packaging
 
     # Import the org to CumulusCI
     cci org import packaging packaging
