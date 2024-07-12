@@ -87,10 +87,6 @@ jobs:
           python pip install requests
           pip list
 
-      - name: Verify installation
-        run: |
-          python -c "import requests; print(requests.__version__)"
-
       - name: Log Package to API
         run: python /usr/local/bin/log_package.py
 
