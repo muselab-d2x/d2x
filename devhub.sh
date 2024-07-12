@@ -41,7 +41,7 @@ else
     echo $DEV_HUB_AUTH_URL > /tmp/dev_hub_auth_url
 
     # Authenticate the DevHub
-    sfdx org login sfdx-url -f /tmp/dev_hub_auth_url -a DevHub -d
+    sf org login sfdx-url -f /tmp/dev_hub_auth_url -a DevHub -d
 
     [[ -f /tmp/dev_hub_auth_url ]] && rm /tmp/dev_hub_auth_url
 fi
