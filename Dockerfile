@@ -27,8 +27,8 @@ RUN echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/g
 RUN apt-get install -y gh
 
 # Install CumulusCI
-RUN pip install --no-cache-dir --upgrade pip pip-tools \
-    pip --no-cache-dir install cumulusci cookiecutter
+RUN pip install --no-cache-dir --upgrade pip pip-tools && \
+    pip install --no-cache-dir cumulusci cookiecutter
 
 # Copy devhub auth script and make it executable
 COPY devhub.sh /usr/local/bin/devhub.sh
