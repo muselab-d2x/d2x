@@ -1,4 +1,4 @@
-name: Feature Test - Unmanaged
+name: Unmanaged Feature Test
 
 on:
   workflow_call:
