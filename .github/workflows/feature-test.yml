@@ -2,6 +2,10 @@ name: 2GP Feature Test
 
 on:
   workflow_call:
+    inputs:
+      org:
+        type: string
+        default: feature
     secrets:
       # Either dev-hub-auth-url or dev-hub-username, dev-hub-client-id, and dev-hub-private-key are required
       dev-hub-auth-url:
@@ -38,12 +42,12 @@ jobs:
               uses: actions/checkout@v2
             - name: Auth to DevHub
               run: /usr/local/bin/devhub.sh
-            - name: Set feature org as default org
-              run: cci org default feature
+            - name: Set ${{ inputs.org }} org as default org
+              run: cci org default ${{ inputs.org }}
             - name: Run Feature Test
               run: cci flow run ci_feature
             - name: Delete Scratch Org
               if: ${{ always() }}
               run: |
-                cci org scratch_delete feature
+                cci org scratch_delete ${{ inputs.org }}
               shell: bash
