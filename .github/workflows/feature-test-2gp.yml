@@ -3,6 +3,10 @@ name: 2GP Feature Test
 on:
   workflow_call:
     inputs:
+      org:
+        required: false
+        default: feature
+        type: string
       debug:
         required: false
         default: false
@@ -44,8 +48,8 @@ jobs:
               uses: actions/checkout@v2
             - name: Auth to DevHub
               run: /usr/local/bin/devhub.sh
-            - name: Set feature org as default org
-              run: cci org default feature
+            - name: Set ${{ inputs.org }} org as default org
+              run: cci org default ${{ inputs.org }}
             - name: Build Feature Test Package
               env:
                   GITHUB_TOKEN: '${{ secrets.github-token }}'
