@@ -53,7 +53,7 @@ jobs:
             - name: Run Release Test
               run: cci flow run ci_release --org release $([[ "${{ inputs.debug }}" == "true" ]] && echo " --debug")
             - name: Delete Scratch Org
-              if: ${{ inputs.delete-scratch == 'true' }}
+              if: ${{ always() && inputs.delete-scratch }}
               run: |
                 echo "Deleting Scratch Org..."
                 cci org scratch_delete release
