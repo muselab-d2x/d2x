@@ -1,5 +1,0 @@
-site_name: D2X Documentation
-theme:
-  name: material
-extra_css:
-  - stylesheets/extra.css
