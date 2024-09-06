@@ -12,7 +12,6 @@ on:
                 type: boolean
             snapshot-pr-label:
                 required: false
-                default: "snapshot"
                 type: string
             snapshot-pr-draft:
                 required: false
@@ -28,7 +27,6 @@ on:
                 type: boolean
             snapshot-fail-pr-label:
                 required: false
-                default: "snapshot-on-fail"
                 type: string
             snapshot-fail-pr-draft:
                 required: false
