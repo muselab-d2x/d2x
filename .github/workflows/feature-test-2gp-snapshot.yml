@@ -85,12 +85,21 @@ jobs:
                       if (pullRequests.length > 0) {
                         const pr = pullRequests[0];
                         console.log('PR found:', pr.number);
+
+                        const is_draft = pr.draft.toString();
+                        console.log('PR is draft:', is_draft);
+
+                        const labels = pr.labels.map(label => label.name);
+                        const has_snapshot_label = labels.includes('${{ inputs.snapshot-pr-label }}');
+                        console.log('PR has snapshot label:', has_snapshot_label);
+                        const has_snapshot_fail_label = labels.includes('${{ inputs.snapshot-fail-pr-label }}');
+                        console.log('PR has snapshot fail label:', has_snapshot_fail_label); 
+
                         core.setOutput('pr-number', pr.number);
                         core.setOutput('has-pr', 'true');
-                        core.setOutput('is-draft', pr.draft.toString());
-                        const labels = pr.labels.map(label => label.name);
-                        core.setOutput('has-snapshot-label', labels.includes('${{ inputs.snapshot-pr-label }}').toString());
-                        core.setOutput('has-snapshot-fail-label', labels.includes('${{ inputs.snapshot-fail-pr-label }}').toString());
+                        core.setOutput('is-draft', is_draft);
+                        core.setOutput('has-snapshot-label', has_snapshot_label);
+                        core.setOutput('has-snapshot-fail-label', has_snapshot_fail_label);
                       } else {
                         console.log('No PR found');
                         core.setOutput('has-pr', 'false');
