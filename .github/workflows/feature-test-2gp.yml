@@ -17,10 +17,10 @@ on:
                 required: false
                 default: false
                 type: boolean
-            # snapshot-fail:
-            #     required: false
-            #     default: false
-            #     type: boolean
+            snapshot-fail:
+                required: false
+                default: false
+                type: boolean
             snapshot-fail-pr:
                 required: false
                 default: false
@@ -139,7 +139,7 @@ jobs:
 
             - name: Check for Apex Test Failure
               id: check_apex_failure
-              if: ${{ failure() }}
+              if: ${{ job.status == 'failure' }}
               run: |
                   if cci error info | grep -q "cumulusci.salesforce_api.exceptions.ApexTestException"; then
                     echo "Apex test failure detected"
@@ -176,10 +176,10 @@ jobs:
                         else
                             CREATE_SNAPSHOT="true"
                         fi
-                    elif [[ "${{ inputs.snapshot-fail-test-only }}" == "true" && "${{ failure() }}" == "true" ]]; then
+                    elif [[ "${{ inputs.snapshot-fail-test-only }}" == "true" && "${{ job.status == 'failure' }}" == "true" ]]; then
                       CREATE_SNAPSHOT="true"
                     fi
-                  elif [[ "${{ inputs.snapshot-fail }}" == "true" && ("${{ steps.check_apex_failure.outputs.apex_failure }}" == "true" || ("${{ inputs.snapshot-fail-test-only }}" == "true" && "${{ failure() }}" == "true")) ]]; then
+                  elif [[ "${{ inputs.snapshot-fail }}" == "true" && ("${{ steps.check_apex_failure.outputs.apex_failure }}" == "true" || ("${{ inputs.snapshot-fail-test-only }}" == "true" && "${{ job.status == 'failure' }}" == "true")) ]]; then
                     CREATE_SNAPSHOT="true"
                   fi
                   echo "create=$CREATE_SNAPSHOT" >> $GITHUB_OUTPUT
@@ -203,7 +203,7 @@ jobs:
                   # Image Name
                   if [[ "${{ steps.check_apex_failure.outputs.apex_failure }}" == "true" ]]; then
                     IMAGE_NAME="Ftests"
-                  elif [[ "${{ failure() }}" == "true" ]]; then
+                  elif [[ "${{ job.status == 'failure' }}" == "true" ]]; then
                     IMAGE_NAME="Fbuild"
 
                   # Truncate Image Name if necessary (leaving room for OrgTypeCode)
