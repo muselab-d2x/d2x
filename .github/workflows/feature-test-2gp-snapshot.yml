@@ -133,7 +133,8 @@ jobs:
               id: feature_test
               env:
                   GITHUB_TOKEN: "${{ secrets.github-token }}"
-              run: cci flow run ci_feature_2gp | tee feature-test.log
+              run: |
+                  cci flow run ci_feature_2gp | tee feature-test.log
               continue-on-error: true
 
             - name: Check for Apex Test Failure
