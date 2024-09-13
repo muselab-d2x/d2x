@@ -7,35 +7,47 @@ on:
                 default: false
                 type: boolean
             snapshot-pr:
+                description: "Maintain a snapshot for the head commit of the PR"
                 required: false
                 default: false
                 type: boolean
             snapshot-pr-label:
                 required: false
+                description: "Limit pull request snapshot creation to only pull requests with this label if set."
                 type: string
             snapshot-pr-draft:
                 required: false
+                description: "Include draft pull requests in snapshot creation"
                 default: false
                 type: boolean
             snapshot-fail-pr:
                 required: false
+                description: "Create a snapshot on pull request build failure. Unset by default. If enabled, a new snapshot will be maintained for the latest failed build's org."
                 default: false
                 type: boolean
             snapshot-fail-pr-label:
                 required: false
+                description: "Limit build failure snapshot creation to only pull requests with this label if set."
                 type: string
             snapshot-fail-pr-draft:
                 required: false
+                description: "Include draft pull requests in snapshot creation on build failure"
                 default: false
                 type: boolean
             snapshot-fail-test-only:
                 required: false
+                description: "Create a snapshot only when a test fails"
                 default: false
                 type: boolean
             project-code:
                 required: false
-                default: "VA"
+                description: "Project code to use in snapshot name. Must be exactly 2 characters long and should be unique to the Dev Hub."
+                default: "CI"
                 type: string
+            snapshot-team:
+                required: false
+                type: string
+                description: "GitHub team name to restrict snapshot access (optional). If not provided, created GitHub Environemtns for snapshots will be accessible to all repository collaborators."
 
         secrets:
             dev-hub-auth-url:
@@ -71,48 +83,13 @@ jobs:
             - name: Checkout
               uses: actions/checkout@v2
 
-            - name: Check for PR
-              id: check-pr
-              uses: actions/github-script@v6
-              with:
-                  script: |
-                      const { data: pullRequests } = await github.rest.pulls.list({
-                        owner: context.repo.owner,
-                        repo: context.repo.repo,
-                        head: `${context.repo.owner}:${context.ref.replace('refs/heads/', '')}`,
-                        state: 'open'
-                      });
-                      if (pullRequests.length > 0) {
-                        const pr = pullRequests[0];
-                        console.log('PR found:', pr.number);
+            - name: Auth to DevHub
+              run: /usr/local/bin/devhub.sh
 
-                        const is_draft = pr.draft.toString();
-                        console.log('PR is draft:', is_draft);
-
-                        const labels = pr.labels.map(label => label.name);
-                        const has_snapshot_label = labels.includes('${{ inputs.snapshot-pr-label }}');
-                        console.log('PR has snapshot label:', has_snapshot_label);
-                        const has_snapshot_fail_label = labels.includes('${{ inputs.snapshot-fail-pr-label }}');
-                        console.log('PR has snapshot fail label:', has_snapshot_fail_label); 
-
-                        core.setOutput('pr-number', pr.number);
-                        core.setOutput('has-pr', 'true');
-                        core.setOutput('is-draft', is_draft);
-                        core.setOutput('has-snapshot-label', has_snapshot_label);
-                        core.setOutput('has-snapshot-fail-label', has_snapshot_fail_label);
-                      } else {
-                        console.log('No PR found');
-                        core.setOutput('has-pr', 'false');
-                        core.setOutput('is-draft', 'false');
-                        core.setOutput('has-snapshot-label', 'false');
-                        core.setOutput('has-snapshot-fail-label', 'false');
-                      }
-
-            # - name: Auth to DevHub
-            #   run: /usr/local/bin/devhub.sh
-
-            # - name: Set feature org as default org
-            #   run: cci org default feature
+            - name: Set feature org as default org
+              run: |
+                  cci org default feature
+                  cci org info feature
 
             # - name: Build Feature Test Package
             #   env:
@@ -142,97 +119,164 @@ jobs:
             #       cci flow run ci_feature_2gp | tee feature-test.log
             #   continue-on-error: true
 
-            # - name: Check for Apex Test Failure
-            #   id: check_apex_failure
-            #   if: ${{ job.status == 'failure' }}
-            #   run: |
-            #       if cci error info | grep -q "cumulusci.salesforce_api.exceptions.ApexTestException"; then
-            #         echo "Apex test failure detected"
-            #         echo "apex_failure=true" >> $GITHUB_OUTPUT
-            #       elif grep -q "Apex Test Failure" feature-test.log; then
-            #         echo "Apex test failure detected in log"
-            #         echo "apex_failure=true" >> $GITHUB_OUTPUT
-            #       else
-            #         echo "No Apex test failure detected"
-            #         echo "apex_failure=false" >> $GITHUB_OUTPUT
-            #       fi
-            #   shell: bash
+            - name: Check for Apex Test Failure
+              id: check_apex_failure
+              if: ${{ job.status == 'failure' }}
+              run: |
+                  if cci error info | grep -q "cumulusci.salesforce_api.exceptions.ApexTestException"; then
+                    echo "Apex test failure detected"
+                    echo "apex_failure=true" >> $GITHUB_OUTPUT
+                  elif grep -q "Apex Test Failure" feature-test.log; then
+                    echo "Apex test failure detected in log"
+                    echo "apex_failure=true" >> $GITHUB_OUTPUT
+                  else
+                    echo "No Apex test failure detected"
+                    echo "apex_failure=false" >> $GITHUB_OUTPUT
+                  fi
+              shell: bash
 
-            # - name: Determine if Snapshot Should be Created
-            #   id: should-snapshot
-            #   run: |
-            #       CREATE_SNAPSHOT="false"
-            #       if [[ "${{ steps.check-pr.outputs.has-pr }}" == "true" ]]; then
-            #         if [[ "${{ inputs.snapshot-pr }}" == "true" ]]; then
-            #           if [[ "${{ steps.check-pr.outputs.has-snapshot-label }}" == "true" || "${{ inputs.snapshot-pr-label }}" == "" ]]; then
-            #             if [[ "${{ inputs.snapshot-pr-draft }}" == "true" || "${{ steps.check-pr.outputs.is-draft }}" != "true" ]]; then
-            #               CREATE_SNAPSHOT="true"
-            #             fi
-            #           fi
-            #         fi
+            - name: Check for Pull Request
+              id: check-pr
+              uses: actions/github-script@v6
+              with:
+                  script: |
+                      const { data: pullRequests } = await github.rest.pulls.list({
+                          owner: context.repo.owner,
+                          repo: context.repo.repo,
+                          head: `${context.repo.owner}:${context.ref.replace('refs/heads/', '')}`,
+                          state: 'open'
+                      });
+                      if (pullRequests.length > 0) {
+                          const pr = pullRequests[0];
+                          console.log('PR found:', pr.number);
 
-            #         if [[ "${{ steps.check_apex_failure.outputs.apex_failure }}" == "true" ]]; then
-            #             if [[ "${{ inputs.snapshot-fail-pr }}" == "true" ]]; then
-            #                 if [[ "${{ steps.check-pr.outputs.has-snapshot-fail-label }}" == "true" || "${{ inputs.snapshot-fail-pr-label }}" == "" ]]; then
-            #                 if [[ "${{ inputs.snapshot-fail-pr-draft }}" == "true" || "${{ steps.check-pr.outputs.is-draft }}" != "true" ]]; then
-            #                     CREATE_SNAPSHOT="true"
-            #                 fi
-            #                 fi
-            #             else
-            #                 CREATE_SNAPSHOT="true"
-            #             fi
-            #         elif [[ "${{ inputs.snapshot-fail-test-only }}" == "true" && "${{ job.status == 'failure' }}" == "true" ]]; then
-            #           CREATE_SNAPSHOT="true"
-            #         fi
-            #       elif [[ ("${{ steps.check_apex_failure.outputs.apex_failure }}" == "true" || ("${{ inputs.snapshot-fail-test-only }}" == "true" && "${{ job.status == 'failure' }}" == "true")) ]]; then
-            #         CREATE_SNAPSHOT="true"
-            #       fi
-            #       echo "create=$CREATE_SNAPSHOT" >> $GITHUB_OUTPUT
-            #   shell: bash
+                          const is_draft = pr.draft.toString();
+                          console.log('PR is draft:', is_draft);
 
-            # - name: Create Snapshot
-            #   if: steps.should-snapshot.outputs.create == 'true'
-            #   run: |
-            #       PR_NUMBER=${{ steps.check-pr.outputs.pr-number }}
+                          const labels = pr.labels.map(label => label.name);
+                          const has_snapshot_label = labels.includes('${{ inputs.snapshot-pr-label }}');
+                          console.log('PR has snapshot label:', has_snapshot_label);
+                          const has_snapshot_fail_label = labels.includes('${{ inputs.snapshot-fail-pr-label }}');
+                          console.log('PR has snapshot fail label:', has_snapshot_fail_label); 
 
-            #       # Product Code (PC)
-            #       PC="${{ inputs.project-code }}"
-            #       if [[ ${#PC} -ne 2 ]]; then
-            #         echo "Error: Project code must be exactly 2 characters long"
-            #         exit 1
-            #       fi
+                          core.setOutput('pr-number', pr.number);
+                          core.setOutput('has-pr', 'true');
+                          core.setOutput('is-draft', is_draft);
+                          core.setOutput('has-snapshot-label', has_snapshot_label);
+                          core.setOutput('has-snapshot-fail-label', has_snapshot_fail_label);
+                      } else {
+                          console.log('No PR found');
+                          core.setOutput('has-pr', 'false');
+                          core.setOutput('is-draft', 'false');
+                          core.setOutput('has-snapshot-label', 'false');
+                          core.setOutput('has-snapshot-fail-label', 'false');
+                      }
 
-            #       IMAGE_NAME="${IMAGE_NAME}Pr${PR_NUMBER}"
+            - name: Determine if Snapshot Should be Created
+              id: should-snapshot
+              run: |
+                  CREATE_SNAPSHOT="false"
+                  if [[ "${{ steps.check-pr.outputs.has-pr }}" == "true" ]]; then
+                    if [[ "${{ inputs.snapshot-pr }}" == "true" ]]; then
+                      if [[ "${{ steps.check-pr.outputs.has-snapshot-label }}" == "true" || "${{ inputs.snapshot-pr-label }}" == "" ]]; then
+                        if [[ "${{ inputs.snapshot-pr-draft }}" == "true" || "${{ steps.check-pr.outputs.is-draft }}" != "true" ]]; then
+                          CREATE_SNAPSHOT="true"
+                        fi
+                      fi
+                    fi
 
-            #       # Image Name
-            #       if [[ "${{ steps.check_apex_failure.outputs.apex_failure }}" == "true" ]]; then
-            #         IMAGE_NAME="Ftests"
-            #       elif [[ "${{ job.status == 'failure' }}" == "true" ]]; then
-            #         IMAGE_NAME="Fbuild"
+                    if [[ "${{ steps.check_apex_failure.outputs.apex_failure }}" == "true" ]]; then
+                        if [[ "${{ inputs.snapshot-fail-pr }}" == "true" ]]; then
+                            if [[ "${{ steps.check-pr.outputs.has-snapshot-fail-label }}" == "true" || "${{ inputs.snapshot-fail-pr-label }}" == "" ]]; then
+                            if [[ "${{ inputs.snapshot-fail-pr-draft }}" == "true" || "${{ steps.check-pr.outputs.is-draft }}" != "true" ]]; then
+                                CREATE_SNAPSHOT="true"
+                            fi
+                            fi
+                        else
+                            CREATE_SNAPSHOT="true"
+                        fi
+                    elif [[ "${{ inputs.snapshot-fail-test-only }}" == "true" && "${{ job.status == 'failure' }}" == "true" ]]; then
+                      CREATE_SNAPSHOT="true"
+                    fi
+                  elif [[ ("${{ steps.check_apex_failure.outputs.apex_failure }}" == "true" || ("${{ inputs.snapshot-fail-test-only }}" == "true" && "${{ job.status == 'failure' }}" == "true")) ]]; then
+                    CREATE_SNAPSHOT="true"
+                  fi
+                  echo "create=$CREATE_SNAPSHOT" >> $GITHUB_OUTPUT
+              shell: bash
 
-            #       # Truncate Image Name if necessary (leaving room for OrgTypeCode)
-            #       MAX_IMAGE_LENGTH=$((11 - ${#PC}))
-            #       if [[ ${#IMAGE_NAME} -gt $MAX_IMAGE_LENGTH ]]; then
-            #         IMAGE_NAME="${IMAGE_NAME:0:$MAX_IMAGE_LENGTH}"
-            #       fi
+            - name: Create Snapshot
+              if: steps.should-snapshot.outputs.create == 'true'
+              run: |
+                  PR_NUMBER=${{ steps.check-pr.outputs.pr-number }}
 
-            #       # Org Type Code
-            #       ORG_TYPE_CODE="M"  # Since this is a 2GP managed package org snapshot
+                  # Product Code (PC)
+                  PC="${{ inputs.project-code }}"
+                  if [[ ${#PC} -ne 2 ]]; then
+                    echo "Error: Project code must be exactly 2 characters long"
+                    exit 1
+                  fi
 
-            #       # Construct the final snapshot name
-            #       SNAPSHOT_NAME="${PC}${IMAGE_NAME}${ORG_TYPE_CODE}"
+                  IMAGE_NAME="${IMAGE_NAME}Pr${PR_NUMBER}"
 
-            #       # Ensure the snapshot name is not longer than 14 characters
-            #       if [[ ${#SNAPSHOT_NAME} -gt 13 ]]; then
-            #         echo "Warning: Snapshot name exceeds 13 characters without the Org Code. Truncating."
-            #         SNAPSHOT_NAME="${SNAPSHOT_NAME:0:13}"
-            #       fi
+                  # Image Name
+                  if [[ "${{ steps.check_apex_failure.outputs.apex_failure }}" == "true" ]]; then
+                    IMAGE_NAME="Ftests"
+                  elif [[ "${{ job.status == 'failure' }}" == "true" ]]; then
+                    IMAGE_NAME="Fbuild"
 
-            #       echo "Creating snapshot: $SNAPSHOT_NAME"
-            #       cci task run create_snapshot --org feature --snapshot-name $SNAPSHOT_NAME --description "Snapshot for ${{ github.ref }}"
-            #   shell: bash
+                  # Truncate Image Name if necessary (leaving room for OrgTypeCode)
+                  MAX_IMAGE_LENGTH=$((11 - ${#PC}))
+                  if [[ ${#IMAGE_NAME} -gt $MAX_IMAGE_LENGTH ]]; then
+                    IMAGE_NAME="${IMAGE_NAME:0:$MAX_IMAGE_LENGTH}"
+                  fi
 
-            # - name: Delete Scratch Org
-            #   if: ${{ always() }}
-            #   run: cci org scratch_delete feature
-            #   shell: bash
+                  # Org Type Code
+                  ORG_TYPE_CODE="M"  # Since this is a 2GP managed package org snapshot
+
+                  # Construct the final snapshot name
+                  SNAPSHOT_NAME="${PC}${IMAGE_NAME}${ORG_TYPE_CODE}"
+
+                  # Ensure the snapshot name is not longer than 14 characters
+                  if [[ ${#SNAPSHOT_NAME} -gt 13 ]]; then
+                    echo "Warning: Snapshot name exceeds 13 characters without the Org Code. Truncating."
+                    SNAPSHOT_NAME="${SNAPSHOT_NAME:0:13}"
+                  fi
+
+                  echo "Creating snapshot: $SNAPSHOT_NAME"
+                  cci task run create_snapshot --org feature --snapshot-name $SNAPSHOT_NAME --description "Snapshot for ${{ github.ref }}"
+              shell: bash
+
+            - name: Create GitHub Environment for Snapshot
+              if: steps.should-snapshot.outputs.create == 'true'
+              run: |
+                  ENVIRONMENT_NAME="Snapshot: $SNAPSHOT_NAME"
+
+                  # Authenticate as GitHub App
+                  APP_TOKEN=$(python -c "import jwt, time, os; print(jwt.encode({'iat': int(time.time()), 'exp': int(time.time()) + 600, 'iss': os.environ['GH_APP_ID']}, os.environ['GH_APP_KEY'], algorithm='RS256'))")
+                  INSTALLATION_ID=$(curl -s -X GET -H "Authorization: Bearer $APP_TOKEN" -H "Accept: application/vnd.github.v3+json" https://api.github.com/app/installations | jq -r '.[0].id')
+                  ACCESS_TOKEN=$(curl -s -X POST -H "Authorization: Bearer $APP_TOKEN" -H "Accept: application/vnd.github.v3+json" https://api.github.com/app/installations/$INSTALLATION_ID/access_tokens | jq -r '.token')
+
+                  # Check if environment exists
+                  ENV_CHECK=$(curl -s -X GET -H "Authorization: token $ACCESS_TOKEN" -H "Accept: application/vnd.github.v3+json" https://api.github.com/repos/${{ github.repository }}/environments/$ENVIRONMENT_NAME)
+
+                  if [[ $ENV_CHECK == *"Not Found"* ]]; then
+                    # Create new environment
+                    CREATE_PAYLOAD='{"wait_timer":0,"reviewers":[],"deployment_branch_policy":null'
+                    if [[ -n "${{ inputs.snapshot-team }}" ]]; then
+                      CREATE_PAYLOAD+=',"readers":{"teams":["${{ inputs.snapshot-team }}"]}'
+                    fi
+                    CREATE_PAYLOAD+='}'
+                    
+                    curl -X POST -H "Authorization: token $ACCESS_TOKEN" -H "Accept: application/vnd.github.v3+json" \
+                      https://api.github.com/repos/${{ github.repository }}/environments/$ENVIRONMENT_NAME \
+                      -d "$CREATE_PAYLOAD"
+                    echo "Created new environment: $ENVIRONMENT_NAME"
+                  else
+                    echo "Environment already exists: $ENVIRONMENT_NAME"
+                  fi
+              shell: bash
+
+            - name: Delete Scratch Org
+              if: ${{ always() }}
+              run: cci org scratch_delete feature
+              shell: bash
