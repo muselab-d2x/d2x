@@ -86,10 +86,10 @@ jobs:
             - name: Auth to DevHub
               run: /usr/local/bin/devhub.sh
 
-            - name: Set feature org as default org
-              run: |
-                  cci org default feature
-                  cci org info feature
+            # - name: Set feature org as default org
+            #   run: |
+            #       cci org default feature
+            #       cci org info feature
 
             # - name: Build Feature Test Package
             #   env:
@@ -243,7 +243,7 @@ jobs:
                   fi
 
                   echo "Creating snapshot: $SNAPSHOT_NAME"
-                  cci task run create_snapshot --org feature --snapshot-name $SNAPSHOT_NAME --description "Snapshot for ${{ github.ref }}"
+                  #cci task run create_snapshot --org feature --snapshot-name $SNAPSHOT_NAME --description "Snapshot for ${{ github.ref }}"
               shell: bash
 
             - name: Create GitHub Environment for Snapshot
