@@ -146,6 +146,8 @@ jobs:
                           head: `${context.repo.owner}:${context.ref.replace('refs/heads/', '')}`,
                           state: 'open'
                       });
+                      console.log(`Checking PRs for branch: ${context.ref.replace('refs/heads/', '')}`);
+
                       if (pullRequests.length > 0) {
                           const pr = pullRequests[0];
                           console.log('PR found:', pr.number);
