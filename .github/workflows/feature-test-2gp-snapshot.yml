@@ -29,7 +29,17 @@ jobs:
         name: "2GP Feature Test and PR Snapshot"
         runs-on: ubuntu-latest
         container:
-            # ... (keep your existing container setup)
+            image: ghcr.io/muselab-d2x/d2x:cumulusci-next
+            options: --user root
+            credentials:
+                username: "${{ github.actor }}"
+                password: "${{ secrets.github-token }}"
+            env:
+                DEV_HUB_AUTH_URL: "${{ secrets.dev-hub-auth-url }}"
+                DEV_HUB_USERNAME: "${{ secrets.dev-hub-username }}"
+                DEV_HUB_CLIENT_ID: "${{ secrets.dev-hub-client-id }}"
+                DEV_HUB_PRIVATE_KEY: "${{ secrets.dev-hub-private-key }}"
+                CUMULUSCI_SERVICE_github: '{ "username": "${{ github.actor }}", "token": "${{ secrets.github-token }}", "email": "${{ secrets.gh-email }}" }'
         steps:
             - name: Checkout
               uses: actions/checkout@v2
