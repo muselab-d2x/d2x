@@ -88,11 +88,10 @@ jobs:
               if: inputs.create_snapshot == true
               run: |
                   cci task run github_pull_request_snapshot \
-                    --org feature \
-                    --build_success ${{ job.status == 'success' }} \
-                    --build_fail_tests ${{ contains(steps.feature_test.outputs.*, 'ApexTestException') }} \
-                    --snapshot_is_packaged true \
-                    $([[ -n "${{ inputs.environment_prefix }}" ]] && echo "--environment_prefix ${{ inputs.environment_prefix }}")
+                    --build-success ${{ job.status == 'success' }} \
+                    --build-fail-tests ${{ contains(steps.feature_test.outputs.*, 'ApexTestException') }} \
+                    --snapshot-is-packaged true \
+                    $([[ -n "${{ inputs.environment_prefix }}" ]] && echo "--github-environment-prefix ${{ inputs.environment_prefix }}")
               shell: bash
 
             - name: Delete Scratch Org
