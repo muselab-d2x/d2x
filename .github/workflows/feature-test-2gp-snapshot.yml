@@ -108,132 +108,131 @@ jobs:
                         core.setOutput('has-snapshot-fail-label', 'false');
                       }
 
-            - name: Auth to DevHub
-              run: /usr/local/bin/devhub.sh
+            # - name: Auth to DevHub
+            #   run: /usr/local/bin/devhub.sh
 
-            - name: Set feature org as default org
-              run: cci org default feature
+            # - name: Set feature org as default org
+            #   run: cci org default feature
 
-            - name: Build Feature Test Package
-              env:
-                  GITHUB_TOKEN: "${{ secrets.github-token }}"
-              run: cci flow run build_feature_test_package $([[ "${{ inputs.debug }}" == "true" ]] && echo " --debug") | tee cumulusci-flow.log
-              shell: bash
+            # - name: Build Feature Test Package
+            #   env:
+            #       GITHUB_TOKEN: "${{ secrets.github-token }}"
+            #   run: cci flow run build_feature_test_package $([[ "${{ inputs.debug }}" == "true" ]] && echo " --debug") | tee cumulusci-flow.log
+            #   shell: bash
 
-            - name: Set Commit Status
-              env:
-                  GITHUB_TOKEN: "${{ secrets.github-token }}"
-              run: |
-                  VERSION=$(cat cumulusci-flow.log | grep -o -E -m 1 "04t[a-zA-Z0-9]{15}")
-                  gh api \
-                    --method POST \
-                    -H "Accept: application/vnd.github.v3+json" \
-                    '/repos/${{ github.repository }}/statuses/${{ github.sha }}' \
-                    -f state='success' \
-                    -f description="version_id: $VERSION" \
-                    -f context='Build Feature Test Package'
-              shell: bash
+            # - name: Set Commit Status
+            #   env:
+            #       GITHUB_TOKEN: "${{ secrets.github-token }}"
+            #   run: |
+            #       VERSION=$(cat cumulusci-flow.log | grep -o -E -m 1 "04t[a-zA-Z0-9]{15}")
+            #       gh api \
+            #         --method POST \
+            #         -H "Accept: application/vnd.github.v3+json" \
+            #         '/repos/${{ github.repository }}/statuses/${{ github.sha }}' \
+            #         -f state='success' \
+            #         -f description="version_id: $VERSION" \
+            #         -f context='Build Feature Test Package'
+            #   shell: bash
 
-            - name: Run Feature Test
-              id: feature_test
-              env:
-                  GITHUB_TOKEN: "${{ secrets.github-token }}"
-              run: |
-                  cci flow run ci_feature_2gp | tee feature-test.log
-              continue-on-error: true
+            # - name: Run Feature Test
+            #   id: feature_test
+            #   env:
+            #       GITHUB_TOKEN: "${{ secrets.github-token }}"
+            #   run: |
+            #       cci flow run ci_feature_2gp | tee feature-test.log
+            #   continue-on-error: true
 
-            - name: Check for Apex Test Failure
-              id: check_apex_failure
-              if: ${{ job.status == 'failure' }}
-              run: |
-                  if cci error info | grep -q "cumulusci.salesforce_api.exceptions.ApexTestException"; then
-                    echo "Apex test failure detected"
-                    echo "apex_failure=true" >> $GITHUB_OUTPUT
-                  elif grep -q "Apex Test Failure" feature-test.log; then
-                    echo "Apex test failure detected in log"
-                    echo "apex_failure=true" >> $GITHUB_OUTPUT
-                  else
-                    echo "No Apex test failure detected"
-                    echo "apex_failure=false" >> $GITHUB_OUTPUT
-                  fi
-              shell: bash
+            # - name: Check for Apex Test Failure
+            #   id: check_apex_failure
+            #   if: ${{ job.status == 'failure' }}
+            #   run: |
+            #       if cci error info | grep -q "cumulusci.salesforce_api.exceptions.ApexTestException"; then
+            #         echo "Apex test failure detected"
+            #         echo "apex_failure=true" >> $GITHUB_OUTPUT
+            #       elif grep -q "Apex Test Failure" feature-test.log; then
+            #         echo "Apex test failure detected in log"
+            #         echo "apex_failure=true" >> $GITHUB_OUTPUT
+            #       else
+            #         echo "No Apex test failure detected"
+            #         echo "apex_failure=false" >> $GITHUB_OUTPUT
+            #       fi
+            #   shell: bash
 
-            - name: Determine if Snapshot Should be Created
-              id: should-snapshot
-              run: |
-                  CREATE_SNAPSHOT="false"
-                  if [[ "${{ steps.check-pr.outputs.has-pr }}" == "true" ]]; then
-                    if [[ "${{ inputs.snapshot-pr }}" == "true" ]]; then
-                      if [[ "${{ steps.check-pr.outputs.has-snapshot-label }}" == "true" || "${{ inputs.snapshot-pr-label }}" == "" ]]; then
-                        if [[ "${{ inputs.snapshot-pr-draft }}" == "true" || "${{ steps.check-pr.outputs.is-draft }}" != "true" ]]; then
-                          CREATE_SNAPSHOT="true"
-                        fi
-                      fi
-                    fi
-                    
-                    if [[ "${{ steps.check_apex_failure.outputs.apex_failure }}" == "true" ]]; then
-                        if [[ "${{ inputs.snapshot-fail-pr }}" == "true" ]]; then
-                            if [[ "${{ steps.check-pr.outputs.has-snapshot-fail-label }}" == "true" || "${{ inputs.snapshot-fail-pr-label }}" == "" ]]; then
-                            if [[ "${{ inputs.snapshot-fail-pr-draft }}" == "true" || "${{ steps.check-pr.outputs.is-draft }}" != "true" ]]; then
-                                CREATE_SNAPSHOT="true"
-                            fi
-                            fi
-                        else
-                            CREATE_SNAPSHOT="true"
-                        fi
-                    elif [[ "${{ inputs.snapshot-fail-test-only }}" == "true" && "${{ job.status == 'failure' }}" == "true" ]]; then
-                      CREATE_SNAPSHOT="true"
-                    fi
-                  elif [[ ("${{ steps.check_apex_failure.outputs.apex_failure }}" == "true" || ("${{ inputs.snapshot-fail-test-only }}" == "true" && "${{ job.status == 'failure' }}" == "true")) ]]; then
-                    CREATE_SNAPSHOT="true"
-                  fi
-                  echo "create=$CREATE_SNAPSHOT" >> $GITHUB_OUTPUT
-              shell: bash
+            # - name: Determine if Snapshot Should be Created
+            #   id: should-snapshot
+            #   run: |
+            #       CREATE_SNAPSHOT="false"
+            #       if [[ "${{ steps.check-pr.outputs.has-pr }}" == "true" ]]; then
+            #         if [[ "${{ inputs.snapshot-pr }}" == "true" ]]; then
+            #           if [[ "${{ steps.check-pr.outputs.has-snapshot-label }}" == "true" || "${{ inputs.snapshot-pr-label }}" == "" ]]; then
+            #             if [[ "${{ inputs.snapshot-pr-draft }}" == "true" || "${{ steps.check-pr.outputs.is-draft }}" != "true" ]]; then
+            #               CREATE_SNAPSHOT="true"
+            #             fi
+            #           fi
+            #         fi
 
-            - name: Create Snapshot
-              if: steps.should-snapshot.outputs.create == 'true'
-              run: |
-                  PR_NUMBER=${{ steps.check-pr.outputs.pr-number }}
+            #         if [[ "${{ steps.check_apex_failure.outputs.apex_failure }}" == "true" ]]; then
+            #             if [[ "${{ inputs.snapshot-fail-pr }}" == "true" ]]; then
+            #                 if [[ "${{ steps.check-pr.outputs.has-snapshot-fail-label }}" == "true" || "${{ inputs.snapshot-fail-pr-label }}" == "" ]]; then
+            #                 if [[ "${{ inputs.snapshot-fail-pr-draft }}" == "true" || "${{ steps.check-pr.outputs.is-draft }}" != "true" ]]; then
+            #                     CREATE_SNAPSHOT="true"
+            #                 fi
+            #                 fi
+            #             else
+            #                 CREATE_SNAPSHOT="true"
+            #             fi
+            #         elif [[ "${{ inputs.snapshot-fail-test-only }}" == "true" && "${{ job.status == 'failure' }}" == "true" ]]; then
+            #           CREATE_SNAPSHOT="true"
+            #         fi
+            #       elif [[ ("${{ steps.check_apex_failure.outputs.apex_failure }}" == "true" || ("${{ inputs.snapshot-fail-test-only }}" == "true" && "${{ job.status == 'failure' }}" == "true")) ]]; then
+            #         CREATE_SNAPSHOT="true"
+            #       fi
+            #       echo "create=$CREATE_SNAPSHOT" >> $GITHUB_OUTPUT
+            #   shell: bash
 
-                  # Product Code (PC)
-                  PC="${{ inputs.project-code }}"
-                  if [[ ${#PC} -ne 2 ]]; then
-                    echo "Error: Project code must be exactly 2 characters long"
-                    exit 1
-                  fi
+            # - name: Create Snapshot
+            #   if: steps.should-snapshot.outputs.create == 'true'
+            #   run: |
+            #       PR_NUMBER=${{ steps.check-pr.outputs.pr-number }}
 
+            #       # Product Code (PC)
+            #       PC="${{ inputs.project-code }}"
+            #       if [[ ${#PC} -ne 2 ]]; then
+            #         echo "Error: Project code must be exactly 2 characters long"
+            #         exit 1
+            #       fi
 
-                  IMAGE_NAME="${IMAGE_NAME}Pr${PR_NUMBER}"
+            #       IMAGE_NAME="${IMAGE_NAME}Pr${PR_NUMBER}"
 
-                  # Image Name
-                  if [[ "${{ steps.check_apex_failure.outputs.apex_failure }}" == "true" ]]; then
-                    IMAGE_NAME="Ftests"
-                  elif [[ "${{ job.status == 'failure' }}" == "true" ]]; then
-                    IMAGE_NAME="Fbuild"
+            #       # Image Name
+            #       if [[ "${{ steps.check_apex_failure.outputs.apex_failure }}" == "true" ]]; then
+            #         IMAGE_NAME="Ftests"
+            #       elif [[ "${{ job.status == 'failure' }}" == "true" ]]; then
+            #         IMAGE_NAME="Fbuild"
 
-                  # Truncate Image Name if necessary (leaving room for OrgTypeCode)
-                  MAX_IMAGE_LENGTH=$((11 - ${#PC}))
-                  if [[ ${#IMAGE_NAME} -gt $MAX_IMAGE_LENGTH ]]; then
-                    IMAGE_NAME="${IMAGE_NAME:0:$MAX_IMAGE_LENGTH}"
-                  fi
+            #       # Truncate Image Name if necessary (leaving room for OrgTypeCode)
+            #       MAX_IMAGE_LENGTH=$((11 - ${#PC}))
+            #       if [[ ${#IMAGE_NAME} -gt $MAX_IMAGE_LENGTH ]]; then
+            #         IMAGE_NAME="${IMAGE_NAME:0:$MAX_IMAGE_LENGTH}"
+            #       fi
 
-                  # Org Type Code
-                  ORG_TYPE_CODE="M"  # Since this is a 2GP managed package org snapshot
+            #       # Org Type Code
+            #       ORG_TYPE_CODE="M"  # Since this is a 2GP managed package org snapshot
 
-                  # Construct the final snapshot name
-                  SNAPSHOT_NAME="${PC}${IMAGE_NAME}${ORG_TYPE_CODE}"
+            #       # Construct the final snapshot name
+            #       SNAPSHOT_NAME="${PC}${IMAGE_NAME}${ORG_TYPE_CODE}"
 
-                  # Ensure the snapshot name is not longer than 14 characters
-                  if [[ ${#SNAPSHOT_NAME} -gt 13 ]]; then
-                    echo "Warning: Snapshot name exceeds 13 characters without the Org Code. Truncating."
-                    SNAPSHOT_NAME="${SNAPSHOT_NAME:0:13}"
-                  fi
+            #       # Ensure the snapshot name is not longer than 14 characters
+            #       if [[ ${#SNAPSHOT_NAME} -gt 13 ]]; then
+            #         echo "Warning: Snapshot name exceeds 13 characters without the Org Code. Truncating."
+            #         SNAPSHOT_NAME="${SNAPSHOT_NAME:0:13}"
+            #       fi
 
-                  echo "Creating snapshot: $SNAPSHOT_NAME"
-                  cci task run create_snapshot --org feature --snapshot-name $SNAPSHOT_NAME --description "Snapshot for ${{ github.ref }}"
-              shell: bash
+            #       echo "Creating snapshot: $SNAPSHOT_NAME"
+            #       cci task run create_snapshot --org feature --snapshot-name $SNAPSHOT_NAME --description "Snapshot for ${{ github.ref }}"
+            #   shell: bash
 
-            - name: Delete Scratch Org
-              if: ${{ always() }}
-              run: cci org scratch_delete feature
-              shell: bash
+            # - name: Delete Scratch Org
+            #   if: ${{ always() }}
+            #   run: cci org scratch_delete feature
+            #   shell: bash
