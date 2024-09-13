@@ -10,6 +10,10 @@ on:
                 required: false
                 default: false
                 type: boolean
+            environment_prefix:
+                required: false
+                description: "If set, a GitHub Environment will be created for the snapshot with this prefix"
+                type: string
         secrets:
             dev-hub-auth-url:
                 required: false
@@ -87,7 +91,8 @@ jobs:
                     --org feature \
                     --build_success ${{ job.status == 'success' }} \
                     --build_fail_tests ${{ contains(steps.feature_test.outputs.*, 'ApexTestException') }} \
-                    --snapshot_is_packaged true
+                    --snapshot_is_packaged true \
+                    $([[ -n "${{ inputs.environment_prefix }}" ]] && echo "--environment_prefix ${{ inputs.environment_prefix }}")
               shell: bash
 
             - name: Delete Scratch Org
