@@ -237,7 +237,7 @@ jobs:
                   SNAPSHOT_NAME="${PC}${IMAGE_NAME}${ORG_TYPE_CODE}"
 
                   # Ensure the snapshot name is not longer than 14 characters
-                  if [[ ${#SNAPSHOT_NAME} -gt 13 ]]; then
+                  if [[ ${SNAPSHOT_NAME} -gt 13 ]]; then
                     echo "Warning: Snapshot name exceeds 13 characters without the Org Code. Truncating."
                     SNAPSHOT_NAME="${SNAPSHOT_NAME:0:13}"
                   fi
