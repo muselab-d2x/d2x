@@ -14,6 +14,10 @@ on:
                 required: false
                 description: "If set, a GitHub Environment will be created for the snapshot with this prefix"
                 type: string
+            commit_status_context:
+                required: false
+                description: "The context to use for the commit status containing snapshot creation status and details"
+                type: string
         secrets:
             dev-hub-auth-url:
                 required: false
@@ -27,6 +31,10 @@ on:
                 required: true
             github-token:
                 required: true
+            github-app-id:
+                required: false
+            github-app-key:
+                required: false
 
 jobs:
     feature-test-and-snapshot:
@@ -44,6 +52,8 @@ jobs:
                 DEV_HUB_CLIENT_ID: "${{ secrets.dev-hub-client-id }}"
                 DEV_HUB_PRIVATE_KEY: "${{ secrets.dev-hub-private-key }}"
                 CUMULUSCI_SERVICE_github: '{ "username": "${{ github.actor }}", "token": "${{ secrets.github-token }}", "email": "${{ secrets.gh-email }}" }'
+                GITHUB_APP_ID: "${{ secrets.github-app-id }}"
+                GITHUB_APP_KEY: "${{ secrets.github-app-key }}"
         steps:
             - name: Checkout
               uses: actions/checkout@v2
@@ -57,14 +67,10 @@ jobs:
                   cci org info feature
 
             - name: Build Feature Test Package
-              env:
-                  GITHUB_TOKEN: "${{ secrets.github-token }}"
               run: cci flow run build_feature_test_package $([[ "${{ inputs.debug }}" == "true" ]] && echo " --debug") | tee cumulusci-flow.log
               shell: bash
 
             - name: Set Commit Status
-              env:
-                  GITHUB_TOKEN: "${{ secrets.github-token }}"
               run: |
                   VERSION=$(cat cumulusci-flow.log | grep -o -E -m 1 "04t[a-zA-Z0-9]{15}")
                   gh api \
@@ -76,22 +82,37 @@ jobs:
                     -f context='Build Feature Test Package'
               shell: bash
 
-            - name: Run Feature Test
+            - name: Prepare Feature Test Org
               id: feature_test
-              env:
-                  GITHUB_TOKEN: "${{ secrets.github-token }}"
               run: |
-                  cci flow run ci_feature_2gp | tee feature-test.log
+                  cci flow run ci_feature_2gp_pre_snapshot
               continue-on-error: true
 
-            - name: Run GitHub Pull Request Snapshot Task
+            - name: Start Snapshot Creation
               if: inputs.create_snapshot == true
               run: |
                   cci task run github_pull_request_snapshot \
+                    --wait False \
+                    --build-success ${{ job.status == 'success' }} \
+                    --snapshot-is-packaged true
+              shell: bash
+
+            - name: Run Feature Test
+              run: |
+                  cci flow run ci_feature_2gp_post_snapshot
+              continue-on-error: true
+
+            - name: Finalize Snapshot Creation
+              if: inputs.create_snapshot == true
+              run: |
+                  cci task run github_pull_request_snapshot \
+                    --snapshot-id ${{ steps.start_snapshot_creation.outputs.SNAPSHOT_ID }} \
                     --build-success ${{ job.status == 'success' }} \
                     --build-fail-tests ${{ contains(steps.feature_test.outputs.*, 'ApexTestException') }} \
+                    --commit-status-context ${{ inputs.commit_status_context }}
                     --snapshot-is-packaged true \
                     $([[ -n "${{ inputs.environment_prefix }}" ]] && echo "--github-environment-prefix ${{ inputs.environment_prefix }}")
+                    $([[ -n "${{ inputs.commit_status_context }}" ]] && echo "--commit-status-context ${{ inputs.commit_status_context }}")
               shell: bash
 
             - name: Delete Scratch Org
