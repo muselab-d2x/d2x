@@ -97,6 +97,12 @@ jobs:
                     --wait False \
                     --build-success ${{ job.status == 'success' }} \
                     --snapshot-is-packaged true
+                  if [ -f "$GITHUB_OUTPUT" ]; then
+                    SNAPSHOT_ID=$(grep SNAPSHOT_ID $GITHUB_OUTPUT | cut -d '=' -f 2)
+                    echo "SNAPSHOT_ID=$SNAPSHOT_ID" >> $GITHUB_ENV
+                    echo "::set-output name=snapshot_id::$SNAPSHOT_ID"
+                  fi
+
               shell: bash
 
             - name: Run Feature Test
@@ -105,16 +111,15 @@ jobs:
               continue-on-error: true
 
             - name: Finalize Snapshot Creation
-              if: inputs.create_snapshot == true
+              if: steps.start_snapshot_creation.outputs.snapshot_id
               run: |
                   cci task run github_pull_request_snapshot \
-                    --snapshot-id ${{ steps.start_snapshot_creation.outputs.SNAPSHOT_ID }} \
-                    --build-success ${{ job.status == 'success' }} \
-                    --build-fail-tests ${{ contains(steps.feature_test.outputs.*, 'ApexTestException') }} \
-                    --commit-status-context ${{ inputs.commit_status_context }}
+                    --snapshot-id "${{ steps.start_snapshot_creation.outputs.snapshot_id }}" \
+                    --build-success "${{ job.status == 'success' }}" \
+                    --build-fail-tests "${{ contains(steps.feature_test.outputs.*, 'ApexTestException') }}" \
                     --snapshot-is-packaged true \
-                    $([[ -n "${{ inputs.environment_prefix }}" ]] && echo "--github-environment-prefix ${{ inputs.environment_prefix }}")
-                    $([[ -n "${{ inputs.commit_status_context }}" ]] && echo "--commit-status-context ${{ inputs.commit_status_context }}")
+                    $([[ -n "${{ inputs.environment_prefix }}" ]] && echo "--github-environment-prefix '${{ inputs.environment_prefix }}'") \
+                    $([[ -n "${{ inputs.commit_status_context }}" ]] && echo "--commit-status-context '${{ inputs.commit_status_context }}'")
               shell: bash
 
             - name: Delete Scratch Org
