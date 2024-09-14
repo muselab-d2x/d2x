@@ -84,11 +84,11 @@ jobs:
                     -f context='Build Feature Test Package'
               shell: bash
 
-            - name: Prepare Feature Test Org
-              id: feature_test
-              run: |
-                  cci flow run ci_feature_2gp_pre_snapshot
-              continue-on-error: true
+            # - name: Prepare Feature Test Org
+            #   id: prepare_org
+            #   run: |
+            #       cci flow run ci_feature_2gp_pre_snapshot
+            #   continue-on-error: true
 
             - name: Start Snapshot Creation
               if: inputs.create_snapshot == true
@@ -105,10 +105,11 @@ jobs:
 
               shell: bash
 
-            - name: Run Feature Test
-              run: |
-                  cci flow run ci_feature_2gp_post_snapshot
-              continue-on-error: true
+            # - name: Run Feature Test
+            #   id: feature_test
+            #   run: |
+            #       cci flow run ci_feature_2gp_post_snapshot
+            #   continue-on-error: true
 
             - name: Finalize Snapshot Creation
               if: steps.start_snapshot_creation.outputs.snapshot_id
