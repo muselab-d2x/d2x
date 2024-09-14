@@ -71,6 +71,8 @@ jobs:
               shell: bash
 
             - name: Set Commit Status
+              env:
+                  GITHUB_TOKEN: "${{ secrets.github-token }}"
               run: |
                   VERSION=$(cat cumulusci-flow.log | grep -o -E -m 1 "04t[a-zA-Z0-9]{15}")
                   gh api \
