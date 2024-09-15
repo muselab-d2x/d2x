@@ -5,33 +5,36 @@ on:
             debug:
                 required: false
                 default: false
+                description: "Enable debug logging output for CumulusCI"
                 type: boolean
-        create_pr_snapshot:
-            required: false
-            default: false
-            description: "Toggle to enable creation of snapshots using the github_pull_request_snapshot task"
-            type: boolean
-        create_failure_snapshot:
-            required: false
-            default: false
-            description: "Toggle to enable creation of snapshots on failure"
-            type: boolean
-        environment_prefix:
-            required: false
-            description: "If set, a GitHub Environment will be created for the snapshot with this prefix"
-            type: string
-        commit_status_context:
-            required: false
-            description: "The context to use for the commit status containing snapshot creation status and details"
-            type: string
+            create_pr_snapshot:
+                required: false
+                default: false
+                description: "If true, snapshot functionality is enabled for pull requests. CumulusCI's logic will determine if a snapshot should be created via the github_pull_request_snapshot task."
+                type: boolean
+            create_failure_snapshot:
+                required: false
+                default: false
+                description: "If true, a snapshot will be created if the build fails. CumulusCI's logic will determine if a snapshot should be created via the github_pull_request_snapshot task."
+                type: boolean
+            environment_prefix:
+                required: false
+                description: "If set, a GitHub Environment will be created for the snapshot with this prefix"
+                type: string
+            commit_status_context:
+                required: false
+                description: "The context to use for the commit status containing snapshot creation status and details"
+                type: string
+            parent_workflow_name:
+                required: true
+                type: string
+                description: "The name of the parent workflow that called this workflow. Used to determine if the build has already run and passed."
+            triggering_event:
+                required: true
+                type: string
+                description: "The event that triggered the parent workflow (push, pull_request, workflow_dispatch)"
         secrets:
             dev-hub-auth-url:
-                required: false
-            dev-hub-username:
-                required: false
-            dev-hub-client-id:
-                required: false
-            dev-hub-private-key:
                 required: false
             gh-email:
                 required: true
@@ -43,7 +46,56 @@ on:
                 required: false
 
 jobs:
+    check-build-status:
+        runs-on: ubuntu-latest
+        outputs:
+            should_build: ${{ steps.check.outputs.should_build }}
+            original_run_url: ${{ steps.check.outputs.original_run_url }}
+            in_progress: ${{ steps.check.outputs.in_progress }}
+        steps:
+            - name: Check build status
+              id: check
+              env:
+                  GITHUB_TOKEN: ${{ secrets.github-token }}
+              run: |
+                  # Get the commit SHA
+                  if [[ "${{ inputs.triggering_event }}" == "pull_request" ]]; then
+                    SHA="${{ github.event.pull_request.head.sha }}"
+                  else
+                    SHA="${{ github.sha }}"
+                  fi
+
+                  # Check for existing workflow runs (successful or in progress)
+                  workflow_runs=$(gh api -H "Accept: application/vnd.github+json" "/repos/${{ github.repository }}/actions/runs?head_sha=$SHA&event=push" | jq '.workflow_runs[] | select(.name == "${{ inputs.parent_workflow_name }}") | {status: .status, conclusion: .conclusion, html_url: .html_url}')
+
+                  successful_run=$(echo "$workflow_runs" | jq 'select(.status == "completed" and .conclusion == "success")')
+                  in_progress_run=$(echo "$workflow_runs" | jq 'select(.status == "in_progress")')
+
+                  if [[ -n "$in_progress_run" ]]; then
+                    echo "in_progress=true" >> $GITHUB_OUTPUT
+                    echo "should_build=false" >> $GITHUB_OUTPUT
+                  elif [[ -n "$successful_run" ]]; then
+                    if [[ "${{ inputs.triggering_event }}" == "pull_request" ]]; then
+                      # Check for existing snapshot status
+                      snapshot_status=$(gh api -H "Accept: application/vnd.github+json" "/repos/${{ github.repository }}/commits/$SHA/statuses" | jq '.[] | select(.context | startswith("${{ inputs.commit_status_context }}")) | .state' -r)
+                      
+                      if [[ -z "$snapshot_status" && ("${{ inputs.create_pr_snapshot }}" == "true" || "${{ inputs.create_failure_snapshot }}" == "true") ]]; then
+                        echo "should_build=true" >> $GITHUB_OUTPUT
+                      else
+                        echo "should_build=false" >> $GITHUB_OUTPUT
+                        echo "original_run_url=$(echo "$successful_run" | jq -r '.html_url')" >> $GITHUB_OUTPUT
+                      fi
+                    else
+                      echo "should_build=false" >> $GITHUB_OUTPUT
+                      echo "original_run_url=$(echo "$successful_run" | jq -r '.html_url')" >> $GITHUB_OUTPUT
+                    fi
+                  else
+                    echo "should_build=true" >> $GITHUB_OUTPUT
+                  fi
+
     feature-test-and-snapshot:
+        needs: check-build-status
+        if: needs.check-build-status.outputs.should_build == 'true'
         name: "2GP Feature Test and PR Snapshot"
         runs-on: ubuntu-latest
         container:
@@ -109,14 +161,18 @@ jobs:
                   echo "SNAPSHOT_ID=$snapshot_id" >> $GITHUB_OUTPUT
               shell: bash
 
-            # - name: Run Feature Test
-            #   id: feature_test
-            #   run: |
-            #       cci flow run ci_feature_2gp_post_snapshot
-            #   continue-on-error: true
+            - name: Run Feature Test
+              id: feature_test
+              run: |
+                  cci flow run ci_feature_2gp_post_snapshot
+              continue-on-error: true
 
             - name: Finalize Snapshot Creation
+              env:
+                  GITHUB_TOKEN: ${{ secrets.github-token }}
               run: |
+
+                  # If the snapshot creation task was run, finalize the snapshot
                   if [[ "${{ inputs.create_pr_snapshot }}" == "true" && -n "${{ steps.start_snapshot_creation.outputs.SNAPSHOT_ID }}" ]]; then
                     cci task run github_pull_request_snapshot \
                         --snapshot-id "${{ steps.start_snapshot_creation.outputs.SNAPSHOT_ID }}" \
@@ -125,6 +181,8 @@ jobs:
                         --snapshot-is-packaged true \
                         $([[ -n "${{ inputs.environment_prefix }}" ]] && echo "--github-environment-prefix '${{ inputs.environment_prefix }}'") \
                         $([[ -n "${{ inputs.commit_status_context }}" ]] && echo "--commit-status-context '${{ inputs.commit_status_context }}'")
+
+                  # If the snapshot creation task was not run, create a snapshot if the build failed
                   elif [[ "${{ inputs.create_failure_snapshot }}" == "true" && "${{ job.status }}" != "success" ]]; then
                     cci task run github_pull_request_snapshot \
                         --build-success false \
@@ -139,3 +197,33 @@ jobs:
               if: ${{ always() }}
               run: cci org scratch_delete feature
               shell: bash
+
+    report-status:
+        needs: check-build-status
+        if: needs.check-build-status.outputs.should_build == 'false' && needs.check-build-status.outputs.in_progress != 'true'
+        runs-on: ubuntu-latest
+        steps:
+            - name: Report Status
+              env:
+                  GITHUB_TOKEN: ${{ secrets.github-token }}
+              run: |
+                  gh api \
+                    --method POST \
+                    -H "Accept: application/vnd.github+json" \
+                    "/repos/${{ github.repository }}/statuses/${{ github.sha }}" \
+                    -f state="success" \
+                    -f context="${{ inputs.commit_status_context }}" \
+                    -f description="Build skipped. Previous successful build found." \
+                    -f target_url="${{ needs.check-build-status.outputs.original_run_url }}"
+
+    wait-for-in-progress:
+        needs: check-build-status
+        if: needs.check-build-status.outputs.in_progress == 'true'
+        runs-on: ubuntu-latest
+        steps:
+            - name: Wait for in-progress workflow
+              env:
+                  GITHUB_TOKEN: ${{ secrets.github-token }}
+              run: |
+                  echo "An in-progress workflow was detected. Exiting without reporting a status."
+                  exit 0
