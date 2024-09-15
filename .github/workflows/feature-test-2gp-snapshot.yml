@@ -60,6 +60,8 @@ jobs:
               run: |
                   # Get the commit SHA
                   if [[ "${{ inputs.triggering_event }}" == "pull_request" ]]; then
+                    # Delay for 10 seconds to prevent race conditions
+                    sleep 10
                     SHA="${{ github.event.pull_request.head.sha }}"
                   else
                     SHA="${{ github.sha }}"
@@ -152,13 +154,22 @@ jobs:
               if: inputs.create_pr_snapshot == true
               id: start_snapshot_creation
               run: |
+                  set -e
                   output=$(cci task run github_pull_request_snapshot \
                     --wait False \
                     --build-success ${{ job.status == 'success' }} \
-                    --snapshot-is-packaged true)
+                    --snapshot-is-packaged true) || {
+                      echo "Snapshot creation failed."
+                      exit 1
+                    }
                   echo "$output"
                   snapshot_id=$(echo "$output" | grep -oP 'SNAPSHOT_ID=\K[^ ]+')
-                  echo "SNAPSHOT_ID=$snapshot_id" >> $GITHUB_OUTPUT
+                  if [ -n "$snapshot_id" ]; then
+                    echo "SNAPSHOT_ID=$snapshot_id" >> $GITHUB_OUTPUT
+                  else
+                    echo "No SNAPSHOT_ID found in the output."
+                    exit 1
+                  fi
               shell: bash
 
             - name: Run Feature Test
