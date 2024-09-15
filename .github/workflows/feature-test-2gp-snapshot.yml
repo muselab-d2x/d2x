@@ -208,8 +208,8 @@ jobs:
                         --build-success "${{ job.status == 'success' }}" \
                         --build-fail-tests "${{ contains(steps.feature_test.outputs.*, 'ApexTestException') }}" \
                         --snapshot-is-packaged true \
-                        $([[ -n "${{ inputs.environment_prefix }}" ]] && echo "--github-environment-prefix '${{ inputs.environment_prefix }}'") \
-                        $([[ -n "${{ inputs.commit_status_context }}" ]] && echo "--commit-status-context '${{ inputs.commit_status_context }}'")
+                        $([[ -n "${{ inputs.environment_prefix }}" ]] && echo "--github-environment-prefix ${{ inputs.environment_prefix }}") \
+                        $([[ -n "${{ inputs.commit_status_context }}" ]] && echo "--commit-status-context ${{ inputs.commit_status_context }}")
 
                   # If the snapshot creation task was not run, create a snapshot if the build failed
                   elif [[ "${{ inputs.create_failure_snapshot }}" == "true" && "${{ job.status }}" != "success" ]]; then
@@ -217,8 +217,8 @@ jobs:
                         --build-success false \
                         --build-fail-tests "${{ contains(steps.feature_test.outputs.*, 'ApexTestException') }}" \
                         --snapshot-is-packaged true \
-                        $([[ -n "${{ inputs.environment_prefix }}" ]] && echo "--github-environment-prefix '${{ inputs.environment_prefix }}'") \
-                        $([[ -n "${{ inputs.commit_status_context }}" ]] && echo "--commit-status-context '${{ inputs.commit_status_context }}'")
+                        $([[ -n "${{ inputs.environment_prefix }}" ]] && echo "--github-environment-prefix ${{ inputs.environment_prefix }}") \
+                        $([[ -n "${{ inputs.commit_status_context }}" ]] && echo "--commit-status-context ${{ inputs.commit_status_context }}")
                   fi
               shell: bash
 
