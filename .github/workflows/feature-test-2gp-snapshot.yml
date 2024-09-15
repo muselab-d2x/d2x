@@ -196,15 +196,15 @@ jobs:
 
             - name: Finalize Snapshot Creation
               id: finalize_snapshot
-              if: inputs.create_pr_snapshot == true || (inputs.create_failure_snapshot == true && job.status != 'success')
+              if: inputs.create_pr_snapshot == true && steps.start_snapshot|| (inputs.create_failure_snapshot == true && job.status != 'success')
               env:
                   GITHUB_TOKEN: ${{ secrets.github-token }}
               run: |
 
                   # If the snapshot creation task was run, finalize the snapshot
-                  if [[ "${{ inputs.create_pr_snapshot }}" == "true" && -n "${{ steps.start_snapshot_creation.outputs.SNAPSHOT_ID }}" ]]; then
+                  if [[ "${{ inputs.create_pr_snapshot }}" == "true" && -n "${{ steps.start_snapshot.outputs.SNAPSHOT_ID }}" ]]; then
                     cci task run github_pull_request_snapshot \
-                        --snapshot-id "${{ steps.start_snapshot_creation.outputs.SNAPSHOT_ID }}" \
+                        --snapshot-id "${{ steps.start_snapshot.outputs.SNAPSHOT_ID }}" \
                         --build-success "${{ job.status == 'success' }}" \
                         --build-fail-tests "${{ contains(steps.feature_test.outputs.*, 'ApexTestException') }}" \
                         --snapshot-is-packaged true \
