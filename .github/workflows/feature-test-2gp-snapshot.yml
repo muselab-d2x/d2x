@@ -84,43 +84,49 @@ jobs:
                     -f context='Build Feature Test Package'
               shell: bash
 
-            - name: Prepare Feature Test Org
-              id: prepare_org
-              run: |
-                  cci flow run ci_feature_2gp_pre_snapshot
-              continue-on-error: true
+            # - name: Prepare Feature Test Org
+            #   id: prepare_org
+            #   run: |
+            #       cci flow run ci_feature_2gp_pre_snapshot
+            #   continue-on-error: true
 
             - name: Start Snapshot Creation
               if: inputs.create_snapshot == true
+              id: start_snapshot_creation
               run: |
                   cci task run github_pull_request_snapshot \
-                    --wait False \
-                    --build-success ${{ job.status == 'success' }} \
-                    --snapshot-is-packaged true
+                  --wait False \
+                  --build-success ${{ job.status == 'success' }} \
+                  --snapshot-is-packaged true
                   if [ -f "$GITHUB_OUTPUT" ]; then
                     SNAPSHOT_ID=$(grep SNAPSHOT_ID $GITHUB_OUTPUT | cut -d '=' -f 2)
-                    echo "SNAPSHOT_ID=$SNAPSHOT_ID" >> $GITHUB_ENV
-                    echo "::set-output name=snapshot_id::$SNAPSHOT_ID"
+                    if [ -n "$SNAPSHOT_ID" ]; then
+                        echo "SNAPSHOT_ID=$SNAPSHOT_ID" >> $GITHUB_ENV
+                        echo "snapshot_id=$SNAPSHOT_ID" >> $GITHUB_OUTPUT
+                    else
+                        echo "No snapshot ID found. Skipping snapshot finalization."
+                    fi
+                  else
+                    echo "No GITHUB_OUTPUT file found. Skipping snapshot finalization."
                   fi
-
               shell: bash
-
-            - name: Run Feature Test
-              id: feature_test
-              run: |
-                  cci flow run ci_feature_2gp_post_snapshot
               continue-on-error: true
 
+            - name: Run Feature Test
+              run: |
+                  cci flow run ci_feature_2gp_post_snapshot
+                  continue-on-error: true
+
             - name: Finalize Snapshot Creation
-              if: steps.start_snapshot_creation.outputs.snapshot_id
+              if: env.SNAPSHOT_ID
               run: |
                   cci task run github_pull_request_snapshot \
-                    --snapshot-id "${{ steps.start_snapshot_creation.outputs.snapshot_id }}" \
-                    --build-success "${{ job.status == 'success' }}" \
-                    --build-fail-tests "${{ contains(steps.feature_test.outputs.*, 'ApexTestException') }}" \
-                    --snapshot-is-packaged true \
-                    $([[ -n "${{ inputs.environment_prefix }}" ]] && echo "--github-environment-prefix '${{ inputs.environment_prefix }}'") \
-                    $([[ -n "${{ inputs.commit_status_context }}" ]] && echo "--commit-status-context '${{ inputs.commit_status_context }}'")
+                      --snapshot-id "${{ env.SNAPSHOT_ID }}" \
+                      --build-success "${{ job.status == 'success' }}" \
+                      --build-fail-tests "${{ contains(steps.feature_test.outputs.*, 'ApexTestException') }}" \
+                      --snapshot-is-packaged true \
+                      $([[ -n "${{ inputs.environment_prefix }}" ]] && echo "--github-environment-prefix '${{ inputs.environment_prefix }}'") \
+                      $([[ -n "${{ inputs.commit_status_context }}" ]] && echo "--commit-status-context '${{ inputs.commit_status_context }}'")
               shell: bash
 
             - name: Delete Scratch Org
