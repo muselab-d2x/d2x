@@ -33,6 +33,10 @@ on:
                 required: true
                 type: string
                 description: "The event that triggered the parent workflow (push, pull_request, workflow_dispatch)"
+            current_workflow_run_id:
+                required: true
+                type: string
+                description: "The ID of the current workflow run. Used to exclude the current build from the list of running builds."
         secrets:
             dev-hub-auth-url:
                 required: false
@@ -68,7 +72,7 @@ jobs:
                   fi
 
                   # Check for existing workflow runs (successful or in progress)
-                  workflow_runs=$(gh api -H "Accept: application/vnd.github+json" "/repos/${{ github.repository }}/actions/runs?head_sha=$SHA&event=push" | jq '.workflow_runs[] | select(.name == "${{ inputs.parent_workflow_name }}") | {status: .status, conclusion: .conclusion, html_url: .html_url}')
+                  workflow_runs=$(gh api -H "Accept: application/vnd.github+json" "/repos/${{ github.repository }}/actions/runs?head_sha=$SHA&event=push" | jq '.workflow_runs[] | select(.name == "${{ inputs.parent_workflow_name }}") | select(.id != ${{ inputs.current_workflow_run_id }}) | {status: .status, conclusion: .conclusion, html_url: .html_url}')
 
                   successful_run=$(echo "$workflow_runs" | jq 'select(.status == "completed" and .conclusion == "success")')
                   in_progress_run=$(echo "$workflow_runs" | jq 'select(.status == "in_progress")')
