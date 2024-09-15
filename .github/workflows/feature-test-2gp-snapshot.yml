@@ -131,6 +131,7 @@ jobs:
                   cci org info feature
 
             - name: Build Feature Test Package
+              id: create_2gp
               run: cci flow run build_feature_test_package $([[ "${{ inputs.debug }}" == "true" ]] && echo " --debug") | tee cumulusci-flow.log
               shell: bash
 
@@ -153,9 +154,10 @@ jobs:
             #   run: |
             #       cci flow run ci_feature_2gp_pre_snapshot
             #   continue-on-error: true
+
             - name: Start Snapshot Creation
               if: inputs.create_pr_snapshot == true
-              id: start_snapshot_creation
+              id: start_snapshot
               run: |
                   set -e
                   cci task run github_pull_request_snapshot \
@@ -181,11 +183,20 @@ jobs:
 
             - name: Run Feature Test
               id: feature_test
+              #if: steps.prepare_org.outcome == 'success'
               run: |
                   cci flow run ci_feature_2gp_post_snapshot
               continue-on-error: true
 
+            - name: Report CumulusCI Errors
+              if: always() && (steps.create_2gp.outcome == 'failure' || steps.prepare_org.outcome == 'failure' || steps.feature_test.outcome == 'failure' || steps.start_snapshot.outcome == 'failure')
+              run: |
+                  echo "CumulusCI encountered an error. Please review the logs for more information."
+                  cci error info
+
             - name: Finalize Snapshot Creation
+              id: finalize_snapshot
+              if: inputs.create_pr_snapshot == true || (inputs.create_failure_snapshot == true && job.status != 'success')
               env:
                   GITHUB_TOKEN: ${{ secrets.github-token }}
               run: |
