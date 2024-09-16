@@ -177,25 +177,11 @@ jobs:
               if: inputs.create_pr_snapshot == true
               id: start_snapshot
               run: |
-                  set -e
                   cci task run github_pull_request_snapshot \
                     --wait False \
                     --build-success ${{ job.status == 'success' }} \
-                    --snapshot-is-packaged true || {
-                      echo "Snapshot creation failed."
-                      exit 1
-                    }
-                  if [ -f "$GITHUB_OUTPUT" ]; then
-                    snapshot_id=$(grep SNAPSHOT_ID $GITHUB_OUTPUT | cut -d '=' -f 2)
-                    if [ -n "$snapshot_id" ]; then
-                      echo "SNAPSHOT_ID=$snapshot_id" >> $GITHUB_ENV
-                    else
-                      echo "No SNAPSHOT_ID found in the output. This may be expected if no snapshot creation was required."
-                    fi
-                  else
-                    echo "GITHUB_OUTPUT file not found."
-                    exit 1
-                  fi
+                    --snapshot-is-packaged true
+
               shell: bash
 
             - name: Run Feature Test
@@ -213,7 +199,7 @@ jobs:
 
             - name: Finalize Snapshot Creation
               id: finalize_snapshot
-              if: inputs.create_pr_snapshot == true && steps.start_snapshot|| (inputs.create_failure_snapshot == true && job.status != 'success')
+              if: (inputs.create_pr_snapshot == true && "${{ steps.start_snapshot.outputs.SNAPSHOT_ID}}" != "")  || (inputs.create_failure_snapshot == true && job.status != 'success')
               env:
                   GITHUB_TOKEN: ${{ secrets.github-token }}
               run: |
