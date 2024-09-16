@@ -4,7 +4,7 @@ name: Investigate 1GP Packaging Org
 on:
     workflow_call:
         inputs:
-            env-name:
+            env_name:
                 required: true
                 description: "The GitHub Environment to run the job against. If the environment does not exist, it will be created."
                 type: string
@@ -20,7 +20,7 @@ jobs:
     investigate-1gp-stage1:
         name: "CumulusCI Packaging Flows Check"
         runs-on: ubuntu-latest
-        environment: ${{ inputs.env-name }}
+        environment: ${{ inputs.env_name }}
         container:
             image: ghcr.io/muselab-d2x/d2x:cumulusci-next
             options: --user root
