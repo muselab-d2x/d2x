@@ -50,76 +50,76 @@ on:
                 required: false
 
 jobs:
-    check-build-status:
-        runs-on: ubuntu-latest
-        outputs:
-            should_build: ${{ steps.check.outputs.should_build }}
-            original_run_url: ${{ steps.check.outputs.original_run_url }}
-            in_progress: ${{ steps.check.outputs.in_progress }}
-        steps:
-            - name: Check build status
-              id: check
-              env:
-                  GITHUB_TOKEN: ${{ secrets.github-token }}
-              run: |
-                  echo "## Job Summary Report" >> $GITHUB_STEP_SUMMARY
-                  echo "### Build Status Check" >> $GITHUB_STEP_SUMMARY
+    # check-build-status:
+    #     runs-on: ubuntu-latest
+    #     outputs:
+    #         should_build: ${{ steps.check.outputs.should_build }}
+    #         original_run_url: ${{ steps.check.outputs.original_run_url }}
+    #         in_progress: ${{ steps.check.outputs.in_progress }}
+    #     steps:
+    #         - name: Check build status
+    #           id: check
+    #           env:
+    #               GITHUB_TOKEN: ${{ secrets.github-token }}
+    #           run: |
+    #               echo "## Job Summary Report" >> $GITHUB_STEP_SUMMARY
+    #               echo "### Build Status Check" >> $GITHUB_STEP_SUMMARY
 
-                  # Get the commit SHA
-                  if [[ "${{ inputs.triggering_event }}" == "pull_request" ]]; then
-                    echo "Triggering event is a pull request. Delaying for 10 seconds to prevent race conditions." | tee -a $GITHUB_STEP_SUMMARY
-                    sleep 10
-                    SHA="${{ github.event.pull_request.head.sha }}"
-                  else
-                    SHA="${{ github.sha }}"
-                  fi
-                  echo "Commit SHA: $SHA" | tee -a $GITHUB_STEP_SUMMARY
+    #               # Get the commit SHA
+    #               if [[ "${{ inputs.triggering_event }}" == "pull_request" ]]; then
+    #                 echo "Triggering event is a pull request. Delaying for 10 seconds to prevent race conditions." | tee -a $GITHUB_STEP_SUMMARY
+    #                 sleep 10
+    #                 SHA="${{ github.event.pull_request.head.sha }}"
+    #               else
+    #                 SHA="${{ github.sha }}"
+    #               fi
+    #               echo "Commit SHA: $SHA" | tee -a $GITHUB_STEP_SUMMARY
 
-                  # Check for existing workflow runs (successful or in progress)
-                  echo "Checking for existing workflow runs..." | tee -a $GITHUB_STEP_SUMMARY
-                  workflow_runs=$(gh api -H "Accept: application/vnd.github+json" "/repos/${{ github.repository }}/actions/runs?head_sha=$SHA&event=push" | jq '.workflow_runs[] | select(.name == "${{ inputs.parent_workflow_name }}") | select(.id != ${{ inputs.current_workflow_run_id }}) | {status: .status, conclusion: .conclusion, html_url: .html_url}')
+    #               # Check for existing workflow runs (successful or in progress)
+    #               echo "Checking for existing workflow runs..." | tee -a $GITHUB_STEP_SUMMARY
+    #               workflow_runs=$(gh api -H "Accept: application/vnd.github+json" "/repos/${{ github.repository }}/actions/runs?head_sha=$SHA&event=push" | jq '.workflow_runs[] | select(.name == "${{ inputs.parent_workflow_name }}") | select(.id != ${{ inputs.current_workflow_run_id }}) | {status: .status, conclusion: .conclusion, html_url: .html_url}')
 
-                  echo "Workflow runs found: $workflow_runs" | tee -a $GITHUB_STEP_SUMMARY
+    #               echo "Workflow runs found: $workflow_runs" | tee -a $GITHUB_STEP_SUMMARY
 
-                  successful_run=$(echo "$workflow_runs" | jq 'select(.status == "completed" and .conclusion == "success")')
-                  in_progress_run=$(echo "$workflow_runs" | jq 'select(.status == "in_progress")')
+    #               successful_run=$(echo "$workflow_runs" | jq 'select(.status == "completed" and .conclusion == "success")')
+    #               in_progress_run=$(echo "$workflow_runs" | jq 'select(.status == "in_progress")')
 
-                  if [[ -n "$in_progress_run" ]]; then
-                    echo "An in-progress run was found. Setting in_progress to true and should_build to false." | tee -a $GITHUB_STEP_SUMMARY
-                    echo "in_progress=true" >> $GITHUB_OUTPUT
-                    echo "should_build=false" >> $GITHUB_OUTPUT
-                  elif [[ -n "$successful_run" ]]; then
-                    echo "A successful run was found." | tee -a $GITHUB_STEP_SUMMARY
-                    if [[ "${{ inputs.triggering_event }}" == "pull_request" ]]; then
-                      echo "Triggering event is a pull request. Checking for existing snapshot status." | tee -a $GITHUB_STEP_SUMMARY
-                      snapshot_status=$(gh api -H "Accept: application/vnd.github+json" "/repos/${{ github.repository }}/commits/$SHA/statuses" | jq '.[] | select(.context | startswith("${{ inputs.commit_status_context }}")) | .state' -r)
-                      echo "Snapshot status: $snapshot_status" | tee -a $GITHUB_STEP_SUMMARY
-                      
-                      if [[ -z "$snapshot_status" && ("${{ inputs.create_pr_snapshot }}" == "true" || "${{ inputs.create_failure_snapshot }}" == "true") ]]; then
-                        echo "No snapshot status found and snapshot creation is enabled. Setting should_build to true." | tee -a $GITHUB_STEP_SUMMARY
-                        echo "should_build=true" >> $GITHUB_OUTPUT
-                      else
-                        echo "Snapshot status found or snapshot creation is not enabled. Setting should_build to false." | tee -a $GITHUB_STEP_SUMMARY
-                        echo "should_build=false" >> $GITHUB_OUTPUT
-                        echo "original_run_url=$(echo "$successful_run" | jq -r '.html_url')" >> $GITHUB_OUTPUT
-                        echo "- [Successful Run]($(echo "$successful_run" | jq -r '.html_url'))" >> $GITHUB_STEP_SUMMARY
-                      fi
-                    else
-                      echo "Triggering event is not a pull request. Setting should_build to false." | tee -a $GITHUB_STEP_SUMMARY
-                      echo "should_build=false" >> $GITHUB_OUTPUT
-                      echo "original_run_url=$(echo "$successful_run" | jq -r '.html_url')" >> $GITHUB_OUTPUT
-                      echo "- [Successful Run]($(echo "$successful_run" | jq -r '.html_url'))" >> $GITHUB_STEP_SUMMARY
-                    fi
-                  else
-                    echo "No in-progress or successful runs found. Setting should_build to true." | tee -a $GITHUB_STEP_SUMMARY
-                    echo "should_build=true" >> $GITHUB_OUTPUT
-                  fi
+    #               if [[ -n "$in_progress_run" ]]; then
+    #                 echo "An in-progress run was found. Setting in_progress to true and should_build to false." | tee -a $GITHUB_STEP_SUMMARY
+    #                 echo "in_progress=true" >> $GITHUB_OUTPUT
+    #                 echo "should_build=false" >> $GITHUB_OUTPUT
+    #               elif [[ -n "$successful_run" ]]; then
+    #                 echo "A successful run was found." | tee -a $GITHUB_STEP_SUMMARY
+    #                 if [[ "${{ inputs.triggering_event }}" == "pull_request" ]]; then
+    #                   echo "Triggering event is a pull request. Checking for existing snapshot status." | tee -a $GITHUB_STEP_SUMMARY
+    #                   snapshot_status=$(gh api -H "Accept: application/vnd.github+json" "/repos/${{ github.repository }}/commits/$SHA/statuses" | jq '.[] | select(.context | startswith("${{ inputs.commit_status_context }}")) | .state' -r)
+    #                   echo "Snapshot status: $snapshot_status" | tee -a $GITHUB_STEP_SUMMARY
 
-                  echo "Build status check completed." | tee -a $GITHUB_STEP_SUMMARY
+    #                   if [[ -z "$snapshot_status" && ("${{ inputs.create_pr_snapshot }}" == "true" || "${{ inputs.create_failure_snapshot }}" == "true") ]]; then
+    #                     echo "No snapshot status found and snapshot creation is enabled. Setting should_build to true." | tee -a $GITHUB_STEP_SUMMARY
+    #                     echo "should_build=true" >> $GITHUB_OUTPUT
+    #                   else
+    #                     echo "Snapshot status found or snapshot creation is not enabled. Setting should_build to false." | tee -a $GITHUB_STEP_SUMMARY
+    #                     echo "should_build=false" >> $GITHUB_OUTPUT
+    #                     echo "original_run_url=$(echo "$successful_run" | jq -r '.html_url')" >> $GITHUB_OUTPUT
+    #                     echo "- [Successful Run]($(echo "$successful_run" | jq -r '.html_url'))" >> $GITHUB_STEP_SUMMARY
+    #                   fi
+    #                 else
+    #                   echo "Triggering event is not a pull request. Setting should_build to false." | tee -a $GITHUB_STEP_SUMMARY
+    #                   echo "should_build=false" >> $GITHUB_OUTPUT
+    #                   echo "original_run_url=$(echo "$successful_run" | jq -r '.html_url')" >> $GITHUB_OUTPUT
+    #                   echo "- [Successful Run]($(echo "$successful_run" | jq -r '.html_url'))" >> $GITHUB_STEP_SUMMARY
+    #                 fi
+    #               else
+    #                 echo "No in-progress or successful runs found. Setting should_build to true." | tee -a $GITHUB_STEP_SUMMARY
+    #                 echo "should_build=true" >> $GITHUB_OUTPUT
+    #               fi
+
+    #               echo "Build status check completed." | tee -a $GITHUB_STEP_SUMMARY
 
     feature-test-and-snapshot:
         needs: check-build-status
-        if: needs.check-build-status.outputs.should_build == 'true'
+        # if: needs.check-build-status.outputs.should_build == 'true'
         name: "2GP Feature Test and PR Snapshot"
         runs-on: ubuntu-latest
         container:
@@ -230,32 +230,32 @@ jobs:
               run: cci org scratch_delete feature
               shell: bash
 
-    report-status:
-        needs: check-build-status
-        if: needs.check-build-status.outputs.should_build == 'false' && needs.check-build-status.outputs.in_progress != 'true'
-        runs-on: ubuntu-latest
-        steps:
-            - name: Report Status
-              env:
-                  GITHUB_TOKEN: ${{ secrets.github-token }}
-              run: |
-                  gh api \
-                    --method POST \
-                    -H "Accept: application/vnd.github+json" \
-                    "/repos/${{ github.repository }}/statuses/${{ github.sha }}" \
-                    -f state="success" \
-                    -f context="${{ inputs.commit_status_context }}" \
-                    -f description="Build skipped. Previous successful build found." \
-                    -f target_url="${{ needs.check-build-status.outputs.original_run_url }}"
+    # report-status:
+    #     needs: check-build-status
+    #     if: needs.check-build-status.outputs.should_build == 'false' && needs.check-build-status.outputs.in_progress != 'true'
+    #     runs-on: ubuntu-latest
+    #     steps:
+    #         - name: Report Status
+    #           env:
+    #               GITHUB_TOKEN: ${{ secrets.github-token }}
+    #           run: |
+    #               gh api \
+    #                 --method POST \
+    #                 -H "Accept: application/vnd.github+json" \
+    #                 "/repos/${{ github.repository }}/statuses/${{ github.sha }}" \
+    #                 -f state="success" \
+    #                 -f context="${{ inputs.commit_status_context }}" \
+    #                 -f description="Build skipped. Previous successful build found." \
+    #                 -f target_url="${{ needs.check-build-status.outputs.original_run_url }}"
 
-    wait-for-in-progress:
-        needs: check-build-status
-        if: needs.check-build-status.outputs.in_progress == 'true'
-        runs-on: ubuntu-latest
-        steps:
-            - name: Wait for in-progress workflow
-              env:
-                  GITHUB_TOKEN: ${{ secrets.github-token }}
-              run: |
-                  echo "An in-progress workflow was detected. Exiting without reporting a status."
-                  exit 0
+    # wait-for-in-progress:
+    #     needs: check-build-status
+    #     if: needs.check-build-status.outputs.in_progress == 'true'
+    #     runs-on: ubuntu-latest
+    #     steps:
+    #         - name: Wait for in-progress workflow
+    #           env:
+    #               GITHUB_TOKEN: ${{ secrets.github-token }}
+    #           run: |
+    #               echo "An in-progress workflow was detected. Exiting without reporting a status."
+    #               exit 0
