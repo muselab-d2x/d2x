@@ -1,0 +1,47 @@
+name: Investigate 1GP Packaging Org
+# Runs a series of read-only tasks to investigate the safety of CumulusCI's `ci_master` flow for use against an existing 1GP packaging org
+
+on:
+    workflow_call:
+        inputs:
+            env-name:
+                required: true
+                description: "The GitHub Environment to run the job against. If the environment does not exist, it will be created."
+                type: string
+            debug:
+                required: false
+                default: false
+                type: boolean
+        secrets:
+            packaging-org-auth-url:
+                required: true
+
+jobs:
+    investigate-1gp-stage1:
+        name: "CumulusCI Packaging Flows Check"
+        runs-on: ubuntu-latest
+        environment: ${{ inputs.env-name }}
+        container:
+            image: ghcr.io/muselab-d2x/d2x:cumulusci-next
+            options: --user root
+            env:
+                PACKAGING_ORG_AUTH_URL: "${{ secrets.packaging-org-auth-url }}"
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v2
+            - name: Auth to DevHub
+              run: /usr/local/bin/devhub.sh
+            - name: Convert SFDX Source
+              run: |
+                  if [ -d force-app ]; then
+                      cci task run dx_convert_from
+                  fi
+              shell: bash
+            - name: Prepare Managed Source
+              run: cci task run create_managed_src
+            - name: Update Package XML for Packaged Deploy
+              run: cci task run update_package_xml
+            - name: Validate-Only Deploy with Tests to Packaging Org
+              run: cci task run deploy --org packaging --path src --check-only True --test-level RunLocalTests
+            - name: Dry Run of uninstall_packaged_incremental
+              run: cci task run uninstall_packaged_incremental --org packaging --dry-run True
