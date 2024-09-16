@@ -118,7 +118,7 @@ jobs:
     #               echo "Build status check completed." | tee -a $GITHUB_STEP_SUMMARY
 
     feature-test-and-snapshot:
-        needs: check-build-status
+        # needs: check-build-status
         # if: needs.check-build-status.outputs.should_build == 'true'
         name: "2GP Feature Test and PR Snapshot"
         runs-on: ubuntu-latest
