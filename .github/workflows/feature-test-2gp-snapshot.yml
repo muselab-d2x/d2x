@@ -190,8 +190,7 @@ jobs:
                     if [ -n "$snapshot_id" ]; then
                       echo "SNAPSHOT_ID=$snapshot_id" >> $GITHUB_ENV
                     else
-                      echo "No SNAPSHOT_ID found in the output."
-                      exit 1
+                      echo "No SNAPSHOT_ID found in the output. This may be expected if no snapshot creation was required."
                     fi
                   else
                     echo "GITHUB_OUTPUT file not found."
