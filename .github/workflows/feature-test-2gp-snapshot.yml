@@ -26,17 +26,17 @@ on:
                 description: "The context to use for the commit status containing snapshot creation status and details"
                 type: string
             parent_workflow_name:
-                required: true
+                required: false
                 type: string
-                description: "The name of the parent workflow that called this workflow. Used to determine if the build has already run and passed."
+                description: "NOT USED: The name of the parent workflow that called this workflow. Used to determine if the build has already run and passed."
             triggering_event:
-                required: true
+                required: false
                 type: string
-                description: "The event that triggered the parent workflow (push, pull_request, workflow_dispatch)"
+                description: "NOT USED: The event that triggered the parent workflow (push, pull_request, workflow_dispatch)"
             current_workflow_run_id:
-                required: true
+                required: false
                 type: string
-                description: "The ID of the current workflow run. Used to exclude the current build from the list of running builds."
+                description: "NOT USED: The ID of the current workflow run. Used to exclude the current build from the list of running builds."
         secrets:
             dev-hub-auth-url:
                 required: false
