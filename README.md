@@ -1,4 +1,4 @@
-[![Build Docker Image](https://github.com/muselab-d2x/d2x/actions/workflows/build.yml/badge.svg)](https://github.com/muselab-d2x/d2x/actions/workflows/build.yml)
+
 
 D2X lets teams deliver repeatable, composable Salesforce products and solutions that align with Salesforce's [Well-Architected Framework](https://architect.salesforce.com/well-architected/overview).
 
