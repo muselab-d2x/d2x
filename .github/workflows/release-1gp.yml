@@ -1,19 +1,19 @@
 name: Production Release
 
 on:
-  workflow_call:
-    secrets:
-      dev-hub-auth-url:
-        required: true
-      packaging-org-auth-url:
-        required: true
-      gh-email:
-        required: true      
-      github-token:
-        required: true
+    workflow_call:
+        secrets:
+            dev-hub-auth-url:
+                required: true
+            packaging-org-auth-url:
+                required: true
+            gh-email:
+                required: true
+            github-token:
+                required: true
 
 jobs:
-    beta-test:
+    release-test:
         name: "Production Release"
         runs-on: ubuntu-latest
         container:
@@ -25,7 +25,7 @@ jobs:
             env:
                 DEV_HUB_AUTH_URL: "${{ secrets.dev-hub-auth-url }}"
                 PACKAGING_ORG_AUTH_URL: "${{ secrets.packaging-org-auth-url }}"
-                CUMULUSCI_SERVICE_github: "{ \"username\": \"${{ github.actor }}\", \"token\": \"${{ secrets.github-token }}\", \"email\": \"${{ secrets.gh-email }}\" }"
+                CUMULUSCI_SERVICE_github: '{ "username": "${{ github.actor }}", "token": "${{ secrets.github-token }}", "email": "${{ secrets.gh-email }}" }'
         steps:
             - name: Checkout
               uses: actions/checkout@v2
@@ -41,5 +41,5 @@ jobs:
             - name: Delete Scratch Org
               if: ${{ always() }}
               run: |
-                cci org scratch_delete release
+                  cci org scratch_delete release
               shell: bash

@@ -1,0 +1,79 @@
+name: 2GP Feature Test
+
+on:
+  workflow_call:
+    inputs:
+      org:
+        required: false
+        default: feature
+        type: string
+      debug:
+        required: false
+        default: false
+        type: boolean
+          
+    secrets:
+      # Either dev-hub-auth-url or dev-hub-username, dev-hub-client-id, and dev-hub-private-key are required
+      dev-hub-auth-url:
+        required: false
+      dev-hub-username:
+        required: false
+      dev-hub-client-id:
+        required: false
+      dev-hub-private-key:
+        required: false      
+      gh-email:
+        required: true      
+      github-token:
+        required: true
+
+jobs:
+    feature-test:
+        name: "2GP Feature Test"
+        runs-on: ubuntu-latest
+        container:
+            image: ghcr.io/muselab-d2x/d2x:cumulusci-next
+            options: --user root
+            credentials:
+                username: "${{ github.actor }}"
+                password: "${{ secrets.github-token }}"
+            env:
+                DEV_HUB_AUTH_URL: "${{ secrets.dev-hub-auth-url }}"
+                DEV_HUB_USERNAME: "${{ secrets.dev-hub-username }}"
+                DEV_HUB_CLIENT_ID: "${{ secrets.dev-hub-client-id }}"
+                DEV_HUB_PRIVATE_KEY: "${{ secrets.dev-hub-private-key }}"
+                CUMULUSCI_SERVICE_github: "{ \"username\": \"${{ github.actor }}\", \"token\": \"${{ secrets.github-token }}\", \"email\": \"${{ secrets.gh-email }}\" }"
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v2
+            - name: Auth to DevHub
+              run: /usr/local/bin/devhub.sh
+            - name: Set ${{ inputs.org }} org as default org
+              run: cci org default ${{ inputs.org }}
+            - name: Build Feature Test Package
+              env:
+                  GITHUB_TOKEN: '${{ secrets.github-token }}'
+              run: cci flow run build_feature_test_package $([[ "${{ inputs.debug }}" == "true" ]] && echo " --debug") | tee cumulusci-flow.log
+              shell: bash
+            - name: Set Commit Status
+              env:
+                  GITHUB_TOKEN: '${{ secrets.github-token }}'
+              run: |
+                  VERSION=$(cat cumulusci-flow.log | grep -o -E -m 1 "04t[a-zA-Z0-9]{15}")
+                  gh api \
+                    --method POST \
+                    -H "Accept: application/vnd.github.v3+json" \
+                    '/repos/${{ github.repository }}/statuses/${{ github.sha }}' \
+                    -f state='success' \
+                    -f description="version_id: $VERSION" \
+                    -f context='Build Feature Test Package'
+              shell: bash
+            - name: Run Feature Test
+              env:
+                  GITHUB_TOKEN: '${{ secrets.github-token }}'
+              run: cci flow run ci_feature_2gp
+            - name: Delete Scratch Org
+              if: ${{ always() }}
+              run: |
+                cci org scratch_delete feature
+              shell: bash
