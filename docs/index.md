@@ -25,6 +25,12 @@ You've created your own GitHub repository using [D2X Launchpad](https://launchpa
 
 Head over to the [D2X Project Tutorial](tutorial.md) for next steps on finalizing your project's setup and getting started building.
 
+## D2X `cumulusci-next`
+
+Learn more about advance features of CumulusCI contained in Muselab's preview `cumulusci-next` branch of `d2x` and the corresponding Docker image tag to try out new features like Scratch Org Snapshot management, additional yaml loadable from the command line, a simple plugin framework, and more.
+
+Check out [D2X cumulusci-next](cumulusci-next.md) for more details.
+
 ## Troubleshooting
 
 Need help troubleshooting an error? Check out the [Troubleshooting](troubleshooting.md) section for common error messages and tips on debugging issues.
