@@ -6,6 +6,11 @@ on:
       env-name:
         required: true
         type: string
+      delete-scratch:
+        description: 'Flag to delete scratch org'
+        required: false
+        default: true
+        type: boolean
       debug:
         required: false
         default: false
@@ -48,7 +53,8 @@ jobs:
             - name: Run Release Test
               run: cci flow run ci_release --org release $([[ "${{ inputs.debug }}" == "true" ]] && echo " --debug")
             - name: Delete Scratch Org
-              if: ${{ always() }}
+              if: ${{ always() && inputs.delete-scratch }}
               run: |
+                echo "Deleting Scratch Org..."
                 cci org scratch_delete release
               shell: bash
