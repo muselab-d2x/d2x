@@ -22,7 +22,7 @@ jobs:
         runs-on: ubuntu-latest
         environment: ${{ inputs.env_name }}
         container:
-            image: ghcr.io/muselab-d2x/d2x:cumulusci-next
+            image: ghcr.io/muselab-d2x/d2x:cumulusci-next-snapshots
             options: --user root
             env:
                 PACKAGING_ORG_AUTH_URL: "${{ secrets.packaging-org-auth-url }}"

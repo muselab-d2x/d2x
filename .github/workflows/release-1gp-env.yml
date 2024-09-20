@@ -26,7 +26,7 @@ jobs:
         runs-on: ubuntu-latest
         environment: ${{ inputs.env-name }}
         container:
-            image: ghcr.io/muselab-d2x/d2x:cumulusci-next
+            image: ghcr.io/muselab-d2x/d2x:cumulusci-next-snapshots
             options: --user root
             credentials:
                 username: ${{ github.actor }}

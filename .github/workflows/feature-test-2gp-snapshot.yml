@@ -17,28 +17,25 @@ on:
                 default: false
                 description: "If true, a snapshot will be created if the build fails. CumulusCI's logic will determine if a snapshot should be created via the github_pull_request_snapshot task."
                 type: boolean
-            environment_prefix:
+            create_snapshot_commit_status:
                 required: false
-                description: "If set, a GitHub Environment will be created for the snapshot with this prefix"
-                type: string
-            commit_status_context:
+                default: false
+                description: "If true, a commit status will be set for the build. This is useful for tracking the status of the snapshot creation task."
+                type: boolean
+            create_snapshot_environment:
                 required: false
-                description: "The context to use for the commit status containing snapshot creation status and details"
-                type: string
-            parent_workflow_name:
-                required: false
-                type: string
-                description: "NOT USED: The name of the parent workflow that called this workflow. Used to determine if the build has already run and passed."
-            triggering_event:
-                required: false
-                type: string
-                description: "NOT USED: The event that triggered the parent workflow (push, pull_request, workflow_dispatch)"
-            current_workflow_run_id:
-                required: false
-                type: string
-                description: "NOT USED: The ID of the current workflow run. Used to exclude the current build from the list of running builds."
+                default: false
+                description: "If true, a GitHub Environment will be created for the snapshot."
+                type: boolean
+
         secrets:
             dev-hub-auth-url:
+                required: false
+            dev-hub-username:
+                required: false
+            dev-hub-client-id:
+                required: false
+            dev-hub-private-key:
                 required: false
             gh-email:
                 required: true
@@ -50,80 +47,13 @@ on:
                 required: false
 
 jobs:
-    # check-build-status:
-    #     runs-on: ubuntu-latest
-    #     outputs:
-    #         should_build: ${{ steps.check.outputs.should_build }}
-    #         original_run_url: ${{ steps.check.outputs.original_run_url }}
-    #         in_progress: ${{ steps.check.outputs.in_progress }}
-    #     steps:
-    #         - name: Check build status
-    #           id: check
-    #           env:
-    #               GITHUB_TOKEN: ${{ secrets.github-token }}
-    #           run: |
-    #               echo "## Job Summary Report" >> $GITHUB_STEP_SUMMARY
-    #               echo "### Build Status Check" >> $GITHUB_STEP_SUMMARY
-
-    #               # Get the commit SHA
-    #               if [[ "${{ inputs.triggering_event }}" == "pull_request" ]]; then
-    #                 echo "Triggering event is a pull request. Delaying for 10 seconds to prevent race conditions." | tee -a $GITHUB_STEP_SUMMARY
-    #                 sleep 10
-    #                 SHA="${{ github.event.pull_request.head.sha }}"
-    #               else
-    #                 SHA="${{ github.sha }}"
-    #               fi
-    #               echo "Commit SHA: $SHA" | tee -a $GITHUB_STEP_SUMMARY
-
-    #               # Check for existing workflow runs (successful or in progress)
-    #               echo "Checking for existing workflow runs..." | tee -a $GITHUB_STEP_SUMMARY
-    #               workflow_runs=$(gh api -H "Accept: application/vnd.github+json" "/repos/${{ github.repository }}/actions/runs?head_sha=$SHA&event=push" | jq '.workflow_runs[] | select(.name == "${{ inputs.parent_workflow_name }}") | select(.id != ${{ inputs.current_workflow_run_id }}) | {status: .status, conclusion: .conclusion, html_url: .html_url}')
-
-    #               echo "Workflow runs found: $workflow_runs" | tee -a $GITHUB_STEP_SUMMARY
-
-    #               successful_run=$(echo "$workflow_runs" | jq 'select(.status == "completed" and .conclusion == "success")')
-    #               in_progress_run=$(echo "$workflow_runs" | jq 'select(.status == "in_progress")')
-
-    #               if [[ -n "$in_progress_run" ]]; then
-    #                 echo "An in-progress run was found. Setting in_progress to true and should_build to false." | tee -a $GITHUB_STEP_SUMMARY
-    #                 echo "in_progress=true" >> $GITHUB_OUTPUT
-    #                 echo "should_build=false" >> $GITHUB_OUTPUT
-    #               elif [[ -n "$successful_run" ]]; then
-    #                 echo "A successful run was found." | tee -a $GITHUB_STEP_SUMMARY
-    #                 if [[ "${{ inputs.triggering_event }}" == "pull_request" ]]; then
-    #                   echo "Triggering event is a pull request. Checking for existing snapshot status." | tee -a $GITHUB_STEP_SUMMARY
-    #                   snapshot_status=$(gh api -H "Accept: application/vnd.github+json" "/repos/${{ github.repository }}/commits/$SHA/statuses" | jq '.[] | select(.context | startswith("${{ inputs.commit_status_context }}")) | .state' -r)
-    #                   echo "Snapshot status: $snapshot_status" | tee -a $GITHUB_STEP_SUMMARY
-
-    #                   if [[ -z "$snapshot_status" && ("${{ inputs.create_pr_snapshot }}" == "true" || "${{ inputs.create_failure_snapshot }}" == "true") ]]; then
-    #                     echo "No snapshot status found and snapshot creation is enabled. Setting should_build to true." | tee -a $GITHUB_STEP_SUMMARY
-    #                     echo "should_build=true" >> $GITHUB_OUTPUT
-    #                   else
-    #                     echo "Snapshot status found or snapshot creation is not enabled. Setting should_build to false." | tee -a $GITHUB_STEP_SUMMARY
-    #                     echo "should_build=false" >> $GITHUB_OUTPUT
-    #                     echo "original_run_url=$(echo "$successful_run" | jq -r '.html_url')" >> $GITHUB_OUTPUT
-    #                     echo "- [Successful Run]($(echo "$successful_run" | jq -r '.html_url'))" >> $GITHUB_STEP_SUMMARY
-    #                   fi
-    #                 else
-    #                   echo "Triggering event is not a pull request. Setting should_build to false." | tee -a $GITHUB_STEP_SUMMARY
-    #                   echo "should_build=false" >> $GITHUB_OUTPUT
-    #                   echo "original_run_url=$(echo "$successful_run" | jq -r '.html_url')" >> $GITHUB_OUTPUT
-    #                   echo "- [Successful Run]($(echo "$successful_run" | jq -r '.html_url'))" >> $GITHUB_STEP_SUMMARY
-    #                 fi
-    #               else
-    #                 echo "No in-progress or successful runs found. Setting should_build to true." | tee -a $GITHUB_STEP_SUMMARY
-    #                 echo "should_build=true" >> $GITHUB_OUTPUT
-    #               fi
-
-    #               echo "Build status check completed." | tee -a $GITHUB_STEP_SUMMARY
-
     feature-test-and-snapshot:
         # needs: check-build-status
         # if: needs.check-build-status.outputs.should_build == 'true'
         name: "2GP Feature Test and PR Snapshot"
         runs-on: ubuntu-latest
         container:
-            image: ghcr.io/muselab-d2x/d2x:cumulusci-next
+            image: ghcr.io/muselab-d2x/d2x:cumulusci-next-snapshots
             options: --user root
             credentials:
                 username: "${{ github.actor }}"
@@ -150,7 +80,15 @@ jobs:
 
             - name: Build Feature Test Package
               id: create_2gp
-              run: cci flow run build_feature_test_package $([[ "${{ inputs.debug }}" == "true" ]] && echo " --debug") | tee cumulusci-flow.log
+              run: |
+                  set -e {
+                      cci flow run build_feature_test_package \
+                          $([[ "${{ inputs.debug }}" == "true" ]] && echo " --debug") | tee cumulusci-flow.log
+                  } || {
+                      echo "::error::Build failed. Please review the logs for more information."}
+                      cci error info
+                      exit 1
+                  }
               shell: bash
 
             - name: Set Commit Status
@@ -170,32 +108,40 @@ jobs:
             - name: Prepare Feature Test Org
               id: prepare_org
               run: |
-                  cci flow run ci_feature_2gp_pre_snapshot
+                  cci flow run ci_feature_2gp --skip-from run_tests
               continue-on-error: true
 
             - name: Start Snapshot Creation
               if: inputs.create_pr_snapshot == true
               id: start_snapshot
               run: |
-                  cci task run github_pull_request_snapshot \
-                    --wait False \
-                    --build-success ${{ job.status == 'success' }} \
-                    --snapshot-is-packaged true
+                  set -e
+                  {
+                      cci task run github_pull_request_snapshot \
+                          --wait False \
+                          --build-success ${{ job.status == 'success' }} \
+                          --is-packaged true
+                  } || {
+                      echo "::error::Snapshot creation failed. Please review the logs for more information."}
+                      cci error info
+                      exit 1
+                  }
 
               shell: bash
 
             - name: Run Feature Test
               id: feature_test
-              #if: steps.prepare_org.outcome == 'success'
+              if: steps.prepare_org.outcome == 'success'
               run: |
-                  cci flow run ci_feature_2gp_post_snapshot
+                  set -e
+                  {
+                    cci flow run ci_feature_2gp --start-from run_tests
+                  } || {
+                      echo "::error::Apex test failure. Please review the logs for more information."}
+                      cci error info
+                      exit 1
+                  }
               continue-on-error: true
-
-            - name: Report CumulusCI Errors
-              if: always() && (steps.create_2gp.outcome == 'failure' || steps.prepare_org.outcome == 'failure' || steps.feature_test.outcome == 'failure' || steps.start_snapshot.outcome == 'failure')
-              run: |
-                  echo "CumulusCI encountered an error. Please review the logs for more information."
-                  cci error info
 
             - name: Finalize Snapshot Creation
               id: finalize_snapshot
@@ -204,58 +150,36 @@ jobs:
                   GITHUB_TOKEN: ${{ secrets.github-token }}
               run: |
 
-                  # If the snapshot creation task was run, finalize the snapshot
-                  if [[ "${{ inputs.create_pr_snapshot }}" == "true" && -n "${{ steps.start_snapshot.outputs.SNAPSHOT_ID }}" ]]; then
-                    cci task run github_pull_request_snapshot \
-                        --snapshot-id "${{ steps.start_snapshot.outputs.SNAPSHOT_ID }}" \
-                        --build-success "${{ job.status == 'success' }}" \
-                        --build-fail-tests "${{ contains(steps.feature_test.outputs.*, 'ApexTestException') }}" \
-                        --snapshot-is-packaged true \
-                        $([[ -n "${{ inputs.environment_prefix }}" ]] && echo "--github-environment-prefix ${{ inputs.environment_prefix }}") \
-                        $([[ -n "${{ inputs.commit_status_context }}" ]] && echo "--commit-status-context ${{ inputs.commit_status_context }}")
+                  set -e
+                  {
+                      # If the snapshot creation task was run, finalize the snapshot
+                      if [[ "${{ inputs.create_pr_snapshot }}" == "true" && -n "${{ steps.start_snapshot.outputs.SNAPSHOT_ID }}" ]]; then
+                          cci task run github_pull_request_snapshot \
+                              --snapshot-id "${{ steps.start_snapshot.outputs.SNAPSHOT_ID }}" \
+                              --build-success "${{ job.status == 'success' }}" \
+                              --build-fail-tests "${{ contains(steps.feature_test.outputs.*, 'ApexTestException') }}" \
+                              --snapshot-is-packaged true \
+                              $([[ -n "${{ inputs.create_snapshot_commit_status }}" ]] && echo "--create-commit-status ${{ inputs.create_snapshot_commit_status }}") \
+                              $([[ -n "${{ inputs.create_snapshot_environment }}" ]] && echo "--create-environment-status ${{ inputs.create_snapshot_environment }}")
 
-                  # If the snapshot creation task was not run, create a snapshot if the build failed
-                  elif [[ "${{ inputs.create_failure_snapshot }}" == "true" && "${{ job.status }}" != "success" ]]; then
-                    cci task run github_pull_request_snapshot \
-                        --build-success false \
-                        --build-fail-tests "${{ contains(steps.feature_test.outputs.*, 'ApexTestException') }}" \
-                        --snapshot-is-packaged true \
-                        $([[ -n "${{ inputs.environment_prefix }}" ]] && echo "--github-environment-prefix ${{ inputs.environment_prefix }}") \
-                        $([[ -n "${{ inputs.commit_status_context }}" ]] && echo "--commit-status-context ${{ inputs.commit_status_context }}")
-                  fi
+
+                      # If the snapshot creation task was not run, create a snapshot if the build failed
+                      elif [[ "${{ inputs.create_failure_snapshot }}" == "true" && "${{ job.status }}" != "success" ]]; then
+                          cci task run github_pull_request_snapshot \
+                              --build-success false \
+                              --build-fail-tests "${{ contains(steps.feature_test.outputs.*, 'ApexTestException') }}" \
+                              --snapshot-is-packaged true \
+                              $([[ -n "${{ inputs.create_snapshot_commit_status }}" ]] && echo "--create-commit-status ${{ inputs.create_snapshot_commit_status }}") \
+                              $([[ -n "${{ inputs.create_snapshot_environment }}" ]] && echo "--create-environment-status ${{ inputs.create_snapshot_environment }}")
+                      fi
+                  } || {
+                      echo "::error::Apex test failure. Please review the logs for more information."}
+                      cci error info
+                      exit 1
+                  }
               shell: bash
 
             - name: Delete Scratch Org
               if: ${{ always() }}
               run: cci org scratch_delete feature
               shell: bash
-
-    # report-status:
-    #     needs: check-build-status
-    #     if: needs.check-build-status.outputs.should_build == 'false' && needs.check-build-status.outputs.in_progress != 'true'
-    #     runs-on: ubuntu-latest
-    #     steps:
-    #         - name: Report Status
-    #           env:
-    #               GITHUB_TOKEN: ${{ secrets.github-token }}
-    #           run: |
-    #               gh api \
-    #                 --method POST \
-    #                 -H "Accept: application/vnd.github+json" \
-    #                 "/repos/${{ github.repository }}/statuses/${{ github.sha }}" \
-    #                 -f state="success" \
-    #                 -f context="${{ inputs.commit_status_context }}" \
-    #                 -f description="Build skipped. Previous successful build found." \
-    #                 -f target_url="${{ needs.check-build-status.outputs.original_run_url }}"
-
-    # wait-for-in-progress:
-    #     needs: check-build-status
-    #     if: needs.check-build-status.outputs.in_progress == 'true'
-    #     runs-on: ubuntu-latest
-    #     steps:
-    #         - name: Wait for in-progress workflow
-    #           env:
-    #               GITHUB_TOKEN: ${{ secrets.github-token }}
-    #           run: |
-    #               echo "An in-progress workflow was detected. Exiting without reporting a status."
-    #               exit 0

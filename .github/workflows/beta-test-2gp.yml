@@ -1,28 +1,68 @@
 name: Beta Test 2GP
 
 on:
-  workflow_call:
-    secrets:
-      dev-hub-auth-url:
-        required: true
-      gh-email:
-        required: true      
-      github-token:
-        required: true
+    workflow_call:
+        inputs:
+            debug:
+                description: "Enable debug logging output for CumulusCI"
+                required: false
+                default: false
+                type: boolean
+            package_version_id:
+                description: "The 04t ID of the package version to promote. if not provided, the latest beta package version will be promoted."
+                required: false
+                type: string
+            snapshot_name:
+                description: If provided, a snapshot will be created with this name after the post-install configuration is complete.
+                required: true
+                type: string
+                default: Beta
+            create_snapshot_commit_status:
+                required: false
+                default: true
+                description: "If true, a commit status will be set for the build. This is useful for tracking the status of the snapshot creation task."
+                type: boolean
+            create_snapshot_environment:
+                required: false
+                default: false
+                description: "If true, a GitHub Environment will be created for the snapshot."
+                type: boolean
+        secrets:
+            dev-hub-auth-url:
+                required: false
+            dev-hub-username:
+                required: false
+            dev-hub-client-id:
+                required: false
+            dev-hub-private-key:
+                required: false
+            gh-email:
+                required: true
+            github-token:
+                required: true
+            github-app-id:
+                required: false
+            github-app-key:
+                required: false
 
 jobs:
     beta-test:
         name: "Beta Test 2GP"
         runs-on: ubuntu-latest
         container:
-            image: ghcr.io/muselab-d2x/d2x:cumulusci-next
+            image: ghcr.io/muselab-d2x/d2x:cumulusci-next-snapshots
             options: --user root
             credentials:
                 username: "${{ github.actor }}"
                 password: "${{ secrets.github-token }}"
             env:
                 DEV_HUB_AUTH_URL: "${{ secrets.dev-hub-auth-url }}"
-                CUMULUSCI_SERVICE_github: "{ \"username\": \"${{ github.actor }}\", \"token\": \"${{ secrets.github-token }}\", \"email\": \"${{ secrets.gh-email }}\" }"
+                DEV_HUB_USERNAME: "${{ secrets.dev-hub-username }}"
+                DEV_HUB_CLIENT_ID: "${{ secrets.dev-hub-client-id }}"
+                DEV_HUB_PRIVATE_KEY: "${{ secrets.dev-hub-private-key }}"
+                CUMULUSCI_SERVICE_github: '{ "username": "${{ github.actor }}", "token": "${{ secrets.github-token }}", "email": "${{ secrets.gh-email }}" }'
+                GITHUB_APP_ID: "${{ secrets.github-app-id }}"
+                GITHUB_APP_KEY: "${{ secrets.github-app-key }}"
         steps:
             - name: Checkout
               uses: actions/checkout@v2
@@ -31,14 +71,89 @@ jobs:
             - name: Set default org
               run: cci org default beta
             - name: Install Dependencies for Resolution
-              run: cci flow run dependencies
-            - name: Build Beta Package
-              run: cci flow run release_2gp_beta
+              run: |
+                  set -e {
+                    cci flow run dependencies \
+                        $([[ "${{ inputs.debug }}" == "true" ]] && echo " --debug")
+                  } || {
+                    echo "::error::Failed to install dependencies. Running cci error info..."}
+                    cci error info
+                    exit 1
+                  }
               shell: bash
-            - name: Run Beta Test
-              run: cci flow run ci_beta
+
+            - name: Build Beta Package
+              run: |
+                  set -e {
+                      cci flow run release_2gp_beta \
+                          $([[ "${{ inputs.debug }}" == "true" ]] && echo " --debug")
+                  } || {
+                      echo "::error::Failed to build beta package. Running cci error info..."}
+                      cci error info
+                      exit 1
+                  }
+              shell: bash
+            - name: Install and Configure Beta Package
+              run: |
+                  {
+                      cci flow run ci_beta \
+                          --skip-from run-tests \
+                          $([[ "${{ inputs.debug }}" == "true" ]] && echo " --debug")
+                  } || {
+                      echo "::error::Failed to run beta test. Running cci error info..."}
+                      cci error info
+                      exit 1
+                  }
+                    - name: Start Scratch Org Snapshot
+            - name: Start Snapshot
+              id: start_snapshot
+              if: ${{ inputs.snapshot_name != '' }}
+              run: |
+                  set -e {
+                      cci task run create_snapshot \
+                          --wait False \
+                          --snapshot-name ${{ inputs.snapshot_name }} \
+                          $([[ "${{ inputs.debug }}" == "true" ]] && echo " --debug") \
+                          $([[ "${{ inputs.create_snapshot_commit_status }}" == "true" ]] && echo " --create-commit-status") \
+                          $([[ "${{ inputs.create_snapshot_environment }}" == "true" ]] && echo " --create-environment") \
+                          $([[ "${{ inputs.debug }}" == "true" ]] && echo " --debug")
+                  } || {
+                      echo "::error::Failed to start the snapshot. Running cci error info..."
+                      cci error info
+                      exit 1
+                  }
+              shell: bash
+            - name: Run Apex Tests
+              run: |
+                  set -e {
+                      cci flow run ci_beta --start-from run_tests \
+                          $([[ "${{ inputs.debug }}" == "true" ]] && echo " --debug")
+                  } || {
+                      echo "::error::Apex test failure. Running cci error info..."
+                      cci error info
+                      exit 1
+                  }
+              shell: bash
+              continue-on-error: true
+            - name: Finalize Snapshot
+              if: (inputs.snapshot_name != '' && "${{ steps.start_snapshot.outputs.SNAPSHOT_ID}}" != "")
+              run: |
+                  set -e {
+                      cci task run create_snapshot \
+                          --wait True \
+                          --snapshot-id ${{ inputs.snapshot_name }} \
+                          $([[ "${{ inputs.debug }}" == "true" ]] && echo " --debug") \
+                          $([[ -n "${{ inputs.create_snapshot_commit_status }}" ]] && echo "--create-commit-status ${{ inputs.create_snapshot_commit_status }}") \
+                          $([[ -n "${{ inputs.create_snapshot_environment }}" ]] && echo "--create-environment-status ${{ inputs.create_snapshot_environment }}")
+                  } || {
+                      echo "::error::Failed to finalize the snapshot. Running cci error info..."
+                      cci error info
+                      exit 1
+                  }
+              shell: bash
+
             - name: Delete Scratch Org
               if: ${{ always() }}
               run: |
-                cci org scratch_delete beta
+                  cci org scratch_delete beta
               shell: bash

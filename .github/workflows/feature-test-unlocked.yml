@@ -1,34 +1,34 @@
 name: 2GP Feature Test
 
 on:
-  workflow_call:
-    inputs:
-      debug:
-        required: false
-        default: false
-        type: boolean
-          
-    secrets:
-      # Either dev-hub-auth-url or dev-hub-username, dev-hub-client-id, and dev-hub-private-key are required
-      dev-hub-auth-url:
-        required: false
-      dev-hub-username:
-        required: false
-      dev-hub-client-id:
-        required: false
-      dev-hub-private-key:
-        required: false      
-      gh-email:
-        required: true      
-      github-token:
-        required: true
+    workflow_call:
+        inputs:
+            debug:
+                required: false
+                default: false
+                type: boolean
+
+        secrets:
+            # Either dev-hub-auth-url or dev-hub-username, dev-hub-client-id, and dev-hub-private-key are required
+            dev-hub-auth-url:
+                required: false
+            dev-hub-username:
+                required: false
+            dev-hub-client-id:
+                required: false
+            dev-hub-private-key:
+                required: false
+            gh-email:
+                required: true
+            github-token:
+                required: true
 
 jobs:
     feature-test:
         name: "2GP Feature Test"
         runs-on: ubuntu-latest
         container:
-            image: ghcr.io/muselab-d2x/d2x:cumulusci-next
+            image: ghcr.io/muselab-d2x/d2x:cumulusci-next-snapshots
             options: --user root
             credentials:
                 username: ${{ github.actor }}
@@ -38,7 +38,7 @@ jobs:
                 DEV_HUB_USERNAME: "${{ secrets.dev-hub-username }}"
                 DEV_HUB_CLIENT_ID: "${{ secrets.dev-hub-client-id }}"
                 DEV_HUB_PRIVATE_KEY: "${{ secrets.dev-hub-private-key }}"
-                CUMULUSCI_SERVICE_github: "{ \"username\": \"${{ github.actor }}\", \"token\": \"${{ secrets.github-token }}\", \"email\": \"${{ secrets.gh-email }}\" }"
+                CUMULUSCI_SERVICE_github: '{ "username": "${{ github.actor }}", "token": "${{ secrets.github-token }}", "email": "${{ secrets.gh-email }}" }'
         steps:
             - name: Checkout
               uses: actions/checkout@v2
@@ -48,12 +48,12 @@ jobs:
               run: cci org default feature
             - name: Build Feature Test Package
               env:
-                  GITHUB_TOKEN: '${{ secrets.github-token }}'
+                  GITHUB_TOKEN: "${{ secrets.github-token }}"
               run: cci flow run build_unlocked_test_package $([[ "${{ inputs.debug }}" == "true" ]] && echo " --debug") | tee cumulusci-flow.log
               shell: bash
             - name: Set Commit Status
               env:
-                  GITHUB_TOKEN: '${{ secrets.github-token }}'
+                  GITHUB_TOKEN: "${{ secrets.github-token }}"
               run: |
                   VERSION=$(cat cumulusci-flow.log | grep -o -E -m 1 "04t[a-zA-Z0-9]{15}")
                   gh api \
@@ -66,21 +66,21 @@ jobs:
               shell: bash
             - name: Install Unlocked Package
               env:
-                  GITHUB_TOKEN: '${{ secrets.github-token }}'
+                  GITHUB_TOKEN: "${{ secrets.github-token }}"
               run: cci flow run install_unlocked_commit
               shell: bash
             - name: Configure for Apex Tests
               env:
-                  GITHUB_TOKEN: '${{ secrets.github-token }}'
+                  GITHUB_TOKEN: "${{ secrets.github-token }}"
               run: cci flow run config_apextest
               shell: bash
             - name: Run Tests
               env:
-                  GITHUB_TOKEN: '${{ secrets.github-token }}'
+                  GITHUB_TOKEN: "${{ secrets.github-token }}"
               run: cci task run run_tests
               shell: bash
             - name: Delete Scratch Org
               if: ${{ always() }}
               run: |
-                cci org scratch_delete feature
+                  cci org scratch_delete feature
               shell: bash
