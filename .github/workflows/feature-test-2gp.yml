@@ -101,6 +101,8 @@ jobs:
         env:
           GITHUB_TOKEN: "${{ secrets.github-token }}"
         run: cci flow run ci_feature_2gp -o install_managed__password ${{ env.CR_PKG_KEY }}
+      - name: Run Robot Tests
+        run: cci task run robot --org feature
       - name: Delete Scratch Org
         if: ${{ always() }}
         run: |
