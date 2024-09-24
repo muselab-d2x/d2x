@@ -1,9 +1,6 @@
 FROM python:3.11-slim-bookworm
 
 LABEL org.opencontainers.image.source = "https://github.com/muselab-d2x/d2x"
-ENV CHROMEDRIVER_VERSION 2.19
-ENV CHROMEDRIVER_DIR /chromedriver
-
 
 # Install sfdx
 RUN apt-get update
