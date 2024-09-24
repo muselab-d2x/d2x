@@ -36,7 +36,6 @@ RUN npx @puppeteer/browsers install chromedriver@116.0.5793.0
 # Install CumulusCI
 RUN pip install --no-cache-dir --upgrade pip pip-tools && \
   pip install --no-cache-dir cumulusci cookiecutter
-
 # Copy devhub auth script and make it executable
 COPY devhub.sh /usr/local/bin/devhub.sh
 COPY ./scripts/log_package.py /usr/local/bin/log_package.py
