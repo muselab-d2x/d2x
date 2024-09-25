@@ -13,6 +13,8 @@ on:
                 default: false
                 type: boolean
         secrets:
+            dev-hub-auth-url:
+                required: true
             packaging-org-auth-url:
                 required: true
 
