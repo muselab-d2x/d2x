@@ -2,6 +2,10 @@ name: Production Release
 
 on:
     workflow_call:
+        inputs:
+            release-name:
+                required: false
+                type: string
         secrets:
             dev-hub-auth-url:
                 required: true
@@ -34,7 +38,7 @@ jobs:
             - name: Deploy to Packaging Org
               run: cci flow run ci_master --org packaging
             - name: Build Production Package
-              run: cci flow run release_production --org packaging
+              run: cci flow run release_production --org packaging $([[ "${{ inputs.release-name }}" ]] && echo " --options upload_production__name${{ inputs.release-name }}")
               shell: bash
             - name: Run Beta Test
               run: cci flow run ci_release --org release
