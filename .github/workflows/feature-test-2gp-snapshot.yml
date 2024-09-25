@@ -7,6 +7,11 @@ on:
                 default: false
                 description: "Enable debug logging output for CumulusCI"
                 type: boolean
+            org_name:
+                required: false
+                default: feature
+                description: "The name of the scratch org profile to use for the source org. If not provided, the org named 'feature' will be used."
+                type: string
             create_pr_snapshot:
                 required: false
                 default: false
@@ -27,7 +32,6 @@ on:
                 default: false
                 description: "If true, a GitHub Environment will be created for the snapshot."
                 type: boolean
-
         secrets:
             dev-hub-auth-url:
                 required: false
@@ -73,9 +77,9 @@ jobs:
             - name: Auth to DevHub
               run: /usr/local/bin/devhub.sh
 
-            - name: Set feature org as default org
+            - name: Set ${{ inputs.org_name }} org as default org
               run: |
-                  cci org default feature
+                  cci org default ${{ inputs.org_name }}
                   cci org info feature
 
             - name: Build Feature Test Package
@@ -181,5 +185,5 @@ jobs:
 
             - name: Delete Scratch Org
               if: ${{ always() }}
-              run: cci org scratch_delete feature
+              run: cci org scratch_delete ${{ inputs.org_name }}
               shell: bash
