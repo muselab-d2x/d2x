@@ -25,6 +25,7 @@ jobs:
             image: ghcr.io/muselab-d2x/d2x:cumulusci-next
             options: --user root
             env:
+                DEV_HUB_AUTH_URL: "${{ secrets.dev-hub-auth-url }}"
                 PACKAGING_ORG_AUTH_URL: "${{ secrets.packaging-org-auth-url }}"
         steps:
             - name: Checkout
