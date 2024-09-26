@@ -83,7 +83,7 @@ jobs:
         runs-on: ubuntu-latest
         needs: select_d2x_docker_image
         container:
-            image: ${{ inputs.docker_image }}:${{ inputs.docker_tag }}${{ needs.calculate-tag-suffix.outputs.tag_suffix }}
+            image: ${{ inputs.docker_image }}:${{ inputs.docker_tag }}${{ needs.select_d2x_docker_image.outputs.tag_suffix }}
             options: --user root
             credentials:
                 username: "${{ github.actor }}"
