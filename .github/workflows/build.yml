@@ -12,7 +12,7 @@ jobs:
         runs-on: ubuntu-latest
         strategy:
             matrix:
-                target: [no-browser, chromedriver, playwright, full-browser]
+                target: [no-browser, browser]
                 platform: [linux/amd64, linux/arm64]
         steps:
             - name: Checkout repository

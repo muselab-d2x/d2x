@@ -27,24 +27,24 @@ RUN echo 'export PATH=~/.local/bin:$PATH' >> /root/.bashrc && \
   echo '/usr/local/bin/devhub.sh' >> /root/.bashrc && \
   echo '/usr/local/bin/devhub.sh' >> /home/d2x/.bashrc
 
-# Stage for ChromeDriver
-FROM base AS chromedriver
+# # Stage for ChromeDriver
+# FROM base AS chromedriver
 
-# Install ChromeDriver
-RUN apt-get install -y wget unzip && \
-  wget -O /tmp/chromedriver.zip https://chromedriver.storage.googleapis.com/$(curl -s https://chromedriver.storage.googleapis.com/LATEST_RELEASE)/chromedriver_linux64.zip && \
-  unzip /tmp/chromedriver.zip -d /usr/local/bin/ && \
-  rm /tmp/chromedriver.zip
+# # Install ChromeDriver
+# RUN apt-get install -y wget unzip && \
+#   wget -O /tmp/chromedriver.zip https://chromedriver.storage.googleapis.com/$(curl -s https://chromedriver.storage.googleapis.com/LATEST_RELEASE)/chromedriver_linux64.zip && \
+#   unzip /tmp/chromedriver.zip -d /usr/local/bin/ && \
+#   rm /tmp/chromedriver.zip
 
-# Stage for Playwright
-FROM base AS playwright
+# # Stage for Playwright
+# FROM base AS playwright
 
-# Install Playwright
-RUN npm install -g playwright && \
-  npx playwright install
+# # Install Playwright
+# RUN npm install -g playwright && \
+#   npx playwright install
 
 # Stage for full browser support (ChromeDriver + Playwright)
-FROM base AS full-browser
+FROM base AS browser
 
 # Install ChromeDriver
 RUN apt-get install -y wget unzip && \
