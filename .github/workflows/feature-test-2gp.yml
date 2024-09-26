@@ -39,33 +39,33 @@ on:
                 required: false
 
 jobs:
-    select_d2x_docker_image:
-        name: "Select D2X Docker Image"
-        runs-on: ubuntu-latest
-        outputs:
-            tag_suffix: ${{ steps.set_tag_suffix.outputs.tag_suffix }}
-        steps:
-            - name: Calculate tag suffix
-              id: set_tag_suffix
-              run: |
-                  TAG_SUFFIX=""
-                  if [ "${{ inputs.with_full_browser }}" == "true" ]; then
-                    TAG_SUFFIX=-full-browser
-                    echo "Using full-browser image" >> $GITHUB_STEP_SUMMARY
-                  elif [ "${{ inputs.with_chromedriver }}" == "true" ] && [ "${{ inputs.with_playwright }}" == "true" ]; then
-                    TAG_SUFFIX=-full-browser
-                    echo "Using full-browser image" >> $GITHUB_STEP_SUMMARY
-                  elif [ "${{ inputs.with_chromedriver }}" == "true" ]; then
-                    TAG_SUFFIX=-chromedriver
-                    echo "Using chromedriver image" >> $GITHUB_STEP_SUMMARY
-                  elif [ "${{ inputs.with_playwright }}" == "true" ]; then
-                    TAG_SUFFIX=-playwright
-                    echo "Using playwright image" >> $GITHUB_STEP_SUMMARY
-                  else
-                    TAG_SUFFIX=""
-                    echo "Using default image" >> $GITHUB_STEP_SUMMARY
-                  fi
-                  echo "tag_suffix=$TAG_SUFFIX" >> $GITHUB_OUTPUT
+    # select_d2x_docker_image:
+    #     name: "Select D2X Docker Image"
+    #     runs-on: ubuntu-latest
+    #     outputs:
+    #         tag_suffix: ${{ steps.set_tag_suffix.outputs.tag_suffix }}
+    #     steps:
+    #         - name: Calculate tag suffix
+    #           id: set_tag_suffix
+    #           run: |
+    #               TAG_SUFFIX=""
+    #               if [ "${{ inputs.with_full_browser }}" == "true" ]; then
+    #                 TAG_SUFFIX=-full-browser
+    #                 echo "Using full-browser image" >> $GITHUB_STEP_SUMMARY
+    #               elif [ "${{ inputs.with_chromedriver }}" == "true" ] && [ "${{ inputs.with_playwright }}" == "true" ]; then
+    #                 TAG_SUFFIX=-full-browser
+    #                 echo "Using full-browser image" >> $GITHUB_STEP_SUMMARY
+    #               elif [ "${{ inputs.with_chromedriver }}" == "true" ]; then
+    #                 TAG_SUFFIX=-chromedriver
+    #                 echo "Using chromedriver image" >> $GITHUB_STEP_SUMMARY
+    #               elif [ "${{ inputs.with_playwright }}" == "true" ]; then
+    #                 TAG_SUFFIX=-playwright
+    #                 echo "Using playwright image" >> $GITHUB_STEP_SUMMARY
+    #               else
+    #                 TAG_SUFFIX=""
+    #                 echo "Using default image" >> $GITHUB_STEP_SUMMARY
+    #               fi
+    #               echo "tag_suffix=$TAG_SUFFIX" >> $GITHUB_OUTPUT
 
     feature-test:
         name: "2GP Feature Test"
