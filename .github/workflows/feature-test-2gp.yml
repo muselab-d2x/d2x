@@ -16,21 +16,9 @@ on:
                 default: ghcr.io/muselab-d2x/d2x
                 type: string
             docker_tag:
+                type: string
                 required: false
                 default: cumulusci-next
-                type: string
-            with_chromedriver:
-                required: false
-                default: false
-                type: boolean
-            with_playwright:
-                required: false
-                default: false
-                type: boolean
-            with_full_browser:
-                required: false
-                default: false
-                type: boolean
 
         secrets:
             dev-hub-auth-url:
@@ -82,9 +70,10 @@ jobs:
     feature-test:
         name: "2GP Feature Test"
         runs-on: ubuntu-latest
-        needs: select_d2x_docker_image
+        # needs: select_d2x_docker_image
         container:
-            image: ${{ inputs.docker_image }}:${{ inputs.docker_tag }}${{ needs.select_d2x_docker_image.outputs.tag_suffix }}
+            image: ${{ inputs.docker_image }}:${{ inputs.docker_tag }}
+            # image: ${{ inputs.docker_image }}:${{ inputs.docker_tag }}${{ needs.select_d2x_docker_image.outputs.tag_suffix }}
             options: --user root
             credentials:
                 username: "${{ github.actor }}"
@@ -98,9 +87,6 @@ jobs:
                 GITHUB_APP_ID: "${{ secrets.github-app-id }}"
                 GITHUB_APP_KEY: "${{ secrets.github-app-key }}"
         steps:
-            - name: Debug Docker Tag
-              run: |
-                  echo "Using Docker image: ${{ inputs.docker_image }}:${{ inputs.docker_tag }}${{ needs.select_d2x_docker_image.outputs.tag_suffix }}"
             - name: Checkout
               uses: actions/checkout@v3
             - name: Auth to DevHub
