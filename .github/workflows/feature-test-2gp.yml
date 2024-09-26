@@ -62,16 +62,16 @@ jobs:
               run: |
                   TAG_SUFFIX=""
                   if [ "${{ inputs.with_full_browser }}" == "true" ]; then
-                    TAG_SUFFIX=-full-browser"
+                    TAG_SUFFIX=-full-browser
                     echo "Using full-browser image" >> $GITHUB_STEP_SUMMARY
                   elif [ "${{ inputs.with_chromedriver }}" == "true" ] && [ "${{ inputs.with_playwright }}" == "true" ]; then
-                    TAG_SUFFIX=-full-browser"
+                    TAG_SUFFIX=-full-browser
                     echo "Using full-browser image" >> $GITHUB_STEP_SUMMARY
                   elif [ "${{ inputs.with_chromedriver }}" == "true" ]; then
-                    TAG_SUFFIX=-chromedriver"
+                    TAG_SUFFIX=-chromedriver
                     echo "Using chromedriver image" >> $GITHUB_STEP_SUMMARY
                   elif [ "${{ inputs.with_playwright }}" == "true" ]; then
-                    TAG_SUFFIX=-playwright"
+                    TAG_SUFFIX=-playwright
                     echo "Using playwright image" >> $GITHUB_STEP_SUMMARY
                   else
                     TAG_SUFFIX=""
