@@ -44,7 +44,8 @@ jobs:
               with:
                   context: .
                   push: ${{ github.event_name == 'push' }}
-                  tags: ghcr.io/${{ github.repository }}:${{ env.IMAGE_TAG }}-${{ matrix.target }}
+                  tags: |
+                      ghcr.io/${{ github.repository }}:${{ env.IMAGE_TAG }}-${{ matrix.target }}-${{ matrix.platform == 'linux/amd64' && 'amd64' || 'arm64' }}
                   platforms: ${{ matrix.platform }}
                   target: ${{ matrix.target }}
                   cache-from: type=gha
@@ -53,6 +54,9 @@ jobs:
     merge-manifests:
         needs: build
         runs-on: ubuntu-latest
+        strategy:
+            matrix:
+                target: [no-browser, chromedriver, playwright, full-browser]
         steps:
             - name: Login to GitHub Container Registry
               uses: docker/login-action@v2
@@ -69,10 +73,12 @@ jobs:
                     echo "IMAGE_TAG=${{ github.ref_name }}" >> $GITHUB_ENV
                   fi
 
-            - name: Create and push multi-arch manifests
+            - name: Create and push multi-arch manifest
               run: |
-                  for target in no-browser chromedriver playwright full-browser; do
-                    docker buildx imagetools create -t ghcr.io/${{ github.repository }}:${{ env.IMAGE_TAG }}-${target} \
-                      ghcr.io/${{ github.repository }}:${{ env.IMAGE_TAG }}-${target}-linux-amd64 \
-                      ghcr.io/${{ github.repository }}:${{ env.IMAGE_TAG }}-${target}-linux-arm64
-                  done
+                  docker buildx imagetools create -t ghcr.io/${{ github.repository }}:${{ env.IMAGE_TAG }}-${{ matrix.target }} \
+                    ghcr.io/${{ github.repository }}:${{ env.IMAGE_TAG }}-${{ matrix.target }}-amd64 \
+                    ghcr.io/${{ github.repository }}:${{ env.IMAGE_TAG }}-${{ matrix.target }}-arm64
+
+            - name: Inspect manifest
+              run: |
+                  docker buildx imagetools inspect ghcr.io/${{ github.repository }}:${{ env.IMAGE_TAG }}-${{ matrix.target }}
