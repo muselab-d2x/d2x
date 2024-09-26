@@ -60,6 +60,7 @@ jobs:
             - name: Calculate tag suffix
               id: set-tag-suffix
               run: |
+                  TAG_SUFFIX=""
                   if [ "${{ inputs.with_full_browser }}" == "true" ]; then
                     echo "tag_suffix=-full-browser" >> $GITHUB_ENV
                     echo "Using full-browser image" >> $GITHUB_STEP_SUMMARY
@@ -97,8 +98,10 @@ jobs:
                 GITHUB_APP_ID: "${{ secrets.github-app-id }}"
                 GITHUB_APP_KEY: "${{ secrets.github-app-key }}"
         steps:
+            - name: Debug Docker Tag
+              run: echo "Using Docker image: ${{ inputs.docker_image }}:${{ inputs.docker_tag }}${{ needs.select_d2x_docker_image.outputs.tag_suffix }}"
             - name: Checkout
-              uses: actions/checkout@v2
+              uses: actions/checkout@v3
             - name: Auth to DevHub
               run: /usr/local/bin/devhub.sh
             - name: Set ${{ inputs.org }} org as default org

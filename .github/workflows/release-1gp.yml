@@ -5,6 +5,7 @@ on:
         inputs:
             release-name:
                 required: false
+                description: "The name of the release to upload to the production org."
                 type: string
         secrets:
             dev-hub-auth-url:
