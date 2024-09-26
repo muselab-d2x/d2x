@@ -11,9 +11,28 @@ on:
                 required: false
                 default: false
                 type: boolean
+            docker_image:
+                required: false
+                default: ghcr.io/muselab-d2x/d2x
+                type: string
+            docker_tag:
+                required: true
+                default: cumulusci-next
+                type: string
+            with_chromedriver:
+                required: false
+                default: false
+                type: boolean
+            with_playwright:
+                required: false
+                default: false
+                type: boolean
+            with_full_browser:
+                required: false
+                default: false
+                type: boolean
 
         secrets:
-            # Either dev-hub-auth-url or dev-hub-username, dev-hub-client-id, and dev-hub-private-key are required
             dev-hub-auth-url:
                 required: false
             dev-hub-username:
@@ -32,11 +51,33 @@ on:
                 required: false
 
 jobs:
+    calculate-tag-suffix:
+        runs-on: ubuntu-latest
+        outputs:
+            tag_suffix: ${{ steps.set-tag-suffix.outputs.tag_suffix }}
+        steps:
+            - name: Calculate tag suffix
+              id: set-tag-suffix
+              run: |
+                  if [ "${{ inputs.with_full_browser }}" == "true" ]; then
+                    echo "tag_suffix=-full-browser" >> $GITHUB_ENV
+                  elif [ "${{ inputs.with_chromedriver }}" == "true" ] && [ "${{ inputs.with_playwright }}" == "true" ]; then
+                    echo "tag_suffix=-full-browser" >> $GITHUB_ENV
+                  elif [ "${{ inputs.with_chromedriver }}" == "true" ]; then
+                    echo "tag_suffix=-chromedriver" >> $GITHUB_ENV
+                  elif [ "${{ inputs.with_playwright }}" == "true" ]; then
+                    echo "tag_suffix=-playwright" >> $GITHUB_ENV
+                  else
+                    echo "tag_suffix=" >> $GITHUB_ENV
+                  fi
+                  echo "::set-output name=tag_suffix::${{ env.tag_suffix }}"
+
     feature-test:
         name: "2GP Feature Test"
         runs-on: ubuntu-latest
+        needs: calculate-tag-suffix
         container:
-            image: ghcr.io/muselab-d2x/d2x:cumulusci-next
+            image: ${{ inputs.docker_image }}:${{ inputs.docker_tag }}${{ needs.calculate-tag-suffix.outputs.tag_suffix }}
             options: --user root
             credentials:
                 username: "${{ github.actor }}"
