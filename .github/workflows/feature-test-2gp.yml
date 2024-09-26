@@ -99,7 +99,8 @@ jobs:
                 GITHUB_APP_KEY: "${{ secrets.github-app-key }}"
         steps:
             - name: Debug Docker Tag
-              run: echo "Using Docker image: ${{ inputs.docker_image }}:${{ inputs.docker_tag }}${{ needs.select_d2x_docker_image.outputs.tag_suffix }}"
+              run: |
+                  echo "Using Docker image: ${{ inputs.docker_image }}:${{ inputs.docker_tag }}${{ needs.select_d2x_docker_image.outputs.tag_suffix }}"
             - name: Checkout
               uses: actions/checkout@v3
             - name: Auth to DevHub
