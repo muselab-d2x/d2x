@@ -62,22 +62,22 @@ jobs:
               run: |
                   TAG_SUFFIX=""
                   if [ "${{ inputs.with_full_browser }}" == "true" ]; then
-                    echo "tag_suffix=-full-browser" >> $GITHUB_ENV
+                    TAG_SUFFIX=-full-browser"
                     echo "Using full-browser image" >> $GITHUB_STEP_SUMMARY
                   elif [ "${{ inputs.with_chromedriver }}" == "true" ] && [ "${{ inputs.with_playwright }}" == "true" ]; then
-                    echo "tag_suffix=-full-browser" >> $GITHUB_ENV
+                    TAG_SUFFIX=-full-browser"
                     echo "Using full-browser image" >> $GITHUB_STEP_SUMMARY
                   elif [ "${{ inputs.with_chromedriver }}" == "true" ]; then
-                    echo "tag_suffix=-chromedriver" >> $GITHUB_ENV
+                    TAG_SUFFIX=-chromedriver"
                     echo "Using chromedriver image" >> $GITHUB_STEP_SUMMARY
                   elif [ "${{ inputs.with_playwright }}" == "true" ]; then
-                    echo "tag_suffix=-playwright" >> $GITHUB_ENV
+                    TAG_SUFFIX=-playwright"
                     echo "Using playwright image" >> $GITHUB_STEP_SUMMARY
                   else
-                    echo "tag_suffix=" >> $GITHUB_ENV
+                    TAG_SUFFIX=""
                     echo "Using default image" >> $GITHUB_STEP_SUMMARY
                   fi
-                  echo "tag_suffix=${{ env.tag_suffix }}" >> $GITHUB_ENV
+                  echo "tag_suffix=$TAG_SUFFIX" >> $GITHUB_ENV
 
     feature-test:
         name: "2GP Feature Test"
