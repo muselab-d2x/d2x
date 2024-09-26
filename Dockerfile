@@ -52,9 +52,8 @@ RUN apt-get install -y wget unzip && \
   unzip /tmp/chromedriver.zip -d /usr/local/bin/ && \
   rm /tmp/chromedriver.zip
 
-# Install Playwright
-RUN npm install -g playwright && \
-  npx playwright install
+# Install Playwright and Python dependencies
+RUN cci robot install_playwright
 
 # Final stage for no browser automation support
 FROM base AS no-browser
