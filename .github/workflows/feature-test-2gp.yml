@@ -77,7 +77,7 @@ jobs:
                     TAG_SUFFIX=""
                     echo "Using default image" >> $GITHUB_STEP_SUMMARY
                   fi
-                  echo "tag_suffix=$TAG_SUFFIX" >> $GITHUB_ENV
+                  echo "tag_suffix=$TAG_SUFFIX" >> $GITHUB_OUTPUT
 
     feature-test:
         name: "2GP Feature Test"
