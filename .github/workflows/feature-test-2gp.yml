@@ -16,7 +16,7 @@ on:
                 default: ghcr.io/muselab-d2x/d2x
                 type: string
             docker_tag:
-                required: true
+                required: false
                 default: cumulusci-next
                 type: string
             with_chromedriver:
