@@ -46,15 +46,14 @@ RUN echo 'export PATH=~/.local/bin:$PATH' >> /root/.bashrc && \
 # Stage for full browser support (ChromeDriver + Playwright)
 FROM base AS browser
 
-# Install ChromeDriver
-RUN apt-get install -y wget unzip && \
-  wget -O /tmp/chromedriver.zip https://chromedriver.storage.googleapis.com/$(curl -s https://chromedriver.storage.googleapis.com/LATEST_RELEASE)/chromedriver_linux64.zip && \
-  unzip /tmp/chromedriver.zip -d /usr/local/bin/ && \
-  rm /tmp/chromedriver.zip
+# # Install ChromeDriver
+# RUN apt-get install -y wget unzip && \
+#   wget -O /tmp/chromedriver.zip https://chromedriver.storage.googleapis.com/$(curl -s https://chromedriver.storage.googleapis.com/LATEST_RELEASE)/chromedriver_linux64.zip && \
+#   unzip /tmp/chromedriver.zip -d /usr/local/bin/ && \
+#   rm /tmp/chromedriver.zip
 
 # Install Playwright
-RUN npm install -g playwright && \
-  npx playwright install
+RUN cci robot install_playwright
 
 # Final stage for no browser automation support
 FROM base AS no-browser
