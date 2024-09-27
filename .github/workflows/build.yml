@@ -56,7 +56,7 @@ jobs:
         runs-on: ubuntu-latest
         strategy:
             matrix:
-                target: [no-browser, browser]
+                target: ["", -browser]
         steps:
             - name: Login to GitHub Container Registry
               uses: docker/login-action@v2
@@ -76,8 +76,8 @@ jobs:
             - name: Create and push multi-arch manifest
               run: |
                   docker buildx imagetools create -t ghcr.io/${{ github.repository }}:${{ env.IMAGE_TAG }}-${{ matrix.target }} \
-                    ghcr.io/${{ github.repository }}:${{ env.IMAGE_TAG }}-${{ matrix.target }}-amd64 \
-                    ghcr.io/${{ github.repository }}:${{ env.IMAGE_TAG }}-${{ matrix.target }}-arm64
+                    ghcr.io/${{ github.repository }}:${{ env.IMAGE_TAG }}${{ matrix.target }} \
+                    ghcr.io/${{ github.repository }}:${{ env.IMAGE_TAG }}${{ matrix.target }}-arm64
 
             - name: Inspect manifest
               run: |
