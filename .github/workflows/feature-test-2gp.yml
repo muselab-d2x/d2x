@@ -87,6 +87,12 @@ jobs:
                 GITHUB_APP_ID: "${{ secrets.github-app-id }}"
                 GITHUB_APP_KEY: "${{ secrets.github-app-key }}"
         steps:
+            - name: D2X Image Details
+              run: |
+                  echo "D2X Docker Image: ${{ inputs.docker_image }}"
+                  echo "D2X Docker Tag: ${{ inputs.docker_tag }}"
+                  echo "D2X Docker Image: `${{ inputs.docker_image }}:${{ inputs.docker_tag }}`" >> $GITHUB_STEP_SUMMARY
+              shell: bash
             - name: Checkout
               uses: actions/checkout@v3
             - name: Auth to DevHub
