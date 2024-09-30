@@ -53,7 +53,8 @@ FROM base AS browser
 #   rm /tmp/chromedriver.zip
 
 # Install Playwright
-RUN cci robot install_playwright
+RUN cci robot install_playwright \
+  && npx playwright install-deps
 
 # Final stage for no browser automation support
 FROM base AS no-browser
