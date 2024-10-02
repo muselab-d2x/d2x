@@ -52,6 +52,7 @@ jobs:
                       exit 1
                     fi
                   done
+              shell: bash
 
             - name: Run CumulusCI automerge task
               env:
@@ -96,3 +97,4 @@ jobs:
                       cci error info
                       exit $CCI_EXIT_CODE
                   fi
+              shell: bash
