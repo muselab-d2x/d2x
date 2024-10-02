@@ -11,9 +11,16 @@ on:
                 required: false
                 default: false
                 type: boolean
+            docker_image:
+                required: false
+                default: ghcr.io/muselab-d2x/d2x
+                type: string
+            docker_tag:
+                type: string
+                required: false
+                default: cumulusci-next
 
         secrets:
-            # Either dev-hub-auth-url or dev-hub-username, dev-hub-client-id, and dev-hub-private-key are required
             dev-hub-auth-url:
                 required: false
             dev-hub-username:
@@ -32,11 +39,41 @@ on:
                 required: false
 
 jobs:
+    # select_d2x_docker_image:
+    #     name: "Select D2X Docker Image"
+    #     runs-on: ubuntu-latest
+    #     outputs:
+    #         tag_suffix: ${{ steps.set_tag_suffix.outputs.tag_suffix }}
+    #     steps:
+    #         - name: Calculate tag suffix
+    #           id: set_tag_suffix
+    #           run: |
+    #               TAG_SUFFIX=""
+    #               if [ "${{ inputs.with_full_browser }}" == "true" ]; then
+    #                 TAG_SUFFIX=-full-browser
+    #                 echo "Using full-browser image" >> $GITHUB_STEP_SUMMARY
+    #               elif [ "${{ inputs.with_chromedriver }}" == "true" ] && [ "${{ inputs.with_playwright }}" == "true" ]; then
+    #                 TAG_SUFFIX=-full-browser
+    #                 echo "Using full-browser image" >> $GITHUB_STEP_SUMMARY
+    #               elif [ "${{ inputs.with_chromedriver }}" == "true" ]; then
+    #                 TAG_SUFFIX=-chromedriver
+    #                 echo "Using chromedriver image" >> $GITHUB_STEP_SUMMARY
+    #               elif [ "${{ inputs.with_playwright }}" == "true" ]; then
+    #                 TAG_SUFFIX=-playwright
+    #                 echo "Using playwright image" >> $GITHUB_STEP_SUMMARY
+    #               else
+    #                 TAG_SUFFIX=""
+    #                 echo "Using default image" >> $GITHUB_STEP_SUMMARY
+    #               fi
+    #               echo "tag_suffix=$TAG_SUFFIX" >> $GITHUB_OUTPUT
+
     feature-test:
         name: "2GP Feature Test"
         runs-on: ubuntu-latest
+        # needs: select_d2x_docker_image
         container:
-            image: ghcr.io/muselab-d2x/d2x:cumulusci-next-snapshots
+            image: ${{ inputs.docker_image }}:${{ inputs.docker_tag }}
+            # image: ${{ inputs.docker_image }}:${{ inputs.docker_tag }}${{ needs.select_d2x_docker_image.outputs.tag_suffix }}
             options: --user root
             credentials:
                 username: "${{ github.actor }}"
@@ -50,8 +87,14 @@ jobs:
                 GITHUB_APP_ID: "${{ secrets.github-app-id }}"
                 GITHUB_APP_KEY: "${{ secrets.github-app-key }}"
         steps:
+            - name: D2X Image Details
+              run: |
+                  echo "D2X Docker Image: ${{ inputs.docker_image }}"
+                  echo "D2X Docker Tag: ${{ inputs.docker_tag }}"
+                  echo "D2X Docker Image: `${{ inputs.docker_image }}:${{ inputs.docker_tag }}`" >> $GITHUB_STEP_SUMMARY
+              shell: bash
             - name: Checkout
-              uses: actions/checkout@v2
+              uses: actions/checkout@v3
             - name: Auth to DevHub
               run: /usr/local/bin/devhub.sh
             - name: Set ${{ inputs.org }} org as default org

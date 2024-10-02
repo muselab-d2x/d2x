@@ -13,6 +13,8 @@ on:
                 default: false
                 type: boolean
         secrets:
+            dev-hub-auth-url:
+                required: true
             packaging-org-auth-url:
                 required: true
 
@@ -25,6 +27,7 @@ jobs:
             image: ghcr.io/muselab-d2x/d2x:cumulusci-next-snapshots
             options: --user root
             env:
+                DEV_HUB_AUTH_URL: "${{ secrets.dev-hub-auth-url }}"
                 PACKAGING_ORG_AUTH_URL: "${{ secrets.packaging-org-auth-url }}"
         steps:
             - name: Checkout

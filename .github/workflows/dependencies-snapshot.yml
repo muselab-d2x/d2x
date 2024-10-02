@@ -50,8 +50,8 @@ on:
                 required: false
 
 jobs:
-    beta-test:
-        name: "Beta Test 2GP"
+    snapshot-dependencies:
+        name: "Snapshot Dependencies"
         runs-on: ubuntu-latest
         container:
             image: ghcr.io/muselab-d2x/d2x:cumulusci-next-snapshots

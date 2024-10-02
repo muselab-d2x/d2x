@@ -1,0 +1,97 @@
+name: CumulusCI Automerge
+
+on:
+    workflow_call:
+        inputs:
+            merge_target:
+                description: "Target for automerge (main or feature)"
+                required: true
+                type: string
+            triggering_workflows:
+                description: "Comma-separated list of workflow names that must complete successfully"
+                required: true
+                type: string
+            branch_name:
+                description: "Name of the branch to checkout"
+                required: true
+                type: string
+        secrets:
+            github-token:
+                required: true
+            github-app-id:
+                required: false
+            github-app-key:
+                required: false
+
+jobs:
+    automerge:
+        if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/feature/')
+        runs-on: ubuntu-latest
+        container:
+            image: ghcr.io/muselab-d2x/d2x:cumulusci-next
+            credentials:
+                username: ${{ github.actor }}
+                password: ${{ secrets.github-token }}
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v3
+              with:
+                  ref: ${{ inputs.branch_name }}
+
+            - name: Check workflow statuses
+              env:
+                  GITHUB_TOKEN: ${{ secrets.github-token }}
+              run: |
+                  IFS=',' read -ra WORKFLOWS <<< "${{ inputs.triggering_workflows }}"
+                  for workflow in "${WORKFLOWS[@]}"; do
+                    echo "Checking status for workflow: $workflow"
+                    status=$(gh run list --workflow="$workflow" --branch="${{ inputs.branch_name }}" --json conclusion --jq '.[0].conclusion')
+                    if [ "$status" != "success" ]; then
+                      echo "Workflow $workflow has not completed successfully. Current status: $status"
+                      exit 1
+                    fi
+                  done
+
+                  - name: Run CumulusCI automerge task
+                  env:
+                    GITHUB_TOKEN: ${{ secrets.github-token }}
+                    GITHUB_APP_ID: ${{ secrets.github-app-id }}
+                    GITHUB_APP_KEY: ${{ secrets.github-app-key }}
+                  run: |
+                    set +e  # Allow the script to continue if the cci task fails
+                    if [ "${{ inputs.merge_target }}" = "main" ]; then
+                      cci task run github_automerge_main | tee merge_output.log
+                    elif [ "${{ inputs.merge_target }}" = "feature" ]; then
+                      cci task run github_automerge_feature | tee merge_output.log
+                    else
+                      echo "Invalid merge target specified"
+                      exit 1
+                    fi
+                    CCI_EXIT_CODE=$?
+                    set -e  # Re-enable exit on error
+
+                    echo "## Merge Operation Summary" >> $GITHUB_STEP_SUMMARY
+                    echo "Target: ${{ inputs.merge_target }}" >> $GITHUB_STEP_SUMMARY
+                    echo "Branch: ${{ inputs.branch_name }}" >> $GITHUB_STEP_SUMMARY
+                    echo "" >> $GITHUB_STEP_SUMMARY
+                    echo "### Results" >> $GITHUB_STEP_SUMMARY
+                    echo '```' >> $GITHUB_STEP_SUMMARY
+                    grep -E "Merged|Skipping branch|Merge conflict" merge_output.log | sed 's/^//' >> $GITHUB_STEP_SUMMARY
+                    echo '```' >> $GITHUB_STEP_SUMMARY
+
+                    # Check if any merges were performed
+                    if ! grep -q -E "Merged|Skipping branch|Merge conflict" merge_output.log; then
+                      echo "No merge operations were performed." >> $GITHUB_STEP_SUMMARY
+                    fi
+
+                    # Check if there was an error and run cci error info if so
+                    if [ $CCI_EXIT_CODE -ne 0 ]; then
+                      echo "### Error Details" >> $GITHUB_STEP_SUMMARY
+                      echo '```' >> $GITHUB_STEP_SUMMARY
+                      cci error info >> $GITHUB_STEP_SUMMARY 2>&1
+                      echo '```' >> $GITHUB_STEP_SUMMARY
+
+                      echo "CumulusCI task failed. Error details:"
+                      cci error info
+                      exit $CCI_EXIT_CODE
+                    fi
