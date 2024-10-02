@@ -29,6 +29,7 @@ jobs:
         runs-on: ubuntu-latest
         container:
             image: ghcr.io/muselab-d2x/d2x:cumulusci-next
+            options: --user root
             credentials:
                 username: ${{ github.actor }}
                 password: ${{ secrets.github-token }}
