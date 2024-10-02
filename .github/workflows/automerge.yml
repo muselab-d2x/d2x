@@ -39,6 +39,9 @@ jobs:
               with:
                   ref: ${{ inputs.branch_name }}
 
+            - name: Configure Git safe directory
+              run: git config --global --add safe.directory $GITHUB_WORKSPACE
+
             - name: Check workflow statuses
               env:
                   GITHUB_TOKEN: ${{ secrets.github-token }}
