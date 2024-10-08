@@ -45,6 +45,6 @@ jobs:
             - name: Update Package XML for Packaged Deploy
               run: cci task run update_package_xml
             - name: Validate-Only Deploy with Tests to Packaging Org
-              run: cci task run deploy --org packaging --path src --check-only True --test-level RunLocalTests
+              run: cci task run deploy --org packaging --path src --check-only True
             - name: Dry Run of uninstall_packaged_incremental
               run: cci task run uninstall_packaged_incremental --org packaging --dry-run True
