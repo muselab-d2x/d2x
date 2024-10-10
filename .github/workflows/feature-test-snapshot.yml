@@ -133,12 +133,22 @@ jobs:
             - name: Capture CumulusCI Build History
               if: always()
               run: |
+                  cci history list
+                  cci history dependencies
+                  cci history dependencies --json > cci_dependencies_history.json
                   cci history list --json > cci_build_history.json
               shell: bash
 
+            - name: Upload CumulusCI Dependencies History
+              if: always()
+              uses: actions/upload-artifact@v4
+              with:
+                  name: cci-dependencies-history
+                  path: cci_dependencies_history.json
+
             - name: Upload CumulusCI Build History
               if: always()
-              uses: actions/upload-artifact@v2
+              uses: actions/upload-artifact@v4
               with:
                   name: cci-build-history
                   path: cci_build_history.json
