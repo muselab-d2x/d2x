@@ -70,7 +70,7 @@ jobs:
                 GITHUB_APP_KEY: "${{ secrets.github-app-key }}"
         steps:
             - name: Checkout
-              uses: actions/checkout@v2
+              uses: actions/checkout@v4
 
             - name: Auth to DevHub
               run: /usr/local/bin/devhub.sh
@@ -78,7 +78,6 @@ jobs:
             - name: Set ${{ inputs.org_name }} org as default org
               run: |
                   cci org default ${{ inputs.org_name }}
-                  cci org info feature
 
             - name: Prepare Feature Test Org
               id: prepare_org
