@@ -1,25 +1,29 @@
 name: Beta Test
 
 on:
-  workflow_call:
-    inputs:
-      env-name:
-        required: true
-        default: 1GP Packaging Beta
-        type: string
-      debug:
-        required: false
-        default: false
-        type: boolean
-    secrets:
-      packaging-org-auth-url:
-        required: true
-      dev-hub-auth-url:
-        required: true
-      gh-email:
-        required: true      
-      github-token:
-        required: true
+    workflow_call:
+        inputs:
+            env-name:
+                required: true
+                default: 1GP Packaging Beta
+                type: string
+            debug:
+                required: false
+                default: false
+                type: boolean
+        secrets:
+            packaging-org-auth-url:
+                required: true
+            dev-hub-auth-url:
+                required: true
+            gh-email:
+                required: true
+            github-token:
+                required: true
+            github-app-id:
+                required: false
+            github-app-key:
+                required: false
 
 jobs:
     beta-test:
@@ -35,7 +39,9 @@ jobs:
             env:
                 DEV_HUB_AUTH_URL: "${{ secrets.dev-hub-auth-url }}"
                 PACKAGING_ORG_AUTH_URL: "${{ secrets.packaging-org-auth-url }}"
-                CUMULUSCI_SERVICE_github: "{ \"username\": \"${{ github.actor }}\", \"token\": \"${{ secrets.github-token }}\", \"email\": \"${{ secrets.gh-email }}\" }"
+                CUMULUSCI_SERVICE_github: '{ "username": "${{ github.actor }}", "token": "${{ secrets.github-token }}", "email": "${{ secrets.gh-email }}" }'
+                GITHUB_APP_ID: "${{ secrets.github-app-id }}"
+                GITHUB_APP_KEY: "${{ secrets.github-app-key }}"
         steps:
             - name: Checkout
               uses: actions/checkout@v2
@@ -51,5 +57,5 @@ jobs:
             - name: Delete Scratch Org
               if: ${{ always() }}
               run: |
-                cci org scratch_delete beta
+                  cci org scratch_delete beta
               shell: bash
