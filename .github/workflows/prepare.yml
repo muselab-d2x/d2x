@@ -94,4 +94,48 @@ jobs:
               id: pull-image
               run: |
                   echo "Pulling Docker image: ${{ steps.set_vars.outputs.full_image_name }}"
-                  docker pull ${{ steps.set_vars.outputs.fu
+                  docker pull ${{ steps.set_vars.outputs.full_image_name }}
+                  docker save ${{ steps.set_vars.outputs.full_image_name }} > /tmp/.docker-cache/images.tar
+
+            - name: Generate Job Summary
+              run: |
+                  echo "# D2X Docker Preparation Summary" >> $GITHUB_STEP_SUMMARY
+                  echo "## Docker Image Details" >> $GITHUB_STEP_SUMMARY
+                  echo "- **Repository:** ${{ steps.set_vars.outputs.repo_full_name }}" >> $GITHUB_STEP_SUMMARY
+                  echo "- **Docker Image:** ${{ steps.set_vars.outputs.docker_image }}" >> $GITHUB_STEP_SUMMARY
+                  echo "- **Docker Tag:** ${{ steps.set_vars.outputs.full_docker_tag }}" >> $GITHUB_STEP_SUMMARY
+                  echo "- **Full Image Name:** ${{ steps.set_vars.outputs.full_image_name }}" >> $GITHUB_STEP_SUMMARY
+                  echo "" >> $GITHUB_STEP_SUMMARY
+                  echo "## Cache Information" >> $GITHUB_STEP_SUMMARY
+                  echo "- **Cache Hit:** ${{ steps.load-cache.outputs.cache_hit }}" >> $GITHUB_STEP_SUMMARY
+                  echo "" >> $GITHUB_STEP_SUMMARY
+                  echo "## Workflow Information" >> $GITHUB_STEP_SUMMARY
+                  echo "- **Workflow Run ID:** ${{ github.run_id }}" >> $GITHUB_STEP_SUMMARY
+                  echo "- **Workflow Run Number:** ${{ github.run_number }}" >> $GITHUB_STEP_SUMMARY
+                  echo "- **Workflow Run Attempt:** ${{ github.run_attempt }}" >> $GITHUB_STEP_SUMMARY
+                  echo "- **GitHub SHA:** ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+
+                  if [ "${{ inputs.debug }}" == "true" ]; then
+                    echo "" >> $GITHUB_STEP_SUMMARY
+                    echo "## Debug Information" >> $GITHUB_STEP_SUMMARY
+                    echo "Debug mode is enabled. Additional information:" >> $GITHUB_STEP_SUMMARY
+                    echo "\`\`\`json" >> $GITHUB_STEP_SUMMARY
+                    cat docker_prep_info.json >> $GITHUB_STEP_SUMMARY
+                    echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+                  fi
+
+            - name: Upload Docker Prep Info Artifact
+              uses: actions/upload-artifact@v3
+              with:
+                  name: docker-prep-info
+                  path: docker_prep_info.json
+                  retention-days: 5
+
+            - name: D2X Image Details
+              if: inputs.debug == true
+              run: |
+                  echo "Debug mode enabled"
+                  echo "REPO_FULL_NAME: ${{ steps.set_vars.outputs.repo_full_name }}"
+                  echo "DOCKER_IMAGE: ${{ steps.set_vars.outputs.docker_image }}"
+                  echo "FULL_DOCKER_TAG: ${{ steps.set_vars.outputs.full_docker_tag }}"
+                  echo "FULL_IMAGE_NAME: ${{ steps.set_vars.outputs.full_image_name }}"
