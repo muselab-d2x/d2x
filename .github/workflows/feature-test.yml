@@ -20,6 +20,10 @@ on:
                 required: true
             github-token:
                 required: true
+            github-app-id:
+                required: false
+            github-app-key:
+                required: false
 
 jobs:
     feature-test:
@@ -37,6 +41,8 @@ jobs:
                 DEV_HUB_CLIENT_ID: "${{ secrets.dev-hub-client-id }}"
                 DEV_HUB_PRIVATE_KEY: "${{ secrets.dev-hub-private-key }}"
                 CUMULUSCI_SERVICE_github: '{ "username": "${{ github.actor }}", "token": "${{ secrets.github-token }}", "email": "${{ secrets.gh-email }}" }'
+                GITHUB_APP_ID: "${{ secrets.github-app-id }}"
+                GITHUB_APP_KEY: "${{ secrets.github-app-key }}"
         steps:
             - name: Checkout
               uses: actions/checkout@v2
@@ -45,7 +51,7 @@ jobs:
             - name: Set ${{ inputs.org }} org as default org
               run: cci org default ${{ inputs.org }}
             - name: Run Feature Test
-              run: cci flow run ci_feature
+              run: cci flow run ci_feature --use-snapshots
             - name: Delete Scratch Org
               if: ${{ always() }}
               run: |
