@@ -49,8 +49,8 @@ on:
                 required: false
 
 jobs:
-    predict-hashes
-        name: "Predict snapshot hashes"
+    snapshot-hashed-flow:
+        name: "Run flow and create snapshot if needed"
         runs-on: ubuntu-latest
         container:
             image: ghcr.io/muselab-d2x/d2x:cumulusci-next-snapshots
