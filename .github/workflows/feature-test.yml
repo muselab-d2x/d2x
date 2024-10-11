@@ -56,7 +56,7 @@ jobs:
               run: cci flow run ci_feature --use-snapshots
             - name: Delete Scratch Org
               if: always()
-              run: cci org scratch_delete ${{ inputs.org_name }}
+              run: cci org scratch_delete ${{ inputs.org }}
               shell: bash
 
             - name: Capture CumulusCI Build History

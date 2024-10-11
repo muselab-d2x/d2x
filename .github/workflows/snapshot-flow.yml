@@ -98,7 +98,7 @@ jobs:
                     cci flow run ${{inputs.flow_name}} ${{ inputs.flow_run_options }} \
                         $([[ "${{ inputs.debug }}" == "true" ]] && echo " --debug")
                   } || {
-                    echo "::error::Failed to install dependencies. Running cci error info..."}
+                    echo "::error::Failed to install dependencies. Running cci error info..."
                     cci error info
                     exit 1
                   }
