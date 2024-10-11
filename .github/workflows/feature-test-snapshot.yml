@@ -127,11 +127,6 @@ jobs:
                   fi
               shell: bash
 
-            - name: Delete Scratch Org
-              if: always()
-              run: cci org scratch_delete ${{ inputs.org_name }}
-              shell: bash
-
             - name: Capture CumulusCI Build History
               if: always()
               run: |
@@ -154,6 +149,11 @@ jobs:
               with:
                   name: cci-build-history
                   path: cci_build_history.json
+
+            - name: Delete Scratch Org
+              if: always()
+              run: cci org scratch_delete ${{ inputs.org_name }}
+              shell: bash
 
             - name: Check Job Status
               if: always()

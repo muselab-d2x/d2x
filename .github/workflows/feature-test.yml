@@ -54,11 +54,6 @@ jobs:
               run: cci history enable
             - name: Run Feature Test
               run: cci flow run ci_feature --use-snapshots
-            - name: Delete Scratch Org
-              if: always()
-              run: cci org scratch_delete ${{ inputs.org }}
-              shell: bash
-
             - name: Capture CumulusCI Build History
               if: always()
               run: |
@@ -74,6 +69,11 @@ jobs:
               with:
                   name: cci-dependencies-history
                   path: cci_dependencies_history.json
+
+            - name: Delete Scratch Org
+              if: always()
+              run: cci org scratch_delete ${{ inputs.org }}
+              shell: bash
 
             - name: Upload CumulusCI Build History
               if: always()

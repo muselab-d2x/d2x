@@ -119,11 +119,6 @@ jobs:
                       exit 1
                   }
               shell: bash
-            - name: Delete Scratch Org
-              if: ${{ always() }}
-              run: |
-                  cci org scratch_delete ${{ inputs.org_name }}
-              shell: bash
             - name: Capture CumulusCI Build History
               if: always()
               run: |
@@ -140,6 +135,11 @@ jobs:
                   name: cci-dependencies-history
                   path: cci_dependencies_history.json
 
+            - name: Delete Scratch Org
+              if: ${{ always() }}
+              run: |
+                  cci org scratch_delete ${{ inputs.org_name }}
+              shell: bash
             - name: Upload CumulusCI Build History
               if: always()
               uses: actions/upload-artifact@v4
