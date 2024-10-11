@@ -1,0 +1,124 @@
+name: Snapshot Hashed Flow
+
+on:
+    workflow_call:
+        inputs:
+            org_name:
+                description: "The name of the scratch org profile to use for the source org. If not provided, the org named 'beta' will be used."
+                required: true
+                type: string
+            flow_name:
+                description: "The name of the flow to run"
+                required: true
+                type: string
+            flow_run_options:
+                description: "Options to pass to the flow via cci flow run -o 'key=value'"
+                required: false
+                type: string
+            create_snapshot_commit_status:
+                required: false
+                default: true
+                description: "If true, a commit status will be set for the build. This is useful for tracking the status of the snapshot creation task."
+                type: boolean
+            create_snapshot_environment:
+                required: false
+                default: false
+                description: "If true, a GitHub Environment will be created for the snapshot."
+                type: boolean
+            debug:
+                description: "Enable debug logging output for CumulusCI"
+                required: false
+                default: false
+                type: boolean
+        secrets:
+            dev-hub-auth-url:
+                required: false
+            dev-hub-username:
+                required: false
+            dev-hub-client-id:
+                required: false
+            dev-hub-private-key:
+                required: false
+            gh-email:
+                required: true
+            github-token:
+                required: true
+            github-app-id:
+                required: false
+            github-app-key:
+                required: false
+
+jobs:
+    predict-hashes
+        name: "Predict snapshot hashes"
+        runs-on: ubuntu-latest
+        container:
+            image: ghcr.io/muselab-d2x/d2x:cumulusci-next-snapshots
+            options: --user root
+            credentials:
+                username: "${{ github.actor }}"
+                password: "${{ secrets.github-token }}"
+            env:
+                DEV_HUB_AUTH_URL: "${{ secrets.dev-hub-auth-url }}"
+                DEV_HUB_USERNAME: "${{ secrets.dev-hub-username }}"
+                DEV_HUB_CLIENT_ID: "${{ secrets.dev-hub-client-id }}"
+                DEV_HUB_PRIVATE_KEY: "${{ secrets.dev-hub-private-key }}"
+                CUMULUSCI_SERVICE_github: '{ "username": "${{ github.actor }}", "token": "${{ secrets.github-token }}", "email": "${{ secrets.gh-email }}" }'
+                GITHUB_APP_ID: "${{ secrets.github-app-id }}"
+                GITHUB_APP_KEY: "${{ secrets.github-app-key }}"
+        steps:
+            - name: Checkout
+              id: checkout
+              uses: actions/checkout@v2
+            - name: Auth to DevHub
+              id: auth
+              run: /usr/local/bin/devhub.sh
+            - name: Set default org
+              id: default_org
+              run: cci org default ${{ inputs.org_name }}
+            # - name: Predict flow hashes
+            #   id: predict_hashes
+            #   run: |
+            #         set -e {
+            #             cci flow run ${{inputs.flow_name}} --predict ${{ inputs.flow_run_options }}  \
+            #                 $([[ "${{ inputs.debug }}" == "true" ]] && echo " --debug")
+            #         } || {
+            #             echo "::error::Failed to predict hashes. Running cci error info..."
+            #             cci error info
+            #             exit 1
+            #         }
+            #   shell: bash
+
+            - name: Run Flow
+              id: run_flow
+              run: |
+                  set -e {
+                    cci flow run ${{inputs.flow_name}} ${{ inputs.flow_run_options }} \
+                        $([[ "${{ inputs.debug }}" == "true" ]] && echo " --debug")
+                  } || {
+                    echo "::error::Failed to install dependencies. Running cci error info..."}
+                    cci error info
+                    exit 1
+                  }
+              shell: bash
+
+            - name: Create Hashed Snapshot if Needed
+              id: create_snapshot
+              if: ${{ inputs.snapshot_name != '' }}
+              run: |
+                  set -e {
+                      cci task run create_hashed_snapshot \
+                          $([[ "${{ inputs.create_snapshot_commit_status }}" == "true" ]] && echo " --create-commit-status") \
+                          $([[ "${{ inputs.create_snapshot_environment }}" == "true" ]] && echo " --create-environment") \
+                          $([[ "${{ inputs.debug }}" == "true" ]] && echo " --debug")
+                  } || {
+                      echo "::error::Failed to start the snapshot. Running cci error info..."
+                      cci error info
+                      exit 1
+                  }
+              shell: bash
+            - name: Delete Scratch Org
+              if: ${{ always() }}
+              run: |
+                  cci org scratch_delete ${{ inputs.org_name }}
+              shell: bash

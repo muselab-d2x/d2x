@@ -82,7 +82,7 @@ jobs:
             - name: Prepare Feature Test Org
               id: prepare_org
               run: |
-                  cci flow run ci_feature --skip-from run_tests --use-snapshots
+                  cci flow run ci_feature --skip-from run_tests
 
             - name: Start Snapshot Creation
               if: inputs.create_pr_snapshot == true

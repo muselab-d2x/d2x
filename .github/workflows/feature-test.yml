@@ -45,15 +45,46 @@ jobs:
                 GITHUB_APP_KEY: "${{ secrets.github-app-key }}"
         steps:
             - name: Checkout
-              uses: actions/checkout@v2
+              uses: actions/checkout@v4
             - name: Auth to DevHub
               run: /usr/local/bin/devhub.sh
             - name: Set ${{ inputs.org }} org as default org
               run: cci org default ${{ inputs.org }}
             - name: Run Feature Test
               run: cci flow run ci_feature --use-snapshots
-            - name: Delete Scratch Org
-              if: ${{ always() }}
+              - name: Delete Scratch Org
+              if: always()
+              run: cci org scratch_delete ${{ inputs.org_name }}
+              shell: bash
+
+            - name: Capture CumulusCI Build History
+              if: always()
               run: |
-                  cci org scratch_delete ${{ inputs.org }}
+                  cci history list
+                  cci history dependencies
+                  cci history dependencies --json > cci_dependencies_history.json
+                  cci history list --json > cci_build_history.json
+              shell: bash
+
+            - name: Upload CumulusCI Dependencies History
+              if: always()
+              uses: actions/upload-artifact@v4
+              with:
+                  name: cci-dependencies-history
+                  path: cci_dependencies_history.json
+
+            - name: Upload CumulusCI Build History
+              if: always()
+              uses: actions/upload-artifact@v4
+              with:
+                  name: cci-build-history
+                  path: cci_build_history.json
+
+            - name: Check Job Status
+              if: always()
+              run: |
+                  if [[ "${{ steps.create_2gp.outcome }}" == "failure" || "${{ steps.prepare_org.outcome }}" == "failure" || "${{ steps.feature_test.outcome }}" == "failure" ]]; then
+                    echo "Critical step failed. Failing the job."
+                    exit 1
+                  fi
               shell: bash
