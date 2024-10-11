@@ -79,6 +79,9 @@ jobs:
               run: |
                   cci org default ${{ inputs.org_name }}
 
+            - name: Enable History Tracking
+              run: cci history enable
+
             - name: Prepare Feature Test Org
               id: prepare_org
               run: |

@@ -76,6 +76,8 @@ jobs:
             - name: Set default org
               id: default_org
               run: cci org default ${{ inputs.org_name }}
+            - name: Enable History Tracking
+              run: cci history enable
             # - name: Predict flow hashes
             #   id: predict_hashes
             #   run: |

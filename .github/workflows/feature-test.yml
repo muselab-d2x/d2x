@@ -50,6 +50,8 @@ jobs:
               run: /usr/local/bin/devhub.sh
             - name: Set ${{ inputs.org }} org as default org
               run: cci org default ${{ inputs.org }}
+            - name: Enable History Tracking
+              run: cci history enable
             - name: Run Feature Test
               run: cci flow run ci_feature --use-snapshots
             - name: Delete Scratch Org
