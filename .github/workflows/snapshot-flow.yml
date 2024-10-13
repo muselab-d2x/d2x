@@ -100,18 +100,11 @@ jobs:
 
             - name: Create Hashed Snapshot if Needed
               id: create_snapshot
-              if: ${{ inputs.snapshot_name != '' }}
               run: |
-                  set -e {
-                      cci task run create_hashed_snapshot \
-                          $([[ "${{ inputs.create_snapshot_commit_status }}" == "true" ]] && echo " --create-commit-status") \
-                          $([[ "${{ inputs.create_snapshot_environment }}" == "true" ]] && echo " --create-environment") \
-                          $([[ "${{ inputs.debug }}" == "true" ]] && echo " --debug")
-                  } || {
-                      echo "::error::Failed to start the snapshot. Running cci error info..."
-                      cci error info
-                      exit 1
-                  }
+                  cci task run create_hashed_snapshot \
+                      $([[ "${{ inputs.create_snapshot_commit_status }}" == "true" ]] && echo " --create-commit-status") \
+                      $([[ "${{ inputs.create_snapshot_environment }}" == "true" ]] && echo " --create-environment") \
+                      $([[ "${{ inputs.debug }}" == "true" ]] && echo " --debug")
               shell: bash
             - name: Capture CumulusCI Build History
               if: always()
