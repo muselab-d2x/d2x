@@ -102,8 +102,8 @@ jobs:
               id: create_snapshot
               run: |
                   cci task run create_hashed_snapshot \
-                      $([[ "${{ inputs.create_snapshot_commit_status }}" == "true" ]] && echo " --create-commit-status") \
-                      $([[ "${{ inputs.create_snapshot_environment }}" == "true" ]] && echo " --create-environment") \
+                      $([[ "${{ inputs.create_snapshot_commit_status }}" == "true" ]] && echo " --create-commit-status True") \
+                      $([[ "${{ inputs.create_snapshot_environment }}" == "true" ]] && echo " --create-environment True") \
                       $([[ "${{ inputs.debug }}" == "true" ]] && echo " --debug")
               shell: bash
             - name: Capture CumulusCI Build History
