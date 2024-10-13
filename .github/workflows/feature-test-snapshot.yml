@@ -84,6 +84,7 @@ jobs:
 
             - name: Prepare Feature Test Org
               id: prepare_org
+              continue-on-error: true
               run: |
                   cci flow run ci_feature --skip-from run_tests
 
@@ -98,14 +99,15 @@ jobs:
               shell: bash
 
             - name: Run Feature Test
-              id: feature_test
+              id: run_tests
+              if: steps.prepare_org.outcome == 'success'
               run: |
                   cci flow run ci_feature --start-from run_tests
               shell: bash
 
             - name: Finalize Snapshot Creation
               id: finalize_snapshot
-              if: always() && (inputs.create_pr_snapshot == true || (inputs.create_failure_snapshot == true && (steps.feature_test.outcome == 'failure' || steps.prepare_org.outcome == 'failure' || steps.create_2gp.outcome == 'failure')))
+              if: always() && (inputs.create_pr_snapshot == true || (inputs.create_failure_snapshot == true && (steps.run_tests.outcome == 'failure' || steps.prepare_org.outcome == 'failure' || steps.run_tests.outcome == 'failure')))
               env:
                   GITHUB_TOKEN: ${{ secrets.github-token }}
               run: |
@@ -113,11 +115,11 @@ jobs:
                     cci task run github_pull_request_snapshot \
                       --snapshot-id "${{ steps.start_snapshot.outputs.SNAPSHOT_ID }}" \
                       --build-success "${{ job.status == 'success' }}" \
-                      --build-fail-tests "${{ steps.feature_test.outcome == 'failure' }}" \
+                      --build-fail-tests "${{ steps.run_tests.outcome == 'failure' }}" \
                       --snapshot-is-packaged true \
                       $([[ "${{ inputs.create_snapshot_commit_status }}" == "true" ]] && echo "--create-commit-status true") \
                       $([[ "${{ inputs.create_snapshot_environment }}" == "true" ]] && echo "--create-environment-status true")
-                  elif [[ "${{ inputs.create_failure_snapshot }}" == "true" && ("${{ steps.feature_test.outcome }}" == "failure" || "${{ steps.prepare_org.outcome }}" == "failure" || "${{ steps.create_2gp.outcome }}" == "failure") ]]; then
+                  elif [[ "${{ inputs.create_failure_snapshot }}" == "true" && ("${{ steps.run_tests.outcome }}" == "failure" || "${{ steps.prepare_org.outcome }}" == "failure" || "${{ steps.create_2gp.outcome }}" == "failure") ]]; then
                     cci task run github_pull_request_snapshot \
                       --build-success false \
                       --build-fail-tests "${{ steps.feature_test.outcome == 'failure' }}" \
@@ -158,7 +160,7 @@ jobs:
             - name: Check Job Status
               if: always()
               run: |
-                  if [[ "${{ steps.create_2gp.outcome }}" == "failure" || "${{ steps.prepare_org.outcome }}" == "failure" || "${{ steps.feature_test.outcome }}" == "failure" ]]; then
+                  if [[ "${{ steps.prepare_org.outcome }}" == "failure" || "${{ steps.run_tests.outcome }}" == "failure" ]]; then
                     echo "Critical step failed. Failing the job."
                     exit 1
                   fi
