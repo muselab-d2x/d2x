@@ -97,6 +97,7 @@ jobs:
             cci task run github_pull_request_snapshot \
             --wait False \
             --build-success ${{ job.status == 'success' }} \
+            --build-fail-tests false \
             --packaging-suffix U
           fi
         shell: bash
