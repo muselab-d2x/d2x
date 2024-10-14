@@ -54,6 +54,7 @@ jobs:
     feature-test-and-snapshot:
         name: "Unmanaged Feature Test and PR Snapshot"
         runs-on: ubuntu-latest
+        continue-on-error: true
         container:
             image: ghcr.io/muselab-d2x/d2x:cumulusci-next-snapshots
             options: --user root
@@ -84,7 +85,6 @@ jobs:
 
             - name: Prepare Feature Test Org
               id: prepare_org
-              continue-on-error: true
               run: |
                   cci flow run ci_feature --skip-from run_tests
 
@@ -107,7 +107,7 @@ jobs:
 
             - name: Finalize Snapshot Creation
               id: finalize_snapshot
-              if: always() && (inputs.create_pr_snapshot == true || (inputs.create_failure_snapshot == true && (steps.run_tests.outcome == 'failure' || steps.prepare_org.outcome == 'failure' || steps.run_tests.outcome == 'failure')))
+              if: always() && (inputs.create_pr_snapshot == true || (steps.prepare_org.outcome == 'failure' || steps.run_tests.outcome == 'failure'))
               env:
                   GITHUB_TOKEN: ${{ secrets.github-token }}
               run: |
@@ -134,8 +134,8 @@ jobs:
               run: |
                   cci history list
                   cci history dependencies
-                  cci history dependencies --json > cci_dependencies_history.json
-                  cci history list --json > cci_build_history.json
+                  cci history dependencies --json --indent 4 > cci_dependencies_history.json
+                  cci history list --json --indent 4 > cci_build_history.json
               shell: bash
 
             - name: Upload CumulusCI Dependencies History
