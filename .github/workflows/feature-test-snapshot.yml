@@ -51,117 +51,121 @@ on:
                 required: false
 
 jobs:
-    feature-test-and-snapshot:
-        name: "Unmanaged Feature Test and PR Snapshot"
-        runs-on: ubuntu-latest
+  feature-test-and-snapshot:
+    name: "Unmanaged Feature Test and PR Snapshot"
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/muselab-d2x/d2x:cumulusci-next-snapshots
+      options: --user root
+      credentials:
+        username: "${{ github.actor }}"
+        password: "${{ secrets.github-token }}"
+      env:
+        DEV_HUB_AUTH_URL: "${{ secrets.dev-hub-auth-url }}"
+        DEV_HUB_USERNAME: "${{ secrets.dev-hub-username }}"
+        DEV_HUB_CLIENT_ID: "${{ secrets.dev-hub-client-id }}"
+        DEV_HUB_PRIVATE_KEY: "${{ secrets.dev-hub-private-key }}"
+        CUMULUSCI_SERVICE_github: '{ "username": "${{ github.actor }}", "token": "${{ secrets.github-token }}", "email": "${{ secrets.gh-email }}" }'
+        GITHUB_APP_ID: "${{ secrets.github-app-id }}"
+        GITHUB_APP_KEY: "${{ secrets.github-app-key }}"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Auth to DevHub
+        run: /usr/local/bin/devhub.sh
+        id: auth_devhub
+
+      - name: Set ${{ inputs.org_name }} org as default org
+        run: cci org default ${{ inputs.org_name }}
+        id: set_default_org
+
+      - name: Enable History Tracking
+        run: cci history enable
+        id: enable_tracking
+
+      - name: Prepare Feature Test Org
+        id: prepare_org
+        run: cci flow run ci_feature --skip-from run_tests
         continue-on-error: true
-        container:
-            image: ghcr.io/muselab-d2x/d2x:cumulusci-next-snapshots
-            options: --user root
-            credentials:
-                username: "${{ github.actor }}"
-                password: "${{ secrets.github-token }}"
-            env:
-                DEV_HUB_AUTH_URL: "${{ secrets.dev-hub-auth-url }}"
-                DEV_HUB_USERNAME: "${{ secrets.dev-hub-username }}"
-                DEV_HUB_CLIENT_ID: "${{ secrets.dev-hub-client-id }}"
-                DEV_HUB_PRIVATE_KEY: "${{ secrets.dev-hub-private-key }}"
-                CUMULUSCI_SERVICE_github: '{ "username": "${{ github.actor }}", "token": "${{ secrets.github-token }}", "email": "${{ secrets.gh-email }}" }'
-                GITHUB_APP_ID: "${{ secrets.github-app-id }}"
-                GITHUB_APP_KEY: "${{ secrets.github-app-key }}"
-        steps:
-            - name: Checkout
-              uses: actions/checkout@v4
 
-            - name: Auth to DevHub
-              run: /usr/local/bin/devhub.sh
+      - name: Start Snapshot Creation
+        if: always()
+        id: start_snapshot
+        run: |
+          if [[ "${{ inputs.create_pr_snapshot }}" == "true" ]]; then
+            cci task run github_pull_request_snapshot \
+            --wait False \
+            --build-success ${{ job.status == 'success' }} \
+            --is-packaged false
+          fi
+        shell: bash
 
-            - name: Set ${{ inputs.org_name }} org as default org
-              run: |
-                  cci org default ${{ inputs.org_name }}
+      - name: Run Feature Test
+        id: run_tests
+        if: steps.prepare_org.outcome == 'success'
+        run: |
+          cci flow run ci_feature --start-from run_tests
+        shell: bash
+        continue-on-error: true
 
-            - name: Enable History Tracking
-              run: cci history enable
+      - name: Finalize Snapshot Creation
+        id: finalize_snapshot
+        if: always()
+        env:
+          GITHUB_TOKEN: ${{ secrets.github-token }}
+        run: |
+          if [[ "${{ inputs.create_pr_snapshot }}" == "true" && -n "${{ steps.start_snapshot.outputs.SNAPSHOT_ID }}" ]]; then
+            cci task run github_pull_request_snapshot \
+              --snapshot-id "${{ steps.start_snapshot.outputs.SNAPSHOT_ID }}" \
+              --build-success "${{ steps.prepare_org.outcome == 'success' && steps.run_tests.outcome == 'success' }}" \
+              --build-fail-tests "${{ steps.run_tests.outcome == 'failure' }}" \
+              --snapshot-is-packaged true \
+              $([[ "${{ inputs.create_snapshot_commit_status }}" == "true" ]] && echo "--create-commit-status true") \
+              $([[ "${{ inputs.create_snapshot_environment }}" == "true" ]] && echo "--create-environment-status true")
+          elif [[ "${{ inputs.create_failure_snapshot }}" == "true" && ("${{ steps.run_tests.outcome }}" == "failure" || "${{ steps.prepare_org.outcome }}" == "failure") ]]; then
+            cci task run github_pull_request_snapshot \
+              --build-success false \
+              --build-fail-tests "${{ steps.run_tests.outcome == 'failure' }}" \
+              --snapshot-is-packaged true \
+              $([[ "${{ inputs.create_snapshot_commit_status }}" == "true" ]] && echo "--create-commit-status true") \
+              $([[ "${{ inputs.create_snapshot_environment }}" == "true" ]] && echo "--create-environment-status true")
+          fi
+        shell: bash
 
-            - name: Prepare Feature Test Org
-              id: prepare_org
-              run: |
-                  cci flow run ci_feature --skip-from run_tests
+      - name: Capture CumulusCI Build History
+        if: always()
+        run: |
+          cci history list
+          cci history dependencies
+          cci history dependencies --json --indent 4 > cci_dependencies_history.json
+          cci history list --json --indent 4 > cci_build_history.json
+        shell: bash
 
-            - name: Start Snapshot Creation
-              if: inputs.create_pr_snapshot == true
-              id: start_snapshot
-              run: |
-                  cci task run github_pull_request_snapshot \
-                  --wait False \
-                  --build-success ${{ job.status == 'success' }} \
-                  --is-packaged false
-              shell: bash
+      - name: Upload CumulusCI Dependencies History
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cci-dependencies-history
+          path: cci_dependencies_history.json
 
-            - name: Run Feature Test
-              id: run_tests
-              if: steps.prepare_org.outcome == 'success'
-              run: |
-                  cci flow run ci_feature --start-from run_tests
-              shell: bash
+      - name: Upload CumulusCI Build History
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cci-build-history
+          path: cci_build_history.json
 
-            - name: Finalize Snapshot Creation
-              id: finalize_snapshot
-              if: always() && (inputs.create_pr_snapshot == true || (steps.prepare_org.outcome == 'failure' || steps.run_tests.outcome == 'failure'))
-              env:
-                  GITHUB_TOKEN: ${{ secrets.github-token }}
-              run: |
-                  if [[ "${{ inputs.create_pr_snapshot }}" == "true" && -n "${{ steps.start_snapshot.outputs.SNAPSHOT_ID }}" ]]; then
-                    cci task run github_pull_request_snapshot \
-                      --snapshot-id "${{ steps.start_snapshot.outputs.SNAPSHOT_ID }}" \
-                      --build-success "${{ job.status == 'success' }}" \
-                      --build-fail-tests "${{ steps.run_tests.outcome == 'failure' }}" \
-                      --snapshot-is-packaged true \
-                      $([[ "${{ inputs.create_snapshot_commit_status }}" == "true" ]] && echo "--create-commit-status true") \
-                      $([[ "${{ inputs.create_snapshot_environment }}" == "true" ]] && echo "--create-environment-status true")
-                  elif [[ "${{ inputs.create_failure_snapshot }}" == "true" && ("${{ steps.run_tests.outcome }}" == "failure" || "${{ steps.prepare_org.outcome }}" == "failure" || "${{ steps.create_2gp.outcome }}" == "failure") ]]; then
-                    cci task run github_pull_request_snapshot \
-                      --build-success false \
-                      --build-fail-tests "${{ steps.feature_test.outcome == 'failure' }}" \
-                      --snapshot-is-packaged true \
-                      $([[ "${{ inputs.create_snapshot_commit_status }}" == "true" ]] && echo "--create-commit-status true") \
-                      $([[ "${{ inputs.create_snapshot_environment }}" == "true" ]] && echo "--create-environment-status true")
-                  fi
-              shell: bash
+      - name: Delete Scratch Org
+        if: always()
+        run: cci org scratch_delete ${{ inputs.org_name }}
+        shell: bash
 
-            - name: Capture CumulusCI Build History
-              if: always()
-              run: |
-                  cci history list
-                  cci history dependencies
-                  cci history dependencies --json --indent 4 > cci_dependencies_history.json
-                  cci history list --json --indent 4 > cci_build_history.json
-              shell: bash
-
-            - name: Upload CumulusCI Dependencies History
-              if: always()
-              uses: actions/upload-artifact@v4
-              with:
-                  name: cci-dependencies-history
-                  path: cci_dependencies_history.json
-
-            - name: Upload CumulusCI Build History
-              if: always()
-              uses: actions/upload-artifact@v4
-              with:
-                  name: cci-build-history
-                  path: cci_build_history.json
-
-            - name: Delete Scratch Org
-              if: always()
-              run: cci org scratch_delete ${{ inputs.org_name }}
-              shell: bash
-
-            - name: Check Job Status
-              if: always()
-              run: |
-                  if [[ "${{ steps.prepare_org.outcome }}" == "failure" || "${{ steps.run_tests.outcome }}" == "failure" ]]; then
-                    echo "Critical step failed. Failing the job."
-                    exit 1
-                  fi
-              shell: bash
+      - name: Check Job Status
+        if: always()
+        run: |
+          if [[ "${{ steps.auth_devhub.outcome }}" == "failure" || "${{ steps.set_default_org.outcome }}" == "failure" || "${{ steps.enable_tracking.outcome }}" == "failure" || "${{ steps.prepare_org.outcome }}" == "failure" || "${{ steps.run_tests.outcome }}" == "failure" ]]; then
+            echo "Critical step failed. Failing the job."
+            exit 1
+          fi
+        shell: bash
