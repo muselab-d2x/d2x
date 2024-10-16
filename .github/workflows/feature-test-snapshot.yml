@@ -123,14 +123,14 @@ jobs:
               --build-fail-tests "${{ steps.run_tests.outcome == 'failure' }}" \
               --packaging-suffix U \
               $([[ "${{ inputs.create_snapshot_commit_status }}" == "true" ]] && echo "--create-commit-status true") \
-              $([[ "${{ inputs.create_snapshot_environment }}" == "true" ]] && echo "--create-environment-status true")
+              $([[ "${{ inputs.create_snapshot_environment }}" == "true" ]] && echo "--create-environment true")
           elif [[ "${{ inputs.create_failure_snapshot }}" == "true" && ("${{ steps.run_tests.outcome }}" == "failure" || "${{ steps.prepare_org.outcome }}" == "failure") ]]; then
             cci task run github_pull_request_snapshot \
               --build-success false \
               --build-fail-tests "${{ steps.run_tests.outcome == 'failure' }}" \
               --packaging-suffix U \
               $([[ "${{ inputs.create_snapshot_commit_status }}" == "true" ]] && echo "--create-commit-status true") \
-              $([[ "${{ inputs.create_snapshot_environment }}" == "true" ]] && echo "--create-environment-status true")
+              $([[ "${{ inputs.create_snapshot_environment }}" == "true" ]] && echo "--create-environment true")
           fi
         shell: bash
 
