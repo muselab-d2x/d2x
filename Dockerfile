@@ -12,7 +12,7 @@ RUN curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | g
   apt-get update && apt-get install -y gh
 
 # Install CumulusCI
-RUN pip --no-cache-dir install git+https://github.com/muselab-d2x/CumulusCI@635bb6376f9d9142a825ed876948785918a492df cookiecutter keyrings.alt
+RUN pip --no-cache-dir install git+https://github.com/muselab-d2x/CumulusCI@a77e7456fc1b72a99fd0738a984399b1ba6b5878 cookiecutter keyrings.alt
 
 # Copy devhub auth script and make it executable
 COPY devhub.sh /usr/local/bin/devhub.sh
