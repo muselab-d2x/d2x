@@ -3,22 +3,11 @@ name: Beta Test
 on:
     workflow_call:
         inputs:
-            env-name:
-                required: true
-                default: 1GP Packaging Beta
-                type: string
-            run-test:
-                description: If true, run the ci_beta flow to test the beta as part of the job. Set to false to split ci_beta into a separate workflow
-                required: true
-                default: true
-                type: boolean
             debug:
                 required: false
                 default: false
                 type: boolean
         secrets:
-            packaging-org-auth-url:
-                required: true
             dev-hub-auth-url:
                 required: true
             gh-email:
@@ -32,7 +21,7 @@ on:
 
 jobs:
     beta-test:
-        name: "Beta Test"
+        name: "Beta Test in Scratch Org"
         runs-on: ubuntu-latest
         environment: ${{ inputs.env-name }}
         container:
@@ -52,16 +41,10 @@ jobs:
               uses: actions/checkout@v2
             - name: Auth to DevHub
               run: /usr/local/bin/devhub.sh
-            - name: Deploy to Packaging Org
-              run: cci flow run ci_master --org packaging $([[ "${{ inputs.debug }}" == "true" ]] && echo " --debug")
-            - name: Build Beta Package
-              run: cci flow run release_beta --org packaging $([[ "${{ inputs.debug }}" == "true" ]] && echo " --debug")
-              shell: bash
             - name: Run Beta Test
-              if: ${{ inputs.run-test }}
               run: cci flow run ci_beta --org beta
             - name: Delete Scratch Org
-              if: ${{ always() }} && ${{ inputs.run-test }}
+              if: ${{ always() }}
               run: |
                   cci org scratch_delete beta
               shell: bash
