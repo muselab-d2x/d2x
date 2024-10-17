@@ -115,6 +115,8 @@ jobs:
         if: always()
         env:
           GITHUB_TOKEN: ${{ secrets.github-token }}
+          GITHUB_APP_ID: ${{ secrets.github-app-id }}
+          GITHUB_APP_KEY: ${{ secrets.github-app-key }}
         run: |
           if [[ "${{ inputs.create_pr_snapshot }}" == "true" && -n "${{ steps.start_snapshot.outputs.SNAPSHOT_ID }}" ]]; then
             cci task run github_pull_request_snapshot \
