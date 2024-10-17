@@ -51,7 +51,7 @@ on:
                 required: false
 
 jobs:
-    feature-test-and-snapshot:
+    build-2gp-package-version:
         # needs: check-build-status
         # if: needs.check-build-status.outputs.should_build == 'true'
         name: "2GP Feature Test and PR Snapshot"
@@ -70,94 +70,121 @@ jobs:
                 CUMULUSCI_SERVICE_github: '{ "username": "${{ github.actor }}", "token": "${{ secrets.github-token }}", "email": "${{ secrets.gh-email }}" }'
                 GITHUB_APP_ID: "${{ secrets.github-app-id }}"
                 GITHUB_APP_KEY: "${{ secrets.github-app-key }}"
-            steps:
-                - name: Checkout
-                  uses: actions/checkout@v2
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
 
-                - name: Auth to DevHub
-                  run: /usr/local/bin/devhub.sh
+            - name: Auth to DevHub
+              run: /usr/local/bin/devhub.sh
 
-                - name: Set ${{ inputs.org_name }} org as default org
-                  run: |
-                      cci org default ${{ inputs.org_name }}
-                      cci org info feature
+            - name: Set ${{ inputs.org_name }} org as default org
+              run: |
+                    cci org default ${{ inputs.org_name }}
 
-                - name: Build Feature Test Package
-                  id: create_2gp
-                  run: |
-                      cci flow run build_feature_test_package \
-                      $([[ "${{ inputs.debug }}" == "true" ]] && echo " --debug")
-                  shell: bash
+            - name: Build Feature Test Package
+              id: create_2gp
+              run: |
+                    cci flow run build_feature_test_package \
+                    $([[ "${{ inputs.debug }}" == "true" ]] && echo " --debug")
+              shell: bash
 
-                - name: Set Commit Status
-                  env:
-                      GITHUB_TOKEN: "${{ secrets.github-token }}"
-                  run: |
-                      VERSION=$(cat cumulusci-flow.log | grep -o -E -m 1 "04t[a-zA-Z0-9]{15}")
-                      gh api \
-                      --method POST \
-                      -H "Accept: application/vnd.github.v3+json" \
-                      '/repos/${{ github.repository }}/statuses/${{ github.sha }}' \
-                      -f state='success' \
-                      -f description="version_id: $VERSION" \
-                      -f context='Build Feature Test Package'
-                  shell: bash
+            - name: Set Commit Status
+              env:
+                    GITHUB_TOKEN: "${{ secrets.github-token }}"
+              run: |
+                    VERSION=$(cat cumulusci-flow.log | grep -o -E -m 1 "04t[a-zA-Z0-9]{15}")
+                    gh api \
+                    --method POST \
+                    -H "Accept: application/vnd.github.v3+json" \
+                    '/repos/${{ github.repository }}/statuses/${{ github.sha }}' \
+                    -f state='success' \
+                    -f description="version_id: $VERSION" \
+                    -f context='Build Feature Test Package'
+              shell: bash
 
-                - name: Prepare Feature Test Org
-                  id: prepare_org
-                  run: |
-                      cci flow run ci_feature_2gp --skip-from run_tests
+    feature-test-and-snapshot:
+        needs: build-2gp-package-version
+        name: "2GP Feature Test and PR Snapshot"
+        runs-on: ubuntu-latest
+        container:
+            image: ghcr.io/muselab-d2x/d2x:cumulusci-next-snapshots
+            options: --user root
+            credentials:
+                username: "${{ github.actor }}"
+                password: "${{ secrets.github-token }}"
+            env:
+                DEV_HUB_AUTH_URL: "${{ secrets.dev-hub-auth-url }}"
+                DEV_HUB_USERNAME: "${{ secrets.dev-hub-username }}"
+                DEV_HUB_CLIENT_ID: "${{ secrets.dev-hub-client-id }}"
+                DEV_HUB_PRIVATE_KEY: "${{ secrets.dev-hub-private-key }}"
+                CUMULUSCI_SERVICE_github: '{ "username": "${{ github.actor }}", "token": "${{ secrets.github-token }}", "email": "${{ secrets.gh-email }}" }'
+                GITHUB_APP_ID: "${{ secrets.github-app-id }}"
+                GITHUB_APP_KEY: "${{ secrets.github-app-key }}"
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
 
-                - name: Start Snapshot Creation
-                  if: inputs.create_pr_snapshot == true
-                  id: start_snapshot
-                  run: |
-                      cci task run github_pull_request_snapshot \
-                      --wait False \
-                      --build-success ${{ job.status == 'success' }} \
-                      --is-packaged true
-                  shell: bash
+            - name: Auth to DevHub
+              run: /usr/local/bin/devhub.sh
 
-                - name: Run Feature Test
-                  id: feature_test
-                  run: |
-                      cci flow run ci_feature_2gp --start-from run_tests
-                  shell: bash
+            - name: Set ${{ inputs.org_name }} org as default org
+              run: |
+                    cci org default ${{ inputs.org_name }}
+            - name: Prepare Feature Test Org
+              id: prepare_org
+              run: |
+                    cci flow run ci_feature_2gp --skip-from run_tests
 
-                - name: Finalize Snapshot Creation
-                  id: finalize_snapshot
-                  if: always() && (inputs.create_pr_snapshot == true || (inputs.create_failure_snapshot == true && (failure() || contains(steps.feature_test.outcome, 'failure'))))
-                  env:
-                      GITHUB_TOKEN: ${{ secrets.github-token }}
-                  run: |
-                      if [[ "${{ inputs.create_pr_snapshot }}" == "true" && -n "${{ steps.start_snapshot.outputs.SNAPSHOT_ID }}" ]]; then
-                      cci task run github_pull_request_snapshot \
-                          --snapshot-id "${{ steps.start_snapshot.outputs.SNAPSHOT_ID }}" \
-                          --build-success "${{ job.status == 'success' }}" \
-                          --build-fail-tests "${{ contains(steps.feature_test.outcome, 'failure') }}" \
-                          --snapshot-is-packaged true \
-                          $([[ "${{ inputs.create_snapshot_commit_status }}" == "true" ]] && echo "--create-commit-status true") \
-                          $([[ "${{ inputs.create_snapshot_environment }}" == "true" ]] && echo "--create-environment-status true")
-                      elif [[ "${{ inputs.create_failure_snapshot }}" == "true" && ("${{ failure() }}" == "true" || "${{ contains(steps.feature_test.outcome, 'failure') }}" == "true") ]]; then
-                      cci task run github_pull_request_snapshot \
-                          --build-success false \
-                          --build-fail-tests "${{ contains(steps.feature_test.outcome, 'failure') }}" \
-                          --snapshot-is-packaged true \
-                          $([[ "${{ inputs.create_snapshot_commit_status }}" == "true" ]] && echo "--create-commit-status true") \
-                          $([[ "${{ inputs.create_snapshot_environment }}" == "true" ]] && echo "--create-environment-status true")
-                      fi
-                  shell: bash
+            - name: Start Snapshot Creation
+              if: inputs.create_pr_snapshot == true
+              id: start_snapshot
+              run: |
+                    cci task run github_pull_request_snapshot \
+                    --wait False \
+                    --build-success ${{ job.status == 'success' }} \
+                    --is-packaged true
+              shell: bash
 
-                - name: Delete Scratch Org
-                  if: always()
-                  run: cci org scratch_delete ${{ inputs.org_name }}
-                  shell: bash
+            - name: Run Feature Test
+              id: feature_test
+              run: |
+                    cci flow run ci_feature_2gp --start-from run_tests
+              shell: bash
 
-                - name: Check Job Status
-                  if: always()
-                  run: |
-                      if [[ "${{ steps.create_2gp.outcome }}" == "failure" || "${{ steps.prepare_org.outcome }}" == "failure" || "${{ steps.feature_test.outcome }}" == "failure" ]]; then
-                      echo "Critical step failed. Failing the job."
-                      exit 1
-                      fi
-                  shell: bash
+            - name: Finalize Snapshot Creation
+              id: finalize_snapshot
+              if: always() && (inputs.create_pr_snapshot == true || (inputs.create_failure_snapshot == true && (failure() || contains(steps.feature_test.outcome, 'failure'))))
+              env:
+                    GITHUB_TOKEN: ${{ secrets.github-token }}
+              run: |
+                    if [[ "${{ inputs.create_pr_snapshot }}" == "true" && -n "${{ steps.start_snapshot.outputs.SNAPSHOT_ID }}" ]]; then
+                    cci task run github_pull_request_snapshot \
+                        --snapshot-id "${{ steps.start_snapshot.outputs.SNAPSHOT_ID }}" \
+                        --build-success "${{ job.status == 'success' }}" \
+                        --build-fail-tests "${{ contains(steps.feature_test.outcome, 'failure') }}" \
+                        --snapshot-is-packaged true \
+                        $([[ "${{ inputs.create_snapshot_commit_status }}" == "true" ]] && echo "--create-commit-status true") \
+                        $([[ "${{ inputs.create_snapshot_environment }}" == "true" ]] && echo "--create-environment-status true")
+                    elif [[ "${{ inputs.create_failure_snapshot }}" == "true" && ("${{ failure() }}" == "true" || "${{ contains(steps.feature_test.outcome, 'failure') }}" == "true") ]]; then
+                    cci task run github_pull_request_snapshot \
+                        --build-success false \
+                        --build-fail-tests "${{ contains(steps.feature_test.outcome, 'failure') }}" \
+                        --snapshot-is-packaged true \
+                        $([[ "${{ inputs.create_snapshot_commit_status }}" == "true" ]] && echo "--create-commit-status true") \
+                        $([[ "${{ inputs.create_snapshot_environment }}" == "true" ]] && echo "--create-environment-status true")
+                    fi
+              shell: bash
+
+            - name: Delete Scratch Org
+              if: always()
+              run: cci org scratch_delete ${{ inputs.org_name }}
+              shell: bash
+
+            - name: Check Job Status
+              if: always()
+              run: |
+                    if [[ "${{ steps.create_2gp.outcome }}" == "failure" || "${{ steps.prepare_org.outcome }}" == "failure" || "${{ steps.feature_test.outcome }}" == "failure" ]]; then
+                    echo "Critical step failed. Failing the job."
+                    exit 1
+                    fi
+              shell: bash

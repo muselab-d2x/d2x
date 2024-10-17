@@ -39,53 +39,15 @@ on:
                 required: false
 
 jobs:
-    # select_d2x_docker_image:
-    #     name: "Select D2X Docker Image"
-    #     runs-on: ubuntu-latest
-    #     outputs:
-    #         tag_suffix: ${{ steps.set_tag_suffix.outputs.tag_suffix }}
-    #     steps:
-    #         - name: Calculate tag suffix
-    #           id: set_tag_suffix
-    #           run: |
-    #               TAG_SUFFIX=""
-    #               if [ "${{ inputs.with_full_browser }}" == "true" ]; then
-    #                 TAG_SUFFIX=-full-browser
-    #                 echo "Using full-browser image" >> $GITHUB_STEP_SUMMARY
-    #               elif [ "${{ inputs.with_chromedriver }}" == "true" ] && [ "${{ inputs.with_playwright }}" == "true" ]; then
-    #                 TAG_SUFFIX=-full-browser
-    #                 echo "Using full-browser image" >> $GITHUB_STEP_SUMMARY
-    #               elif [ "${{ inputs.with_chromedriver }}" == "true" ]; then
-    #                 TAG_SUFFIX=-chromedriver
-    #                 echo "Using chromedriver image" >> $GITHUB_STEP_SUMMARY
-    #               elif [ "${{ inputs.with_playwright }}" == "true" ]; then
-    #                 TAG_SUFFIX=-playwright
-    #                 echo "Using playwright image" >> $GITHUB_STEP_SUMMARY
-    #               else
-    #                 TAG_SUFFIX=""
-    #                 echo "Using default image" >> $GITHUB_STEP_SUMMARY
-    #               fi
-    #               echo "tag_suffix=$TAG_SUFFIX" >> $GITHUB_OUTPUT
-
-    feature-test:
-        name: "2GP Feature Test"
+    create-2gp-package-version:
+        name: "Create 2GP Package Version"
         runs-on: ubuntu-latest
-        # needs: select_d2x_docker_image
         container:
             image: ${{ inputs.docker_image }}:${{ inputs.docker_tag }}
-            # image: ${{ inputs.docker_image }}:${{ inputs.docker_tag }}${{ needs.select_d2x_docker_image.outputs.tag_suffix }}
             options: --user root
             credentials:
                 username: "${{ github.actor }}"
                 password: "${{ secrets.github-token }}"
-            env:
-                DEV_HUB_AUTH_URL: "${{ secrets.dev-hub-auth-url }}"
-                DEV_HUB_USERNAME: "${{ secrets.dev-hub-username }}"
-                DEV_HUB_CLIENT_ID: "${{ secrets.dev-hub-client-id }}"
-                DEV_HUB_PRIVATE_KEY: "${{ secrets.dev-hub-private-key }}"
-                CUMULUSCI_SERVICE_github: '{ "username": "${{ github.actor }}", "token": "${{ secrets.github-token }}", "email": "${{ secrets.gh-email }}" }'
-                GITHUB_APP_ID: "${{ secrets.github-app-id }}"
-                GITHUB_APP_KEY: "${{ secrets.github-app-key }}"
         steps:
             - name: D2X Image Details
               run: |
@@ -94,14 +56,23 @@ jobs:
                   echo "D2X Docker Image: `${{ inputs.docker_image }}:${{ inputs.docker_tag }}`" >> $GITHUB_STEP_SUMMARY
               shell: bash
             - name: Checkout
-              uses: actions/checkout@v3
+              uses: actions/checkout@v4
             - name: Auth to DevHub
               run: /usr/local/bin/devhub.sh
+              env:
+                DEV_HUB_AUTH_URL: "${{ secrets.dev-hub-auth-url }}"
+                DEV_HUB_USERNAME: "${{ secrets.dev-hub-username }}"
+                DEV_HUB_CLIENT_ID: "${{ secrets.dev-hub-client-id }}"
+                DEV_HUB_PRIVATE_KEY: "${{ secrets.dev-hub-private-key }}"
+
             - name: Set ${{ inputs.org }} org as default org
               run: cci org default ${{ inputs.org }}
             - name: Build Feature Test Package
               env:
                   GITHUB_TOKEN: "${{ secrets.github-token }}"
+                  CUMULUSCI_SERVICE_github: '{ "username": "${{ github.actor }}", "token": "${{ secrets.github-token }}", "email": "${{ secrets.gh-email }}" }'
+                  GITHUB_APP_ID: "${{ secrets.github-app-id }}"
+                  GITHUB_APP_KEY: "${{ secrets.github-app-key }}"
               run: cci flow run build_feature_test_package $([[ "${{ inputs.debug }}" == "true" ]] && echo " --debug") | tee cumulusci-flow.log
               shell: bash
             - name: Set Commit Status
@@ -117,10 +88,67 @@ jobs:
                     -f description="version_id: $VERSION" \
                     -f context='Build Feature Test Package'
               shell: bash
+    feature-test-2gp:
+        name: "Feature Test 2GP"
+        needs: create-2gp-package-version
+        runs-on: ubuntu-latest
+        container:
+            image: ${{ inputs.docker_image }}:${{ inputs.docker_tag }}
+            options: --user root
+            credentials:
+                username: "${{ github.actor }}"
+                password: "${{ secrets.github-token }}"
+        steps:
+            - name: D2X Image Details
+              run: |
+                  echo "D2X Docker Image: ${{ inputs.docker_image }}"
+                  echo "D2X Docker Tag: ${{ inputs.docker_tag }}"
+                  echo "D2X Docker Image: `${{ inputs.docker_image }}:${{ inputs.docker_tag }}`" >> $GITHUB_STEP_SUMMARY
+              shell: bash
+            - name: Checkout
+              uses: actions/checkout@v4
+            - name: Auth to DevHub
+              run: /usr/local/bin/devhub.sh
+              env:
+                DEV_HUB_AUTH_URL: "${{ secrets.dev-hub-auth-url }}"
+                DEV_HUB_USERNAME: "${{ secrets.dev-hub-username }}"
+                DEV_HUB_CLIENT_ID: "${{ secrets.dev-hub-client-id }}"
+                DEV_HUB_PRIVATE_KEY: "${{ secrets.dev-hub-private-key }}"
+
+            - name: Set ${{ inputs.org }} org as default org
+              run: cci org default ${{ inputs.org }}
+              
             - name: Run Feature Test
               env:
                   GITHUB_TOKEN: "${{ secrets.github-token }}"
-              run: cci flow run ci_feature_2gp
+                  CUMULUSCI_SERVICE_github: '{ "username": "${{ github.actor }}", "token": "${{ secrets.github-token }}", "email": "${{ secrets.gh-email }}" }'
+                  GITHUB_APP_ID: "${{ secrets.github-app-id }}"
+                  GITHUB_APP_KEY: "${{ secrets.github-app-key }}"
+              run: cci flow run ci_feature_2gp --use-snapshots
+
+            - name: Capture CumulusCI Build History
+              if: always()
+              run: |
+                  cci history list
+                  cci history dependencies
+                  cci history dependencies --json > cci_dependencies_history.json
+                  cci history list --json > cci_build_history.json
+              shell: bash
+
+            - name: Upload CumulusCI Dependencies History
+              if: always()
+              uses: actions/upload-artifact@v4
+              with:
+                  name: cci-dependencies-history
+                  path: cci_dependencies_history.json
+
+            - name: Upload CumulusCI Build History
+              if: always()
+              uses: actions/upload-artifact@v4
+              with:
+                  name: cci-build-history
+                  path: cci_build_history.json
+
             - name: Delete Scratch Org
               if: ${{ always() }}
               run: |
