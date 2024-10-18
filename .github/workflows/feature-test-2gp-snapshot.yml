@@ -2,6 +2,11 @@ name: 2GP Feature Test and PR Snapshot
 on:
     workflow_call:
         inputs:
+            triggering_workflow_conclusion:
+                required: false
+                type: string
+                default: 'success'
+                description: "The conclusion of the triggering workflow, used to skip the build if the triggering workflow failed."
             debug:
                 required: false
                 default: false
@@ -53,6 +58,7 @@ on:
 jobs:
     feature-test-and-snapshot:
         name: "2GP Feature Test and PR Snapshot"
+        if: ${{ inputs.triggering_workflow_conclusion == 'success' }}
         runs-on: ubuntu-latest
         container:
             image: ghcr.io/muselab-d2x/d2x:cumulusci-next-snapshots
@@ -109,7 +115,7 @@ jobs:
                         fi
                     fi
                     if [[ "$CONDITIONS_MET" == "false" ]]; then
-                        echo "Snapshot Conditions Not Met for any outcome, skipping the build."
+                        echo "Snapshot Conditions Not Met for any outcome, skipping the build." | tee -a $GITHUB_JOB_SUMMARY
                         echo "skip_build=true" >> $GITHUB_OUTPUT
                     else
                         echo "skip_build=false" >> $GITHUB_OUTPUT

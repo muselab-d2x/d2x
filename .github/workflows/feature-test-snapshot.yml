@@ -84,6 +84,43 @@ jobs:
         run: cci history enable
         id: enable_tracking
 
+      - name: Check Pull Request Conditions
+        id: check_conditions
+        run: |
+              CONDITIONS_MET=false
+              if [[ "${{ inputs.create_pr_snapshot }}" == "true" ]]; then
+                  cci task run github_pull_request_snapshot --check-only True --build-success True
+                  SUCCESS_SKIP_REASON=$(cci history info last --json | jq -r '.return_values.skip_reason')
+                  if [[ -z "$SUCCESS_SKIP_REASON" ]]; then
+                      CONDITIONS_MET=true
+                  else
+                      echo "Success Snapshot Conditions Not Met: $SUCCESS_SKIP_REASON"
+                  fi
+              fi
+              if [[ "${{ inputs.create_failure_snapshot }}" == "true" ]]; then
+                  cci task run github_pull_request_snapshot --check-only True --build-success False
+                  FAILURE_SKIP_REASON=$(cci history info last --json | jq -r '.return_values.skip_reason')
+                  if [[ -z "$FAILURE_SKIP_REASON" ]]; then
+                      CONDITIONS_MET=true
+                  else
+                      echo "Failure Snapshot Conditions Not Met: $FAILURE_SKIP_REASON"
+                  fi
+                  cci task run github_pull_request_snapshot --check-only True --build-success False --build-fail-tests True
+                  FAILURE_TESTS_SKIP_REASON=$(cci history info last --json | jq -r '.return_values.skip_reason')
+                  if [[ -z "$FAILURE_TESTS_SKIP_REASON" ]]; then
+                      CONDITIONS_MET=true
+                  else
+                      echo "Failure Tests Snapshot Conditions Not Met: $FAILURE_TESTS_SKIP_REASON"
+                  fi
+              fi
+              if [[ "$CONDITIONS_MET" == "false" ]]; then
+                  echo "Snapshot Conditions Not Met for any outcome, skipping the build." | tee -a $GITHUB_JOB_SUMMARY
+                  echo "skip_build=true" >> $GITHUB_OUTPUT
+              else
+                  echo "skip_build=false" >> $GITHUB_OUTPUT
+              fi
+        shell: bash
+
       - name: Prepare Feature Test Org
         id: prepare_org
         run: cci flow run ci_feature --skip-from run_tests

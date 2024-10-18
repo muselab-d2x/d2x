@@ -2,6 +2,11 @@ name: 2GP Feature Test
 on:
     workflow_call:
         inputs:
+            triggering_workflow_conclusion:
+                required: false
+                type: string
+                default: 'success'
+                description: "The conclusion of the triggering workflow, used to skip the build if the triggering workflow failed."
             org:
                 required: false
                 default: feature
@@ -39,6 +44,7 @@ on:
 jobs:
     feature-test-2gp:
         name: "Feature Test 2GP"
+        if: ${{ inputs.triggering_workflow_conclusion == 'success' }}
         runs-on: ubuntu-latest
         container:
             image: ${{ inputs.docker_image }}:${{ inputs.docker_tag }}
