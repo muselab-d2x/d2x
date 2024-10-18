@@ -2,11 +2,6 @@ name: 2GP Feature Test and PR Snapshot
 on:
     workflow_call:
         inputs:
-            triggering_workflow_conclusion:
-                required: false
-                type: string
-                default: 'success'
-                description: "The conclusion of the triggering workflow, used to skip the build if the triggering workflow failed."
             debug:
                 required: false
                 default: 'false'

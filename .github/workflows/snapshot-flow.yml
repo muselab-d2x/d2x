@@ -110,6 +110,7 @@ jobs:
             - name: Capture CumulusCI Build History
               if: always()
               run: |
+                  cci error info
                   cci history list
                   cci history dependencies
                   cci history dependencies --json > cci_dependencies_history.json
