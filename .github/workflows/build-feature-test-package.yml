@@ -1,4 +1,5 @@
-name: 2GP Feature Test
+name: Build 2GP Feature Test Package
+
 on:
     workflow_call:
         inputs:
@@ -18,6 +19,7 @@ on:
                 type: string
                 required: false
                 default: cumulusci-next-snapshots
+
         secrets:
             dev-hub-auth-url:
                 required: false
@@ -37,8 +39,8 @@ on:
                 required: false
 
 jobs:
-    feature-test-2gp:
-        name: "Feature Test 2GP"
+    create-2gp-package-version:
+        name: "Create 2GP Package Version"
         runs-on: ubuntu-latest
         container:
             image: ${{ inputs.docker_image }}:${{ inputs.docker_tag }}
@@ -51,74 +53,38 @@ jobs:
               run: |
                   echo "D2X Docker Image: ${{ inputs.docker_image }}"
                   echo "D2X Docker Tag: ${{ inputs.docker_tag }}"
-                  echo "D2X Docker Image: ${{ inputs.docker_image }}:${{ inputs.docker_tag }}" >> $GITHUB_STEP_SUMMARY
+                  echo "D2X Docker Image: `${{ inputs.docker_image }}:${{ inputs.docker_tag }}`" >> $GITHUB_STEP_SUMMARY
               shell: bash
-
             - name: Checkout
               uses: actions/checkout@v4
-
             - name: Auth to DevHub
               run: /usr/local/bin/devhub.sh
               env:
-                  DEV_HUB_AUTH_URL: "${{ secrets.dev-hub-auth-url }}"
-                  DEV_HUB_USERNAME: "${{ secrets.dev-hub-username }}"
-                  DEV_HUB_CLIENT_ID: "${{ secrets.dev-hub-client-id }}"
-                  DEV_HUB_PRIVATE_KEY: "${{ secrets.dev-hub-private-key }}"
+                DEV_HUB_AUTH_URL: "${{ secrets.dev-hub-auth-url }}"
+                DEV_HUB_USERNAME: "${{ secrets.dev-hub-username }}"
+                DEV_HUB_CLIENT_ID: "${{ secrets.dev-hub-client-id }}"
+                DEV_HUB_PRIVATE_KEY: "${{ secrets.dev-hub-private-key }}"
 
             - name: Set ${{ inputs.org }} org as default org
               run: cci org default ${{ inputs.org }}
-
-            - name: Run Feature Test
-              id: feature_test
+            - name: Build Feature Test Package
               env:
                   GITHUB_TOKEN: "${{ secrets.github-token }}"
                   CUMULUSCI_SERVICE_github: '{ "username": "${{ github.actor }}", "token": "${{ secrets.github-token }}", "email": "${{ secrets.gh-email }}" }'
                   GITHUB_APP_ID: "${{ secrets.github-app-id }}"
                   GITHUB_APP_KEY: "${{ secrets.github-app-key }}"
-              run: cci flow run ci_feature_2gp --use-snapshots
-
-            - name: Capture CumulusCI Build History
-              if: always()
-              run: |
-                  cci history list
-                  cci history dependencies
-                  cci history dependencies --json > cci_dependencies_history.json
-                  cci history list --json > cci_build_history.json
+              run: cci flow run build_feature_test_package $([[ "${{ inputs.debug }}" == "true" ]] && echo " --debug") | tee cumulusci-flow.log
               shell: bash
-
-            - name: Upload CumulusCI Dependencies History
-              if: always()
-              uses: actions/upload-artifact@v4
-              with:
-                  name: cci-dependencies-history
-                  path: cci_dependencies_history.json
-
-            - name: Upload CumulusCI Build History
-              if: always()
-              uses: actions/upload-artifact@v4
-              with:
-                  name: cci-build-history
-                  path: cci_build_history.json
-
-            - name: Delete Scratch Org
-              if: always()
-              run: cci org scratch_delete feature
-              shell: bash
-
-            - name: Check Job Status
-              if: always()
+            - name: Set Commit Status
+              env:
+                  GITHUB_TOKEN: "${{ secrets.github-token }}"
               run: |
-                  if [[ "${{ steps.feature_test.outcome }}" == "failure" ]]; then
-                      echo "Feature Test step failed. Failing the job."
-                      exit 1
-                  fi
-                  
-                  # Check for any failed steps
-                  FAILED_STEPS=$(cat $GITHUB_OUTPUT | grep -c "failure")
-                  if [[ $FAILED_STEPS -gt 0 ]]; then
-                      echo "One or more steps failed. Failing the job."
-                      exit 1
-                  fi
-                  
-                  echo "All steps completed successfully."
+                  VERSION=$(cat cumulusci-flow.log | grep -o -E -m 1 "04t[a-zA-Z0-9]{15}")
+                  gh api \
+                    --method POST \
+                    -H "Accept: application/vnd.github.v3+json" \
+                    '/repos/${{ github.repository }}/statuses/${{ github.sha }}' \
+                    -f state='success' \
+                    -f description="version_id: $VERSION" \
+                    -f context='Build Feature Test Package'
               shell: bash

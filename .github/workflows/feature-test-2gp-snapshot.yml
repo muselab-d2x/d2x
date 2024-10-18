@@ -51,59 +51,7 @@ on:
                 required: false
 
 jobs:
-    build-2gp-package-version:
-        # needs: check-build-status
-        # if: needs.check-build-status.outputs.should_build == 'true'
-        name: "2GP Feature Test and PR Snapshot"
-        runs-on: ubuntu-latest
-        container:
-            image: ghcr.io/muselab-d2x/d2x:cumulusci-next-snapshots
-            options: --user root
-            credentials:
-                username: "${{ github.actor }}"
-                password: "${{ secrets.github-token }}"
-            env:
-                DEV_HUB_AUTH_URL: "${{ secrets.dev-hub-auth-url }}"
-                DEV_HUB_USERNAME: "${{ secrets.dev-hub-username }}"
-                DEV_HUB_CLIENT_ID: "${{ secrets.dev-hub-client-id }}"
-                DEV_HUB_PRIVATE_KEY: "${{ secrets.dev-hub-private-key }}"
-                CUMULUSCI_SERVICE_github: '{ "username": "${{ github.actor }}", "token": "${{ secrets.github-token }}", "email": "${{ secrets.gh-email }}" }'
-                GITHUB_APP_ID: "${{ secrets.github-app-id }}"
-                GITHUB_APP_KEY: "${{ secrets.github-app-key }}"
-        steps:
-            - name: Checkout
-              uses: actions/checkout@v4
-
-            - name: Auth to DevHub
-              run: /usr/local/bin/devhub.sh
-
-            - name: Set ${{ inputs.org_name }} org as default org
-              run: |
-                    cci org default ${{ inputs.org_name }}
-
-            - name: Build Feature Test Package
-              id: create_2gp
-              run: |
-                    cci flow run build_feature_test_package \
-                    $([[ "${{ inputs.debug }}" == "true" ]] && echo " --debug")
-              shell: bash
-
-            - name: Set Commit Status
-              env:
-                    GITHUB_TOKEN: "${{ secrets.github-token }}"
-              run: |
-                    VERSION=$(cat cumulusci-flow.log | grep -o -E -m 1 "04t[a-zA-Z0-9]{15}")
-                    gh api \
-                    --method POST \
-                    -H "Accept: application/vnd.github.v3+json" \
-                    '/repos/${{ github.repository }}/statuses/${{ github.sha }}' \
-                    -f state='success' \
-                    -f description="version_id: $VERSION" \
-                    -f context='Build Feature Test Package'
-              shell: bash
-
     feature-test-and-snapshot:
-        needs: build-2gp-package-version
         name: "2GP Feature Test and PR Snapshot"
         runs-on: ubuntu-latest
         container:
@@ -130,13 +78,52 @@ jobs:
             - name: Set ${{ inputs.org_name }} org as default org
               run: |
                     cci org default ${{ inputs.org_name }}
+
+            - name: Check Pull Request Conditions
+              id: check_conditions
+              run: |
+                    CONDITIONS_MET=false
+                    if [[ "${{ inputs.create_pr_snapshot }}" == "true" ]]; then
+                        cci task run github_pull_request_snapshot --check-only True --build-success True
+                        SUCCESS_SKIP_REASON=$(cci history info last --json | jq -r '.return_values.skip_reason')
+                        if [[ -z "$SUCCESS_SKIP_REASON" ]]; then
+                            CONDITIONS_MET=true
+                        else
+                            echo "Success Snapshot Conditions Not Met: $SUCCESS_SKIP_REASON"
+                        fi
+                    fi
+                    if [[ "${{ inputs.create_failure_snapshot }}" == "true" ]]; then
+                        cci task run github_pull_request_snapshot --check-only True --build-success False
+                        FAILURE_SKIP_REASON=$(cci history info last --json | jq -r '.return_values.skip_reason')
+                        if [[ -z "$FAILURE_SKIP_REASON" ]]; then
+                            CONDITIONS_MET=true
+                        else
+                            echo "Failure Snapshot Conditions Not Met: $FAILURE_SKIP_REASON"
+                        fi
+                        cci task run github_pull_request_snapshot --check-only True --build-success False --build-fail-tests True
+                        FAILURE_TESTS_SKIP_REASON=$(cci history info last --json | jq -r '.return_values.skip_reason')
+                        if [[ -z "$FAILURE_TESTS_SKIP_REASON" ]]; then
+                            CONDITIONS_MET=true
+                        else
+                            echo "Failure Tests Snapshot Conditions Not Met: $FAILURE_TESTS_SKIP_REASON"
+                        fi
+                    fi
+                    if [[ "$CONDITIONS_MET" == "false" ]]; then
+                        echo "Snapshot Conditions Not Met for any outcome, skipping the build."
+                        echo "skip_build=true" >> $GITHUB_OUTPUT
+                    else
+                        echo "skip_build=false" >> $GITHUB_OUTPUT
+                    fi
+              shell: bash
+
             - name: Prepare Feature Test Org
+              if: steps.check_conditions.outputs.skip_build == 'false'
               id: prepare_org
               run: |
                     cci flow run ci_feature_2gp --skip-from run_tests
 
             - name: Start Snapshot Creation
-              if: inputs.create_pr_snapshot == true
+              if: steps.check_conditions.outputs.skip_build == 'false' && inputs.create_pr_snapshot == true
               id: start_snapshot
               run: |
                     cci task run github_pull_request_snapshot \
@@ -146,14 +133,15 @@ jobs:
               shell: bash
 
             - name: Run Feature Test
+              if: steps.check_conditions.outputs.skip_build == 'false'
               id: feature_test
               run: |
                     cci flow run ci_feature_2gp --start-from run_tests
               shell: bash
 
             - name: Finalize Snapshot Creation
+              if: always() && steps.check_conditions.outputs.skip_build == 'false' && (inputs.create_pr_snapshot == true || (inputs.create_failure_snapshot == true && (failure() || contains(steps.feature_test.outcome, 'failure'))))
               id: finalize_snapshot
-              if: always() && (inputs.create_pr_snapshot == true || (inputs.create_failure_snapshot == true && (failure() || contains(steps.feature_test.outcome, 'failure'))))
               env:
                     GITHUB_TOKEN: ${{ secrets.github-token }}
               run: |
@@ -176,14 +164,14 @@ jobs:
               shell: bash
 
             - name: Delete Scratch Org
-              if: always()
+              if: always() && steps.check_conditions.outputs.skip_build == 'false'
               run: cci org scratch_delete ${{ inputs.org_name }}
               shell: bash
 
             - name: Check Job Status
-              if: always()
+              if: always() && steps.check_conditions.outputs.skip_build == 'false'
               run: |
-                    if [[ "${{ steps.create_2gp.outcome }}" == "failure" || "${{ steps.prepare_org.outcome }}" == "failure" || "${{ steps.feature_test.outcome }}" == "failure" ]]; then
+                    if [[ "${{ steps.prepare_org.outcome }}" == "failure" || "${{ steps.feature_test.outcome }}" == "failure" ]]; then
                     echo "Critical step failed. Failing the job."
                     exit 1
                     fi
