@@ -72,8 +72,6 @@ jobs:
                 DEV_HUB_CLIENT_ID: "${{ secrets.dev-hub-client-id }}"
                 DEV_HUB_PRIVATE_KEY: "${{ secrets.dev-hub-private-key }}"
                 CUMULUSCI_SERVICE_github: '{ "username": "${{ github.actor }}", "token": "${{ secrets.github-token }}", "email": "${{ secrets.gh-email }}" }'
-                GITHUB_APP_ID: "${{ secrets.github-app-id }}"
-                GITHUB_APP_KEY: "${{ secrets.github-app-key }}"
         steps:
             - name: Checkout
               uses: actions/checkout@v4
@@ -149,7 +147,8 @@ jobs:
               if: always() && steps.check_conditions.outputs.skip_build == 'false' && (inputs.create_pr_snapshot == true || (inputs.create_failure_snapshot == true && (failure() || contains(steps.feature_test.outcome, 'failure'))))
               id: finalize_snapshot
               env:
-                    GITHUB_TOKEN: ${{ secrets.github-token }}
+                  GITHUB_APP_ID: "${{ secrets.github-app-id }}"
+                  GITHUB_APP_KEY: "${{ secrets.github-app-key }}"
               run: |
                     if [[ "${{ inputs.create_pr_snapshot }}" == "true" && -n "${{ steps.start_snapshot.outputs.SNAPSHOT_ID }}" ]]; then
                     cci task run github_pull_request_snapshot \
