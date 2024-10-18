@@ -58,7 +58,6 @@ on:
 jobs:
     feature-test-and-snapshot:
         name: "2GP Feature Test and PR Snapshot"
-        if: ${{ inputs.triggering_workflow_conclusion == 'success' }}
         runs-on: ubuntu-latest
         container:
             image: ghcr.io/muselab-d2x/d2x:cumulusci-next-snapshots
