@@ -82,7 +82,7 @@ jobs:
               run: |
                     CONDITIONS_MET=false
                     if [[ "true" == "true" ]]; then
-                        cci task run github_pull_request_snapshot --check-only True --build-success True
+                        cci task run github_pull_request_snapshot --check-only True --build-success True --packaging-suffix M
                         SUCCESS_SKIP_REASON=$(cci history info last --json | jq -r '.return_values.skip_reason')
                         if [[ "$SUCCESS_SKIP_REASON" == "null" ]]; then
                             CONDITIONS_MET=true
@@ -91,14 +91,14 @@ jobs:
                         fi
                     fi
                     if [[ "true" == "true" ]]; then
-                        cci task run github_pull_request_snapshot --check-only True --build-success False
+                        cci task run github_pull_request_snapshot --check-only True --build-success False --packaging-suffix M
                         FAILURE_SKIP_REASON=$(cci history info last --json | jq -r '.return_values.skip_reason')
                         if [[ "$FAILURE_SKIP_REASON" == "null" ]]; then
                             CONDITIONS_MET=true
                         else
                             echo "Failure Snapshot Conditions Not Met: $FAILURE_SKIP_REASON"
                         fi
-                        cci task run github_pull_request_snapshot --check-only True --build-success False --build-fail-tests True
+                        cci task run github_pull_request_snapshot --check-only True --build-success False --build-fail-tests True --packaging-suffix M
                         FAILURE_TESTS_SKIP_REASON=$(cci history info last --json | jq -r '.return_values.skip_reason')
                         if [[ "$FAILURE_TESTS_SKIP_REASON" == "null" ]]; then
                             CONDITIONS_MET=true
@@ -127,7 +127,7 @@ jobs:
                     cci task run github_pull_request_snapshot \
                     --wait False \
                     --build-success ${{ job.status == 'success' }} \
-                    --is-packaged true
+                    --packaging-suffix M
               shell: bash
 
             - name: Run Feature Test

@@ -82,6 +82,7 @@ jobs:
                   GITHUB_APP_ID: "${{ secrets.github-app-id }}"
                   GITHUB_APP_KEY: "${{ secrets.github-app-key }}"
               run: cci flow run ci_feature_2gp --use-snapshots
+              shell: bash
 
             - name: Capture CumulusCI Build History
               if: always()
