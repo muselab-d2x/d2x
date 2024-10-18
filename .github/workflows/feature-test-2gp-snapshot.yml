@@ -81,26 +81,26 @@ jobs:
               id: check_conditions
               run: |
                     CONDITIONS_MET=false
-                    if [[ "${{ inputs.create_pr_snapshot }}" == "true" ]]; then
+                    if [[ "true" == "true" ]]; then
                         cci task run github_pull_request_snapshot --check-only True --build-success True
                         SUCCESS_SKIP_REASON=$(cci history info last --json | jq -r '.return_values.skip_reason')
-                        if [[ -z "$SUCCESS_SKIP_REASON" ]]; then
+                        if [[ "$SUCCESS_SKIP_REASON" == "null" ]]; then
                             CONDITIONS_MET=true
                         else
                             echo "Success Snapshot Conditions Not Met: $SUCCESS_SKIP_REASON"
                         fi
                     fi
-                    if [[ "${{ inputs.create_failure_snapshot }}" == "true" ]]; then
+                    if [[ "true" == "true" ]]; then
                         cci task run github_pull_request_snapshot --check-only True --build-success False
                         FAILURE_SKIP_REASON=$(cci history info last --json | jq -r '.return_values.skip_reason')
-                        if [[ -z "$FAILURE_SKIP_REASON" ]]; then
+                        if [[ "$FAILURE_SKIP_REASON" == "null" ]]; then
                             CONDITIONS_MET=true
                         else
                             echo "Failure Snapshot Conditions Not Met: $FAILURE_SKIP_REASON"
                         fi
                         cci task run github_pull_request_snapshot --check-only True --build-success False --build-fail-tests True
                         FAILURE_TESTS_SKIP_REASON=$(cci history info last --json | jq -r '.return_values.skip_reason')
-                        if [[ -z "$FAILURE_TESTS_SKIP_REASON" ]]; then
+                        if [[ "$FAILURE_TESTS_SKIP_REASON" == "null" ]]; then
                             CONDITIONS_MET=true
                         else
                             echo "Failure Tests Snapshot Conditions Not Met: $FAILURE_TESTS_SKIP_REASON"
