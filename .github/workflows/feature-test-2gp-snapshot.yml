@@ -9,34 +9,34 @@ on:
                 description: "The conclusion of the triggering workflow, used to skip the build if the triggering workflow failed."
             debug:
                 required: false
-                default: false
+                default: 'false'
+                type: string
                 description: "Enable debug logging output for CumulusCI"
-                type: boolean
             org_name:
                 required: false
                 default: feature
-                description: "The name of the scratch org profile to use for the source org. If not provided, the org named 'feature' will be used."
                 type: string
+                description: "The name of the scratch org profile to use for the source org. If not provided, the org named 'feature' will be used."
             create_pr_snapshot:
                 required: false
-                default: false
+                default: 'false'
+                type: string
                 description: "If true, snapshot functionality is enabled for pull requests. CumulusCI's logic will determine if a snapshot should be created via the github_pull_request_snapshot task."
-                type: boolean
             create_failure_snapshot:
                 required: false
-                default: false
+                default: 'false'
+                type: string
                 description: "If true, a snapshot will be created if the build fails. CumulusCI's logic will determine if a snapshot should be created via the github_pull_request_snapshot task."
-                type: boolean
             create_snapshot_commit_status:
                 required: false
-                default: false
+                default: 'false'
+                type: string
                 description: "If true, a commit status will be set for the build. This is useful for tracking the status of the snapshot creation task."
-                type: boolean
             create_snapshot_environment:
                 required: false
-                default: false
+                default: 'false'
+                type: string
                 description: "If true, a GitHub Environment will be created for the snapshot."
-                type: boolean
         secrets:
             dev-hub-auth-url:
                 required: false
@@ -127,7 +127,7 @@ jobs:
                     cci flow run ci_feature_2gp --skip-from run_tests
 
             - name: Start Snapshot Creation
-              if: steps.check_conditions.outputs.skip_build == 'false' && inputs.create_pr_snapshot == true
+              if: steps.check_conditions.outputs.skip_build == 'false' && inputs.create_pr_snapshot == 'true'
               id: start_snapshot
               run: |
                     cci task run github_pull_request_snapshot \
@@ -144,7 +144,7 @@ jobs:
               shell: bash
 
             - name: Finalize Snapshot Creation
-              if: always() && steps.check_conditions.outputs.skip_build == 'false' && (inputs.create_pr_snapshot == true || (inputs.create_failure_snapshot == true && (job.status != 'success' || steps.feature_test.outcome == 'failure')))
+              if: always() && steps.check_conditions.outputs.skip_build == 'false' && (inputs.create_pr_snapshot == 'true' || (inputs.create_failure_snapshot == 'true' && (job.status != 'success' || steps.feature_test.outcome == 'failure')))
               id: finalize_snapshot
               env:
                   GITHUB_APP_ID: "${{ secrets.github-app-id }}"
