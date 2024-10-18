@@ -66,6 +66,7 @@ jobs:
                 CUMULUSCI_SERVICE_github: '{ "username": "${{ github.actor }}", "token": "${{ secrets.github-token }}", "email": "${{ secrets.gh-email }}" }'
                 GITHUB_APP_ID: "${{ secrets.github-app-id }}"
                 GITHUB_APP_KEY: "${{ secrets.github-app-key }}"
+                GITHUB_TOKEN: "${{ secrets.github-token }}"
         steps:
             - name: Checkout
               id: checkout
