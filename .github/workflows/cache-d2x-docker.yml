@@ -1,0 +1,55 @@
+name: Build and Cache D2X Image
+
+on:
+  workflow_dispatch:
+    inputs:
+      image_tag:
+        description: 'Tag for the D2X image'
+        required: true
+        default: 'latest'
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository_owner }}/d2x
+
+jobs:
+  build-and-cache:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Log in to the Container registry
+        uses: docker/login-action@v2
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          push: true
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.event.inputs.image_tag }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Update README
+        run: |
+          echo "## Latest D2X Image" > $GITHUB_JOB_SUMMARY
+          echo "Tag: ${{ github.event.inputs.image_tag }}" >> $GITHUB_JOB_SUMMARY
+          echo "Built on: $(date -u)" >> README.md >> $GITHUB_JOB_SUMMARY
+
+      - name: Commit README
+        uses: EndBug/add-and-commit@v9
+        with:
+          add: 'README.md'
+          message: 'Update README with latest image info'

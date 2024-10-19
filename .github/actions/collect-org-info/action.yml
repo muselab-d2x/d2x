@@ -1,0 +1,56 @@
+name: 'Collect Salesforce Org Info'
+description: 'Collects Salesforce org info and optionally saves it as a GitHub environment'
+inputs:
+  org-alias:
+    description: 'Alias of the Salesforce org'
+    required: true
+  create-environment:
+    description: 'Whether to create a new GitHub environment'
+    required: false
+    default: 'false'
+  environment-name:
+    description: 'Name of the GitHub environment to create'
+    required: false
+    default: ''
+runs:
+  using: "composite"
+  steps:
+    - name: Get and Process Org Info
+      id: process-org-info
+      run: |
+        # Get org info
+        ORG_INFO=$(cci org info ${{ inputs.org-alias }} --json)
+        
+        # Extract non-sensitive information
+        ORG_NAME=$(echo $ORG_INFO | jq -r '.org_name')
+        INSTANCE_URL=$(echo $ORG_INFO | jq -r '.instance_url')
+        USERNAME=$(echo $ORG_INFO | jq -r '.username')
+        
+        # Set non-sensitive outputs
+        echo "org_name=${ORG_NAME}" >> $GITHUB_OUTPUT
+        echo "instance_url=${INSTANCE_URL}" >> $GITHUB_OUTPUT
+        echo "username=${USERNAME}" >> $GITHUB_OUTPUT
+        
+        if [[ "${{ inputs.create-environment }}" == "true" && -n "${{ inputs.environment-name }}" ]]; then
+          # Get SFDX auth URL (sensitive)
+          SFDX_AUTH_URL=$(sf org display --json -o ${{ inputs.org-alias }} | jq -r '.result.sfdxAuthUrl')
+          
+          # Create or update environment
+          gh api -X PUT /repos/${{ github.repository }}/environments/${{ inputs.environment-name }} \
+            -f environment_name="${{ inputs.environment-name }}" \
+            -f wait_timer=0
+          
+          # Set environment variables
+          gh api -X PUT /repos/${{ github.repository }}/environments/${{ inputs.environment-name }}/variables/INSTANCE_URL \
+            -f name="INSTANCE_URL" -f value="${INSTANCE_URL}"
+          gh api -X PUT /repos/${{ github.repository }}/environments/${{ inputs.environment-name }}/variables/USERNAME \
+            -f name="USERNAME" -f value="${USERNAME}"
+          
+          # Set secret
+          gh secret set SFDX_AUTH_URL -b"${SFDX_AUTH_URL}" --env "${{ inputs.environment-name }}"
+          
+          echo "Environment '${{ inputs.environment-name }}' created/updated with necessary variables and secrets."
+        fi
+      shell: bash
+      env:
+        GITHUB_TOKEN: ${{ github.token }}
