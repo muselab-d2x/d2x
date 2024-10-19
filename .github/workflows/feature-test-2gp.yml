@@ -122,6 +122,7 @@ jobs:
                   
                   # Check for any failed steps
                   FAILED_STEPS=$(cat $GITHUB_OUTPUT | grep -c "failure")
+                  print("Failed steps: $FAILED_STEPS")
                   if [[ $FAILED_STEPS -gt 0 ]]; then
                       echo "One or more steps failed. Failing the job."
                       exit 1
