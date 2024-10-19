@@ -2,11 +2,6 @@ name: 2GP Feature Test
 on:
     workflow_call:
         inputs:
-            triggering_workflow_conclusion:
-                required: false
-                type: string
-                default: 'success'
-                description: "The conclusion of the triggering workflow, used to skip the build if the triggering workflow failed."
             org:
                 required: false
                 default: feature
@@ -23,6 +18,15 @@ on:
                 type: string
                 required: false
                 default: cumulusci-next-snapshots
+            keep_org:
+                required: false
+                type: boolean
+                default: false
+                description: "If true, the org will not be deleted at the end of the workflow"
+            environment_name:
+                required: false
+                type: string
+                description: "If set, a GitHub environment will be created with this name"
         secrets:
             dev-hub-auth-url:
                 required: false
@@ -44,7 +48,6 @@ on:
 jobs:
     feature-test-2gp:
         name: "Feature Test 2GP"
-        if: ${{ inputs.triggering_workflow_conclusion == 'success' }}
         runs-on: ubuntu-latest
         container:
             image: ${{ inputs.docker_image }}:${{ inputs.docker_tag }}
@@ -81,8 +84,22 @@ jobs:
                   CUMULUSCI_SERVICE_github: '{ "username": "${{ github.actor }}", "token": "${{ secrets.github-token }}", "email": "${{ secrets.gh-email }}" }'
                   GITHUB_APP_ID: "${{ secrets.github-app-id }}"
                   GITHUB_APP_KEY: "${{ secrets.github-app-key }}"
-              run: cci flow run ci_feature_2gp --use-snapshots
+              run: |
+                if [[ -n "${{ inputs.environment_name }}" ]]; then
+                  # Retrieve SFDX_AUTH_URL from the environment secret
+                  SFDX_AUTH_URL=$(gh secret get SFDX_AUTH_URL --env ${{ inputs.environment_name }})
+                fi
+                cci flow run ci_feature_2gp --use-snapshots
               shell: bash
+
+            - name: Collect Org Info
+              if: always() && ${{ inputs.environment_name != '' }}
+              uses: ./.github/actions/collect-org-info
+              with:
+                org-alias: ${{ inputs.org }}
+                create-environment: ${{ inputs.environment_name != '' }}
+                environment-name: ${{ inputs.environment_name }}
+
 
             - name: Capture CumulusCI Build History
               if: always()
@@ -108,8 +125,8 @@ jobs:
                   path: cci_build_history.json
 
             - name: Delete Scratch Org
-              if: always()
-              run: cci org scratch_delete feature
+              if: always() && !inputs.keep_org
+              run: cci org scratch_delete ${{ inputs.org }}
               shell: bash
 
             - name: Check Job Status
@@ -122,7 +139,7 @@ jobs:
                   
                   # Check for any failed steps
                   FAILED_STEPS=$(cat $GITHUB_OUTPUT | grep -c "failure")
-                  print("Failed steps: $FAILED_STEPS")
+                  echo "Failed steps: $FAILED_STEPS"
                   if [[ $FAILED_STEPS -gt 0 ]]; then
                       echo "One or more steps failed. Failing the job."
                       exit 1
