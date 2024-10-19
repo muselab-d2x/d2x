@@ -85,10 +85,6 @@ jobs:
                   GITHUB_APP_ID: "${{ secrets.github-app-id }}"
                   GITHUB_APP_KEY: "${{ secrets.github-app-key }}"
               run: |
-                if [[ -n "${{ inputs.environment_name }}" ]]; then
-                  # Retrieve SFDX_AUTH_URL from the environment secret
-                  SFDX_AUTH_URL=$(gh secret get SFDX_AUTH_URL --env ${{ inputs.environment_name }})
-                fi
                 cci flow run ci_feature_2gp --use-snapshots
               shell: bash
 
