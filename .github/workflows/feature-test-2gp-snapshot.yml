@@ -149,14 +149,14 @@ jobs:
                         --snapshot-id "${{ steps.start_snapshot.outputs.SNAPSHOT_ID }}" \
                         --build-success "${{ job.status == 'success' }}" \
                         --build-fail-tests "${{ steps.feature_test.outcome == 'failure' }}" \
-                        --snapshot-is-packaged true \
+                        --packaging-suffix P \
                         $([[ "${{ inputs.create_snapshot_commit_status }}" == "true" ]] && echo "--create-commit-status true") \
                         $([[ "${{ inputs.create_snapshot_environment }}" == "true" ]] && echo "--create-environment-status true")
                     elif [[ "${{ inputs.create_failure_snapshot }}" == "true" && ("${{ job.status != 'success' }}" == "true" || "${{ steps.feature_test.outcome == 'failure' }}" == "true") ]]; then
                     cci task run github_pull_request_snapshot \
                         --build-success false \
                         --build-fail-tests "${{ steps.feature_test.outcome == 'failure' }}" \
-                        --snapshot-is-packaged true \
+                        --packaging-suffix P \
                         $([[ "${{ inputs.create_snapshot_commit_status }}" == "true" ]] && echo "--create-commit-status true") \
                         $([[ "${{ inputs.create_snapshot_environment }}" == "true" ]] && echo "--create-environment-status true")
                     fi
