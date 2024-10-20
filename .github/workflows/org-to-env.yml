@@ -49,7 +49,7 @@ jobs:
         steps:
             - name: Check environment exists
               run: |
-                    env_disabled=`gh api /repos/${{ github.repository }}/environments/ | grep 404`
+                    env_disabled=`gh api /repos/${{ github.repository }}/environments | grep 404`
                     if [ ! -z "$env_disabled" ]; then
                         echo "Environments are disabled for this repository"
                         exit 1
