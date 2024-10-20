@@ -47,6 +47,8 @@ jobs:
                 GITHUB_TOKEN: ${{ secrets.github-token }}
 
         steps:
+            - name: Checkout
+              uses: actions/checkout@v4
             - name: Check environment exists
               run: |
                     gh api /repos/${{ github.repository }}/environments 2> /dev/null | jq -r '.total_count'
