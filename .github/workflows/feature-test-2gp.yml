@@ -88,12 +88,12 @@ jobs:
                 cci flow run ci_feature_2gp --use-snapshots
               shell: bash
 
-            - name: Collect Org Info
+            - name: Save Org to GitHub Environment
               if: always() && ${{ inputs.environment_name != '' }}
-              uses: ./.github/actions/collect-org-info
+              uses: muselab-d2x/d2x-org-to-env@main
               with:
                 org-alias: ${{ inputs.org }}
-                create-environment: ${{ inputs.environment_name != '' }}
+                create-environment: 'true'
                 environment-name: ${{ inputs.environment_name }}
 
 
