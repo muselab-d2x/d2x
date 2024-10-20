@@ -17,17 +17,17 @@ on:
                 required: false
                 default: false
                 type: boolean
-            secrets:
-                github-token:
-                    required: true
-                github-app-id:
-                    required: false
-                github-app-key:
-                    required: false
-                dev-hub-auth-url:
-                    required: false
-                target-org-auth-url:
-                    required: false
+        secrets:
+            github-token:
+                required: true
+            github-app-id:
+                required: false
+            github-app-key:
+                required: false
+            dev-hub-auth-url:
+                required: false
+            target-org-auth-url:
+                required: false
 
 jobs:
     org-to-env:
