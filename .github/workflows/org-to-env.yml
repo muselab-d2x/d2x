@@ -77,7 +77,7 @@ jobs:
 
             - name: Save Org to GitHub Environment
               if: always() && ${{ inputs.environment_name != '' }}
-              uses: muselab-d2x/d2x-org-to-env@v1.1
+              uses: muselab-d2x/d2x-org-to-env@v1.2
               env:
                   GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
               with:
