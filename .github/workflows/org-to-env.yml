@@ -49,13 +49,9 @@ jobs:
         steps:
             - name: Check environment exists
               run: |
-                    env_enabled=`gh api /repos/${{ github.repository }}/environments | jq -r '.total_count"`
-                    if [ -z "$env_disabled" ]; then
-                        echo "Environments are disabled for this repository"
-                        exit 1
-                    fi
-                    not_exists=`gh api /repos/${{ github.repository }}/environments/${{ inputs.environment_name }} | grep 404`
-                    if [ ! -z "$not_exists" ]; then
+                    gh api /repos/${{ github.repository }}/environments 2> /dev/null | jq -r '.total_count"
+                    exists=`gh api /repos/${{ github.repository }}/environments/${{ inputs.environment_name }} 2> /dev/null | jq -r 'status'`
+                    if [ "$exists" != "404" ]; then
                         if [ "${{ inputs.update_environment }}" = "true" ]; then
                             echo "Environment exists and will be updated"
                         else
