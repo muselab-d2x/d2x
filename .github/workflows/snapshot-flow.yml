@@ -12,7 +12,7 @@ on:
                 required: true
                 type: string
             flow_run_options:
-                description: "Options to pass to the flow via cci flow run -o 'key=value'"
+                description: "Command line options to pass to the flow via cci flow run -o 'key=value'"
                 required: false
                 type: string
             create_snapshot_commit_status:
