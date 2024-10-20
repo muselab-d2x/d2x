@@ -3,11 +3,11 @@ name: Org to GitHub Environment
 on:
     workflow_call:
         inputs:
-            org-alias:
+            org_alias:
                 description: "Alias of the Salesforce org"
                 required: true
                 type: string
-            environment-name:
+            environment_name:
                 description: "Name of the GitHub environment to create"
                 required: true
                 default: ""
