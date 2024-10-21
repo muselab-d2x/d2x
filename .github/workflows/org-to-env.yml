@@ -73,6 +73,8 @@ jobs:
                           exit 1
                       fi
                   fi
+              env:
+                  GITHUB_TOKEN: ${{ github.env.GH_TOKEN }}
 
             - name: Auth to DevHub
               run: /usr/local/bin/devhub.sh
