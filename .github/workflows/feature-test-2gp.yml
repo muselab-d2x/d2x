@@ -101,6 +101,14 @@ jobs:
         env:
           GITHUB_TOKEN: "${{ secrets.github-token }}"
         run: cci flow run ci_feature_2gp -o install_managed__password ${{ env.CR_PKG_KEY }}
+      - name: Run Feature Test
+        run: |
+          if [ -d "tests" ]; then
+           cci task run robot --org feature
+          else
+           echo "Robot tests folder not found. Skipping tests."
+          fi
+
       - name: Delete Scratch Org
         if: ${{ always() }}
         run: |
