@@ -9,7 +9,6 @@ on:
                 type: string
             run-test:
                 description: If true, run the ci_beta flow to test the beta as part of the job. Set to false to split ci_beta into a separate workflow
-                required: true
                 default: true
                 type: boolean
             debug:
