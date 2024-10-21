@@ -52,26 +52,27 @@ jobs:
             - uses: actions/create-github-app-token@v1
               id: app-token
               with:
-                app-id: ${{ secrets.github-app-id }}
-                private-key: ${{ secrets.github-app-key }}
-                owner: ${{ github.event.repository.owner.login }}
-                repositories: |
-                    ${{ github.event.repository.name }}
+                  app-id: ${{ secrets.github-app-id }}
+                  private-key: ${{ secrets.github-app-key }}
+                  owner: ${{ github.event.repository.owner.login }}
+                  repositories: |
+                      ${{ github.event.repository.name }}
 
             - name: Check environment exists
               env:
-                  GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
+                  GH_TOKEN: ${{ steps.app-token.outputs.token }}
               run: |
-                    gh api /repos/${{ github.repository }}/environments 2> /dev/null | jq -r '.total_count'
-                    exists=`gh api /repos/${{ github.repository }}/environments/${{ inputs.environment_name }} 2> /dev/null | jq -r '.status'`
-                    if [ "$exists" != "404" ]; then
-                        if [ "${{ inputs.update_environment }}" = "true" ]; then
-                            echo "Environment exists and will be updated"
-                        else
-                            echo "Environment already exists"
-                            exit 1
-                        fi
-                    fi
+                  gh api /repos/${{ github.repository }}/environments 2> /dev/null | jq -r '.total_count'
+                  exists=`gh api /repos/${{ github.repository }}/environments/${{ inputs.environment_name }} 2> /dev/null | jq -r '.status'`
+                  if [ "$exists" != "404" ]; then
+                      if [ "${{ inputs.update_environment }}" = "true" ]; then
+                          echo "Environment exists and will be updated"
+                      else
+                          echo "Environment already exists"
+                          exit 1
+                      fi
+                  fi
+
             - name: Auth to DevHub
               run: /usr/local/bin/devhub.sh
 
@@ -79,10 +80,7 @@ jobs:
               if: always() && ${{ inputs.environment_name != '' }}
               uses: muselab-d2x/d2x-org-to-env@main
               with:
-                org-alias: ${{ inputs.org_alias }}
-                create-environment: 'true'
-                environment-name: ${{ inputs.environment_name }}
-                github-token: ${{ steps.app-token.outputs.token }}
-
-
-
+                  org-alias: ${{ inputs.org_alias }}
+                  create-environment: "true"
+                  environment-name: ${{ inputs.environment_name }}
+                  gh-token: ${{ steps.app-token.outputs.token }}
