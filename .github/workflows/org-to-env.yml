@@ -58,9 +58,10 @@ jobs:
                   repositories: |
                       ${{ github.event.repository.name }}
 
+            - name: Set GitHub App Token as Environment Variable
+              run: echo "GH_TOKEN=${{ steps.app-token.outputs.token }}" >> $GITHUB_ENV
+
             - name: Check environment exists
-              env:
-                  GH_TOKEN: ${{ steps.app-token.outputs.token }}
               run: |
                   gh api /repos/${{ github.repository }}/environments 2> /dev/null | jq -r '.total_count'
                   exists=`gh api /repos/${{ github.repository }}/environments/${{ inputs.environment_name }} 2> /dev/null | jq -r '.status'`
@@ -83,4 +84,3 @@ jobs:
                   org-alias: ${{ inputs.org_alias }}
                   create-environment: "true"
                   environment-name: ${{ inputs.environment_name }}
-                  gh-token: ${{ steps.app-token.outputs.token }}
