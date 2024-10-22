@@ -4,7 +4,7 @@ on:
         inputs:
             debug:
                 required: false
-                default: 'false'
+                default: "false"
                 type: string
                 description: "Enable debug logging output for CumulusCI"
             org_name:
@@ -14,22 +14,22 @@ on:
                 description: "The name of the scratch org profile to use for the source org. If not provided, the org named 'feature' will be used."
             create_pr_snapshot:
                 required: false
-                default: 'false'
+                default: "false"
                 type: string
                 description: "If true, snapshot functionality is enabled for pull requests. CumulusCI's logic will determine if a snapshot should be created via the github_pull_request_snapshot task."
             create_failure_snapshot:
                 required: false
-                default: 'false'
+                default: "false"
                 type: string
                 description: "If true, a snapshot will be created if the build fails. CumulusCI's logic will determine if a snapshot should be created via the github_pull_request_snapshot task."
             create_snapshot_commit_status:
                 required: false
-                default: 'false'
+                default: "false"
                 type: string
                 description: "If true, a commit status will be set for the build. This is useful for tracking the status of the snapshot creation task."
             create_snapshot_environment:
                 required: false
-                default: 'false'
+                default: "false"
                 type: string
                 description: "If true, a GitHub Environment will be created for the snapshot."
         secrets:
@@ -75,66 +75,66 @@ jobs:
 
             - name: Set ${{ inputs.org_name }} org as default org
               run: |
-                    cci org default ${{ inputs.org_name }}
+                  cci org default ${{ inputs.org_name }}
 
             - name: Check Pull Request Conditions
               id: check_conditions
               run: |
-                    CONDITIONS_MET=false
-                    if [[ "true" == "true" ]]; then
-                        cci task run github_pull_request_snapshot --check-only True --build-success True --packaging-suffix P
-                        SUCCESS_SKIP_REASON=$(cci history info last --json | jq -r '.return_values.skip_reason')
-                        if [[ "$SUCCESS_SKIP_REASON" == "null" ]]; then
-                            CONDITIONS_MET=true
-                        else
-                            echo "Success Snapshot Conditions Not Met: $SUCCESS_SKIP_REASON"
-                        fi
-                    fi
-                    if [[ "true" == "true" ]]; then
-                        cci task run github_pull_request_snapshot --check-only True --build-success False --packaging-suffix P
-                        FAILURE_SKIP_REASON=$(cci history info last --json | jq -r '.return_values.skip_reason')
-                        if [[ "$FAILURE_SKIP_REASON" == "null" ]]; then
-                            CONDITIONS_MET=true
-                        else
-                            echo "Failure Snapshot Conditions Not Met: $FAILURE_SKIP_REASON"
-                        fi
-                        cci task run github_pull_request_snapshot --check-only True --build-success False --build-fail-tests True --packaging-suffix P
-                        FAILURE_TESTS_SKIP_REASON=$(cci history info last --json | jq -r '.return_values.skip_reason')
-                        if [[ "$FAILURE_TESTS_SKIP_REASON" == "null" ]]; then
-                            CONDITIONS_MET=true
-                        else
-                            echo "Failure Tests Snapshot Conditions Not Met: $FAILURE_TESTS_SKIP_REASON"
-                        fi
-                    fi
-                    if [[ "$CONDITIONS_MET" == "false" ]]; then
-                        echo "Snapshot Conditions Not Met for any outcome, skipping the build." | tee -a $GITHUB_JOB_SUMMARY
-                        echo "skip_build=true" >> $GITHUB_OUTPUT
-                    else
-                        echo "skip_build=false" >> $GITHUB_OUTPUT
-                    fi
+                  CONDITIONS_MET=false
+                  if [[ "true" == "true" ]]; then
+                      cci task run github_pull_request_snapshot --check-only True --build-success True --packaging-suffix P
+                      SUCCESS_SKIP_REASON=$(cci history info last --json | jq -r '.return_values.skip_reason')
+                      if [[ "$SUCCESS_SKIP_REASON" == "null" ]]; then
+                          CONDITIONS_MET=true
+                      else
+                          echo "Success Snapshot Conditions Not Met: $SUCCESS_SKIP_REASON"
+                      fi
+                  fi
+                  if [[ "true" == "true" ]]; then
+                      cci task run github_pull_request_snapshot --check-only True --build-success False --packaging-suffix P
+                      FAILURE_SKIP_REASON=$(cci history info last --json | jq -r '.return_values.skip_reason')
+                      if [[ "$FAILURE_SKIP_REASON" == "null" ]]; then
+                          CONDITIONS_MET=true
+                      else
+                          echo "Failure Snapshot Conditions Not Met: $FAILURE_SKIP_REASON"
+                      fi
+                      cci task run github_pull_request_snapshot --check-only True --build-success False --build-fail-tests True --packaging-suffix P
+                      FAILURE_TESTS_SKIP_REASON=$(cci history info last --json | jq -r '.return_values.skip_reason')
+                      if [[ "$FAILURE_TESTS_SKIP_REASON" == "null" ]]; then
+                          CONDITIONS_MET=true
+                      else
+                          echo "Failure Tests Snapshot Conditions Not Met: $FAILURE_TESTS_SKIP_REASON"
+                      fi
+                  fi
+                  if [[ "$CONDITIONS_MET" == "false" ]]; then
+                      echo "Snapshot Conditions Not Met for any outcome, skipping the build." | tee -a $GITHUB_JOB_SUMMARY
+                      echo "skip_build=true" >> $GITHUB_OUTPUT
+                  else
+                      echo "skip_build=false" >> $GITHUB_OUTPUT
+                  fi
               shell: bash
 
             - name: Prepare Feature Test Org
               if: steps.check_conditions.outputs.skip_build == 'false'
               id: prepare_org
               run: |
-                    cci flow run ci_feature_2gp --skip-from run_tests
+                  cci flow run ci_feature_2gp --skip-from run_tests
 
             - name: Start Snapshot Creation
               if: steps.check_conditions.outputs.skip_build == 'false' && inputs.create_pr_snapshot == 'true'
               id: start_snapshot
               run: |
-                    cci task run github_pull_request_snapshot \
-                    --wait False \
-                    --build-success ${{ job.status == 'success' }} \
-                    --packaging-suffix P
+                  cci task run github_pull_request_snapshot \
+                  --wait False \
+                  --build-success ${{ job.status == 'success' }} \
+                  --packaging-suffix P
               shell: bash
 
             - name: Run Feature Test
               if: steps.check_conditions.outputs.skip_build == 'false'
               id: feature_test
               run: |
-                    cci flow run ci_feature_2gp --start-from run_tests
+                  cci flow run ci_feature_2gp --start-from run_tests
               shell: bash
 
             - name: Finalize Snapshot Creation
@@ -144,23 +144,47 @@ jobs:
                   GITHUB_APP_ID: "${{ secrets.github-app-id }}"
                   GITHUB_APP_KEY: "${{ secrets.github-app-key }}"
               run: |
-                    if [[ "${{ inputs.create_pr_snapshot }}" == "true" && -n "${{ steps.start_snapshot.outputs.SNAPSHOT_ID }}" ]]; then
-                    cci task run github_pull_request_snapshot \
-                        --snapshot-id "${{ steps.start_snapshot.outputs.SNAPSHOT_ID }}" \
-                        --build-success "${{ job.status == 'success' }}" \
-                        --build-fail-tests "${{ steps.feature_test.outcome == 'failure' }}" \
-                        --packaging-suffix P \
-                        $([[ "${{ inputs.create_snapshot_commit_status }}" == "true" ]] && echo "--create-commit-status true") \
-                        $([[ "${{ inputs.create_snapshot_environment }}" == "true" ]] && echo "--create-environment-status true")
-                    elif [[ "${{ inputs.create_failure_snapshot }}" == "true" && ("${{ job.status != 'success' }}" == "true" || "${{ steps.feature_test.outcome == 'failure' }}" == "true") ]]; then
-                    cci task run github_pull_request_snapshot \
-                        --build-success false \
-                        --build-fail-tests "${{ steps.feature_test.outcome == 'failure' }}" \
-                        --packaging-suffix P \
-                        $([[ "${{ inputs.create_snapshot_commit_status }}" == "true" ]] && echo "--create-commit-status true") \
-                        $([[ "${{ inputs.create_snapshot_environment }}" == "true" ]] && echo "--create-environment-status true")
-                    fi
+                  if [[ "${{ inputs.create_pr_snapshot }}" == "true" && -n "${{ steps.start_snapshot.outputs.SNAPSHOT_ID }}" ]]; then
+                  cci task run github_pull_request_snapshot \
+                      --snapshot-id "${{ steps.start_snapshot.outputs.SNAPSHOT_ID }}" \
+                      --build-success "${{ job.status == 'success' }}" \
+                      --build-fail-tests "${{ steps.feature_test.outcome == 'failure' }}" \
+                      --packaging-suffix P \
+                      $([[ "${{ inputs.create_snapshot_commit_status }}" == "true" ]] && echo "--create-commit-status true") \
+                      $([[ "${{ inputs.create_snapshot_environment }}" == "true" ]] && echo "--create-environment-status true")
+                  elif [[ "${{ inputs.create_failure_snapshot }}" == "true" && ("${{ job.status != 'success' }}" == "true" || "${{ steps.feature_test.outcome == 'failure' }}" == "true") ]]; then
+                  cci task run github_pull_request_snapshot \
+                      --build-success false \
+                      --build-fail-tests "${{ steps.feature_test.outcome == 'failure' }}" \
+                      --packaging-suffix P \
+                      $([[ "${{ inputs.create_snapshot_commit_status }}" == "true" ]] && echo "--create-commit-status true") \
+                      $([[ "${{ inputs.create_snapshot_environment }}" == "true" ]] && echo "--create-environment-status true")
+                  fi
               shell: bash
+
+            - name: Capture CumulusCI Build History
+              if: always()
+              run: |
+                  cci error info
+                  cci history list
+                  cci history dependencies
+                  cci history dependencies --json --indent 4 > cci_dependencies_history.json
+                  cci history list --json --indent 4 > cci_build_history.json
+              shell: bash
+
+            - name: Upload CumulusCI Dependencies History
+              if: always()
+              uses: actions/upload-artifact@v4
+              with:
+                  name: cci-dependencies-history
+                  path: cci_dependencies_history.json
+
+            - name: Upload CumulusCI Build History
+              if: always()
+              uses: actions/upload-artifact@v4
+              with:
+                  name: cci-build-history
+                  path: cci_build_history.json
 
             - name: Delete Scratch Org
               if: always() && steps.check_conditions.outputs.skip_build == 'false'
@@ -170,8 +194,8 @@ jobs:
             - name: Check Job Status
               if: always() && steps.check_conditions.outputs.skip_build == 'false'
               run: |
-                    if [[ "${{ steps.prepare_org.outcome }}" == "failure" || "${{ steps.feature_test.outcome }}" == "failure" ]]; then
-                    echo "Critical step failed. Failing the job."
-                    exit 1
-                    fi
+                  if [[ "${{ steps.prepare_org.outcome }}" == "failure" || "${{ steps.feature_test.outcome }}" == "failure" ]]; then
+                  echo "Critical step failed. Failing the job."
+                  exit 1
+                  fi
               shell: bash

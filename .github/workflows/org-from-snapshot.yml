@@ -65,10 +65,11 @@ jobs:
             - name: Create Scratch Org From Snapshot
               run: cci org from_snapshot --default ${{ inputs.org_name }} ${{ inputs.snapshot_name }} ${{ inputs.org_name }}${{ inputs.snapshot_name }}$([[ "${{ inputs.debug }}" == "true" ]] && echo " --debug")
             - name: Save Org as GitHub Environment
-              run: cci task run github_org_to_env --environment-name ${{ inputs.environment_name }}${{ inputs.debug }}$([[ "${{ inputs.debug }}" == "true" ]] && echo " --debug")
+              run: cci task run github_org_to_env --environment-name ${{ inputs.environment_name }}$([[ "${{ inputs.debug }}" == "true" ]] && echo " --debug")
             - name: Capture CumulusCI Build History
               if: always()
               run: |
+                  cci error info
                   cci history list
                   cci history dependencies
                   cci history dependencies --json --indent 4 > cci_dependencies_history.json
