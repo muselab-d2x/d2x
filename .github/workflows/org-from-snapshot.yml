@@ -65,7 +65,7 @@ jobs:
             - name: Import Devhub For Testing
               run: cci org import DevHub DevHub
             - name: Test Github Environment Creation
-              run: cci task run github_org_to_env --environment-name DevHub --org DevHub
+              run: cci task run github_org_to_env --environment-name DevHub --org DevHub --debug
             - name: Create Scratch Org From Snapshot
               run: cci org from_snapshot --default ${{ inputs.org_name }} ${{ inputs.snapshot_name }} ${{ inputs.org_name }}${{ inputs.snapshot_name }}
             - name: Save Org as GitHub Environment
