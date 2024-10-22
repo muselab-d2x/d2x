@@ -62,6 +62,10 @@ jobs:
               uses: actions/checkout@v4
             - name: Auth to DevHub
               run: /usr/local/bin/devhub.sh
+            - name: Import Devhub For Testing
+              run: cci org import DevHub DevHub
+            - name: Test Github Environment Creation
+              run: cci task run github_org_to_env --environment-name DevHub --org DevHub
             - name: Create Scratch Org From Snapshot
               run: cci org from_snapshot --default ${{ inputs.org_name }} ${{ inputs.snapshot_name }} ${{ inputs.org_name }}${{ inputs.snapshot_name }}
             - name: Save Org as GitHub Environment
