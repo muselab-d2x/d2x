@@ -66,13 +66,18 @@ jobs:
               run: cci org from_snapshot --default ${{ inputs.org_name }} ${{ inputs.snapshot_name }} ${{ inputs.org_name }}${{ inputs.snapshot_name }}$([[ "${{ inputs.debug }}" == "true" ]] && echo " --debug")
             - name: Save Org as GitHub Environment
               run: cci task run github_org_to_env --environment-name ${{ inputs.environment_name }}${{ inputs.debug }}$([[ "${{ inputs.debug }}" == "true" ]] && echo " --debug")
-            - name: Capture Org History
+            - name: Capture CumulusCI Build History
               if: always()
               run: |
-                  cci history list --json > cci_history.json
-            - name: Store Org History Artifacts
+                  cci history list
+                  cci history dependencies
+                  cci history dependencies --json --indent 4 > cci_dependencies_history.json
+                  cci history list --json --indent 4 > cci_build_history.json
+              shell: bash
+
+            - name: Upload CumulusCI Dependencies History
               if: always()
-              uses: actions/upload-artifact@v2
+              uses: actions/upload-artifact@v4
               with:
-                  name: org-history
-                  path: cci_history.json
+                  name: cci-dependencies-history
+                  path: cci_dependencies_history.json
