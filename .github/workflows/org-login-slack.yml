@@ -1,15 +1,12 @@
-name: Org Login via Slack
+name: Org Login URL to Slack DM
 
 on:
-    workflow_dispatch:
+    workflow_call:
         inputs:
             slack_username:
-                description: "Slack username to send the login URL"
+                description: Slack username to send the login URL
                 required: true
-            environment:
-                description: "Salesforce environment to use"
-                required: true
-                type: environment
+                type: string
         secrets:
             sfdx-auth-url:
                 required: true
