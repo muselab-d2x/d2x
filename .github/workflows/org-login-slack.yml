@@ -7,6 +7,10 @@ on:
                 description: Slack username to send the login URL
                 required: true
                 type: string
+            environment:
+                description: The name of the environment to generate the login URL for
+                required: true
+                type: string
         secrets:
             sfdx-auth-url:
                 required: true
