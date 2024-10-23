@@ -16,8 +16,6 @@ on:
                 required: true
             github-token:
                 required: true
-            SFDX_AUTH_URL:
-                required: false
 
 jobs:
     generate-login-url:
@@ -39,6 +37,7 @@ jobs:
                   SFDX_AUTH_URL: ${{ secrets.SFDX_AUTH_URL }}
               run: |
                   echo "$SFDX_AUTH_URL" > auth.url
+                  echo "SFDX AUTH URL is `wc -l auth.url` lines long"
                   sf org login sfdx-url -f auth.url
                   sf org open -r --json | jq -r '.result.url' > login_url.txt
 
