@@ -14,10 +14,6 @@ on:
         secrets:
             github-token:
                 required: true
-            sfdx-auth-url:
-                required: true
-            slack-bot-token:
-                required: true
 
 jobs:
     generate-login-url:
@@ -34,9 +30,9 @@ jobs:
             - name: Checkout code
               uses: actions/checkout@v4
 
-            - name: Generate Login URL
+            - name: Generate Login URL for ${{ github.event.inputs.environment }}
               env:
-                  SFDX_AUTH_URL: ${{ secrets.sfdx-auth-url }}
+                  SFDX_AUTH_URL: ${{ secrets.SFDX_AUTH_URL }}
               run: |
                   echo "$SFDX_AUTH_URL" > auth.url
                   sf org login sfdx-url -f auth.url
