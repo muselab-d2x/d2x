@@ -1,51 +1,53 @@
 name: Org Login via Slack
 
 on:
-  workflow_dispatch:
-    inputs:
-      slack_username:
-        description: 'Slack username to send the login URL'
-        required: true
-      environment:
-        description: 'Salesforce environment to use'
-        required: true
-        type: environment
+    workflow_dispatch:
+        inputs:
+            slack_username:
+                description: "Slack username to send the login URL"
+                required: true
+            environment:
+                description: "Salesforce environment to use"
+                required: true
+                type: environment
+        secrets:
+            sfdx-auth-url:
+                required: true
+            slack-bot-token:
+                required: true
 
 jobs:
-  generate-login-url:
-    runs-on: ubuntu-latest
-    container:
-      image: ghcr.io/muselab-d2x/d2x:cumulusci-next-snapshots
-      options: --user root
-      credentials:
-        username: ${{ github.actor }}
-        password: ${{ secrets.GITHUB_TOKEN }}
-    environment: ${{ github.event.inputs.environment }}
+    generate-login-url:
+        runs-on: ubuntu-latest
+        container:
+            image: ghcr.io/muselab-d2x/d2x:cumulusci-next-snapshots
+            options: --user root
+            credentials:
+                username: ${{ github.actor }}
+                password: ${{ secrets.github-token }}
+        environment: ${{ github.event.inputs.environment }}
 
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v4
 
-    - name: Generate Login URL
-      env:
-        SFDX_AUTH_URL: ${{ secrets.SFDX_AUTH_URL }}
-      run: |
-        echo "$SFDX_AUTH_URL" > auth.url
-        sf org login sfdx-url -f auth.url
-        sf org open -r --json | jq -r '.result.url' > login_url.txt
+            - name: Generate Login URL
+              env:
+                  SFDX_AUTH_URL: ${{ secrets.sfdx-auth-url }}
+              run: |
+                  echo "$SFDX_AUTH_URL" > auth.url
+                  sf org login sfdx-url -f auth.url
+                  sf org open -r --json | jq -r '.result.url' > login_url.txt
 
-    - name: Read login URL
-      id: read_url
-      run: echo "login_url=$(cat login_url.txt)" >> $GITHUB_OUTPUT
-
-    - name: Send Slack DM
-      env:
-        SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
-      run: |
-        curl -X POST -H "Authorization: Bearer $SLACK_BOT_TOKEN" \
-             -H "Content-Type: application/json" \
-             -d '{
-               "channel": "@${{ github.event.inputs.slack_username }}",
-               "text": "Here'"'"'s your Salesforce login URL: ${{ steps.read_url.outputs.login_url }}"
-             }' \
-             https://slack.com/api/chat.postMessage
+            - name: Send Slack DM
+              env:
+                  SLACK_BOT_TOKEN: ${{ secrets.slack-bot-token }}
+              run: |
+                  echo "login_url=$(cat login_url.txt)" >> $GITHUB_OUTPUT
+                  curl -X POST -H "Authorization: Bearer $SLACK_BOT_TOKEN" \
+                       -H "Content-Type: application/json" \
+                       -d '{
+                         "channel": "@${{ github.event.inputs.slack_username }}",
+                         "text": "Here'"'"'s your Salesforce login URL for ${{ github.event.inputs.environment }}: ${{ steps.read_url.outputs.login_url }}"
+                       }' \
+                       https://slack.com/api/chat.postMessage
