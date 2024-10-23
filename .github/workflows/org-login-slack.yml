@@ -7,11 +7,9 @@ on:
                 description: Slack username to send the login URL
                 required: true
                 type: string
-            environment:
-                description: The name of the environment to generate the login URL for
-                required: true
-                type: string
         secrets:
+            sfdx-auth-url:
+                required: true
             slack-bot-token:
                 required: true
             github-token:
@@ -26,7 +24,6 @@ jobs:
             credentials:
                 username: ${{ github.actor }}
                 password: ${{ secrets.github-token }}
-        environment: ${{ github.event.inputs.environment }}
 
         steps:
             - name: Checkout code
@@ -34,7 +31,7 @@ jobs:
 
             - name: Generate Login URL for ${{ github.event.inputs.environment }}
               env:
-                  SFDX_AUTH_URL: ${{ secrets.SFDX_AUTH_URL }}
+                  SFDX_AUTH_URL: ${{ secrets.sfdx-auth-url }}
               run: |
                   echo "${SFDX_AUTH_URL}" > auth.url
                   echo "SFDX AUTH URL is `wc -l auth.url` lines long"
