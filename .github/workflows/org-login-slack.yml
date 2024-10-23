@@ -12,6 +12,8 @@ on:
                 required: true
                 type: string
         secrets:
+            github-token:
+                required: true
             sfdx-auth-url:
                 required: true
             slack-bot-token:
