@@ -12,8 +12,12 @@ on:
                 required: true
                 type: string
         secrets:
+            slack_bot_token:
+                required: true
             github-token:
                 required: true
+            SFDX_AUTH_URL:
+                required: false
 
 jobs:
     generate-login-url:
