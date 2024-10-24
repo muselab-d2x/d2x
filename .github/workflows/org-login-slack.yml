@@ -18,6 +18,13 @@ on:
                 required: true
 
 jobs:
+    d2x-login-url:
+        name: Use d2x to generate a login url
+        runs-on: ubuntu-latest
+        environment: ${{ inputs.environment }}
+        steps:
+            - run: pip install git+https://github.com/muselab-d2x/d2x.git@cumulusci-next-snapshots
+
     generate-login-url:
         runs-on: ubuntu-latest
         environment: ${{ inputs.environment }}
