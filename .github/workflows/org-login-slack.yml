@@ -45,7 +45,7 @@ jobs:
                   SFDX_AUTH_URL: ${{ secrets.sfdx-auth-url }}
               run: |
                   echo "${SFDX_AUTH_URL}" > auth.url
-                  echo "SFDX AUTH URL is `wc -l auth.url` lines long"
+                  echo "SFDX AUTH URL is `wc -c auth.url` lines long"
                   sf org login sfdx-url -f auth.url
                   sf org open -r --json | jq -r '.result.url' > login_url.txt
 
