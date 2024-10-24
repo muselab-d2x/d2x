@@ -39,7 +39,7 @@ jobs:
                   grep "^force://.*$" auth_url.txt
                   grep "PlatformCLI" auth_url.txt
               env:
-                  SFDX_AUTH_URL: ${{ secrets.SFDX_AUTH_URL }}
+                  SFDX_AUTH_URL: ${{ secrets.sfdx-auth-url }}
             - name: Generate Login URL for ${{ github.event.inputs.environment }}
               env:
                   SFDX_AUTH_URL: ${{ secrets.sfdx-auth-url }}
