@@ -3,6 +3,10 @@ name: Org Login URL to Slack DM
 on:
     workflow_call:
         inputs:
+            environment:
+                description: The name of the environment
+                required: true
+                type: string
             slack_username:
                 description: Slack username to send the login URL
                 required: true
@@ -18,6 +22,7 @@ on:
 jobs:
     generate-login-url:
         runs-on: ubuntu-latest
+        environment: ${{ inputs.environment }}
         container:
             image: ghcr.io/muselab-d2x/d2x:cumulusci-next-snapshots
             options: --user root
