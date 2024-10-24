@@ -12,8 +12,6 @@ on:
                 required: true
                 type: string
         secrets:
-            sfdx-auth-url:
-                required: true
             slack-bot-token:
                 required: true
             github-token:
@@ -33,7 +31,15 @@ jobs:
         steps:
             - name: Checkout code
               uses: actions/checkout@v4
-
+            - name: Check SFDX_AUTH_URL for Environment
+              run: |
+                  echo "SFDX_AUTH_URL: ${SFDX_AUTH_URL}"
+                  echo "${SFDX_AUTH_URL}" > auth_url.txt
+                  echo "Length: `wc -c auth_url.txt`"
+                  grep "^force://.*$" auth_url.txt
+                  grep "PlatformCLI" auth_url.txt
+              env:
+                  SFDX_AUTH_URL: ${{ secrets.SFDX_AUTH_URL }}
             - name: Generate Login URL for ${{ github.event.inputs.environment }}
               env:
                   SFDX_AUTH_URL: ${{ secrets.sfdx-auth-url }}
