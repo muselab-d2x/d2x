@@ -16,8 +16,8 @@ from rich.progress import Progress, SpinnerColumn, TextColumn
 from rich.table import Table
 
 # Local imports
-from d2x.parse.sf_auth_url import parse_sfdx_auth_url, SalesforceOrgInfo
-from d2x.gh.actions.ux import summary as gha_summary, output as gha_output
+from d2x.parse.sf.auth_url import parse_sfdx_auth_url, SalesforceOrgInfo
+from d2x.ux.gh.actions import summary as gha_summary, output as gha_output
 
 
 # Type definitions

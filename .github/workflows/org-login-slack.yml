@@ -25,42 +25,17 @@ jobs:
         steps:
             - run: pip install git+https://github.com/muselab-d2x/d2x.git@cumulusci-next-snapshots
 
-    generate-login-url:
-        runs-on: ubuntu-latest
-        environment: ${{ inputs.environment }}
-        container:
-            image: ghcr.io/muselab-d2x/d2x:cumulusci-next-snapshots
-            options: --user root
-            credentials:
-                username: ${{ github.actor }}
-                password: ${{ secrets.github-token }}
-
-        steps:
-            - name: Checkout code
-              uses: actions/checkout@v4
-            - name: Check SFDX_AUTH_URL for Environment
-              run: |
-                  echo "SFDX_AUTH_URL: ${SFDX_AUTH_URL}"
-                  echo "${SFDX_AUTH_URL}" > auth_url.txt
-                  echo "Length: `wc -c auth_url.txt`"
-                  grep "^force://.*$" auth_url.txt
-                  grep "PlatformCLI" auth_url.txt
-              env:
-                  SFDX_AUTH_URL: ${{ secrets.sfdx-auth-url }}
             - name: Generate Login URL for ${{ github.event.inputs.environment }}
               env:
-                  SFDX_AUTH_URL: ${{ secrets.sfdx-auth-url }}
-              run: |
-                  echo "${SFDX_AUTH_URL}" > auth.url
-                  echo "SFDX AUTH URL is `wc -c auth.url` lines long"
-                  sf org login sfdx-url -f auth.url
-                  sf org open -r --json | jq -r '.result.url' > login_url.txt
+                  AUTH_URL: ${{ secrets.sfdx-auth-url }}
+              run: python -m d2x.auth.login_url > login_url.txt
 
             - name: Send Slack DM
               env:
                   SLACK_BOT_TOKEN: ${{ secrets.slack-bot-token }}
               run: |
                   echo "login_url=$(cat login_url.txt)" >> $GITHUB_OUTPUT
+                  rm login_url.txt
                   curl -X POST -H "Authorization: Bearer $SLACK_BOT_TOKEN" \
                        -H "Content-Type: application/json" \
                        -d '{
