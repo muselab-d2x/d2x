@@ -5,6 +5,7 @@ description = "Salesforce DevOps Helper"
 authors = ["Muselab LLC"]
 license = "BSD3"
 readme = "README.md"
+python = "^3.10"
 
 [tool.poetry.dependencies]
 python = "^3.10"
