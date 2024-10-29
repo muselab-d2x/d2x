@@ -42,9 +42,15 @@ RUN useradd -r -m -s /bin/bash -c "D2X User" d2x
 # Set up PATH for both environments
 ENV PATH="/usr/local/d2x/.venv/bin:/usr/local/cci/.venv/bin:$PATH"
 
+# Create a script to activate the cci environment
+RUN echo '#!/bin/bash\nsource /usr/local/cci/.venv/bin/activate\nexec "$@"' > /usr/local/bin/activate_cci && \
+  chmod +x /usr/local/bin/activate_cci
+
+# Set the default entrypoint to activate the cci environment
+ENTRYPOINT ["/usr/local/bin/activate_cci"]
+
 # Verify installations
-#RUN cd /usr/local/d2x && poetry run python -c "import d2x" && \
-RUN  cd /usr/local/cci && poetry run cci version
+RUN cci version
 
 # Stage for ChromeDriver
 FROM base AS chromedriver
