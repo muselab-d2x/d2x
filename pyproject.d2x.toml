@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "d2x"
-version = "0.0.1a7"
+version = "0.1.1"
 description = "Salesforce DevOps Helper"
 authors = ["Muselab LLC"]
 license = "BSD3"
