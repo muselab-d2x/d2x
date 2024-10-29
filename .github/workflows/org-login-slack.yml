@@ -23,7 +23,7 @@ jobs:
         runs-on: ubuntu-latest
         environment: ${{ inputs.environment }}
         steps:
-            - run: pip install git+https://github.com/muselab-d2x/d2x.git@cumulusci-next-snapshots
+            - run: pip install d2x
 
             - name: Generate Login URL for ${{ github.event.inputs.environment }}
               env:
