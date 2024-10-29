@@ -33,14 +33,14 @@ def main():
             )
 
             # Set outputs for GitHub Actions
-            output.add("access_token", token_response.access_token.get_secret_value())
-            output.add("instance_url", token_response.instance_url)
-            output.add("start_url", start_url)
-            output.add("org_type", org_info.org_type)
+            output("access_token", token_response.access_token.get_secret_value())
+            output("instance_url", token_response.instance_url)
+            output("start_url", start_url)
+            output("org_type", org_info.org_type)
 
             if org_info.domain_type == "pod":
-                output.add("region", org_info.region or "classic")
-                output.add("is_hyperforce", str(org_info.is_hyperforce).lower())
+                output("region", org_info.region or "classic")
+                output("is_hyperforce", str(org_info.is_hyperforce).lower())
 
             # Add summary for GitHub Actions
             summary_md = f"""
@@ -63,7 +63,7 @@ def main():
 {start_url}
 ```
 """
-            summary.add(summary_md)
+            summary(summary_md)
 
             # Success output
             console.print("\n[green]✓ Successfully authenticated to Salesforce!")
