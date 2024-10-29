@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "d2x"
 version = "0.1.2"
-description = "Composable Salesforce DevOps on GitHub"
+description = "Salesforce DevOps Helper"
 authors = ["Muselab LLC"]
 license = "BSD3"
 readme = "README.md"
