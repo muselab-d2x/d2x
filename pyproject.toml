@@ -1,11 +1,10 @@
 [tool.poetry]
 name = "d2x"
 version = "0.1.2"
-description = "Salesforce DevOps Helper"
+description = "Composable Salesforce DevOps on GitHub"
 authors = ["Muselab LLC"]
 license = "BSD3"
 readme = "README.md"
-python = "^3.10"
 
 [tool.poetry.dependencies]
 python = "^3.10"
