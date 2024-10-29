@@ -18,6 +18,9 @@ ENV PATH="/root/.local/bin:$PATH"
 COPY pyproject.d2x.toml /usr/local/d2x/pyproject.toml
 COPY pyproject.cci.toml /usr/local/cci/pyproject.toml
 
+# Copy d2x source code
+COPY d2x /usr/local/d2x
+
 # Set up d2x environment
 RUN cd /usr/local/d2x && \
   poetry install
@@ -25,9 +28,6 @@ RUN cd /usr/local/d2x && \
 # Set up CumulusCI environment
 RUN cd /usr/local/cci && \
   poetry install
-
-# Copy d2x source code
-COPY d2x /usr/local/d2x
 
 # Install CumulusCI and other Python packages
 RUN pip --no-cache-dir install git+https://github.com/muselab-d2x/CumulusCI@1ae7db2af cookiecutter keyrings.alt
@@ -43,8 +43,8 @@ RUN useradd -r -m -s /bin/bash -c "D2X User" d2x
 ENV PATH="/usr/local/d2x/.venv/bin:/usr/local/cci/.venv/bin:$PATH"
 
 # Verify installations
-RUN python -c "import d2x" && \
-  cci version
+#RUN cd /usr/local/d2x && poetry run python -c "import d2x" && \
+RUN  cd /usr/local/cci && poetry run cci version
 
 # Stage for ChromeDriver
 FROM base AS chromedriver
