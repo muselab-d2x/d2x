@@ -1,7 +1,8 @@
+# pyproject.toml
 [tool.poetry]
 name = "d2x"
 version = "0.1.2"
-description = "Salesforce DevOps Helper"
+description = "Composable Salesforce DevOps on GitHub"
 authors = ["Muselab LLC"]
 license = "BSD3"
 readme = "README.md"
@@ -15,6 +16,7 @@ requests = "^2.28.1"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.3.3"
+pip-tools = "^7.4.1"
 
 [build-system]
 requires = ["poetry-core"]
@@ -22,7 +24,4 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.pip-compile]
 generate-hashes = true
-requirements = [
-    "requirements/production.in",
-    "requirements/development.in"
-]
+output-file = "requirements.txt"
