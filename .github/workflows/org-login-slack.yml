@@ -28,7 +28,7 @@ jobs:
             - name: Generate Login URL for ${{ github.event.inputs.environment }}
               env:
                   AUTH_URL: ${{ secrets.sfdx-auth-url }}
-              run: python -m d2x.auth.login_url > login_url.txt
+              run: python -m d2x.auth.sf.login_url > login_url.txt
 
             - name: Send Slack DM
               env:
