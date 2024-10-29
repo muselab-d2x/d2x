@@ -17,8 +17,6 @@ jobs:
               uses: actions/setup-python@v5
               with:
                   python-version: "3.x"
-            - name: Rename pyproject.d2x.toml to pyproject.toml
-              run: mv pyproject.d2x.toml pyproject.toml
             - name: Install pypa/build
               run: |
                   python3 -m pip install build --user

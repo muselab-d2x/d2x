@@ -15,7 +15,7 @@ RUN apt-get update && apt-get upgrade -y && apt-get install -y python3-pip curl 
 ENV PATH="/root/.local/bin:$PATH"
 
 # Copy d2x and CumulusCI pyproject.toml files
-COPY pyproject.d2x.toml /usr/local/d2x/pyproject.toml
+COPY pyproject.toml /usr/local/d2x/pyproject.toml
 COPY pyproject.cci.toml /usr/local/cci/pyproject.toml
 
 # Copy d2x source code
