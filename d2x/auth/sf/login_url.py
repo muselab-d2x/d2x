@@ -1,7 +1,7 @@
 import sys
 import os
 from rich.console import Console
-from d2x.auth.refresh.sf.auth_url import exchange_token, parse_sfdx_auth_url
+from d2x.auth.sf.auth_url import exchange_token, parse_sfdx_auth_url
 from d2x.gen.sf.login_url import get_login_url_and_token
 from d2x.ux.gh.actions import summary, output
 
@@ -9,11 +9,6 @@ from d2x.ux.gh.actions import summary, output
 def main():
     """Main CLI entrypoint"""
     console = Console()
-
-    if len(sys.argv) < 2:
-        console.print("[red]Error: No authentication URL provided")
-        console.print("Usage: d2x auth login --url <sfdx_auth_url>")
-        sys.exit(1)
 
     try:
         auth_url = os.environ.get("SFDX_AUTH_URL")
@@ -81,7 +76,7 @@ def main():
 
 **Error**: {str(e)}
 """
-        summary.add(error_md)
+        summary(error_md)
         sys.exit(1)
 
 
