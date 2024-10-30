@@ -5,6 +5,7 @@ on:
         branches:
             - main
             - cumulusci-next**
+            - jlantz/fix-docker-build
     workflow_dispatch:
 
 jobs:
