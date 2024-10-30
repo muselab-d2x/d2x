@@ -4,6 +4,7 @@ from d2x.auth.sf.auth_url import exchange_token
 from d2x.models.sf.org import SalesforceOrgInfo
 from d2x.base.types import CLIOptions
 from d2x.models.sf.auth import AuthInfo
+import json
 
 class TestExchangeToken(unittest.TestCase):
     @patch("d2x.auth.sf.auth_url.set_environment_variable")

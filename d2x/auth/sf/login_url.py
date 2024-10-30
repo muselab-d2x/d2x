@@ -6,7 +6,7 @@ from d2x.ux.gh.actions import summary, output
 from d2x.base.types import CLIOptions
 from typing import Optional
 from d2x.auth.sf.auth_url import parse_sfdx_auth_url
-from d2x.api.gh import get_environment_variable  # Add this import
+from d2x.api.gh import get_environment_variable
 
 
 def generate_login_url(instance_url: str, access_token: str) -> str:
