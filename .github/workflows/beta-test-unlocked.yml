@@ -25,7 +25,7 @@ jobs:
                 CUMULUSCI_SERVICE_github: "{ \"username\": \"${{ github.actor }}\", \"token\": \"${{ secrets.github-token }}\", \"email\": \"${{ secrets.gh-email }}\" }"
         steps:
             - name: Checkout
-              uses: actions/checkout@v2
+              uses: actions/checkout@v4
             - name: Auth to DevHub
               run: /usr/local/bin/devhub.sh
             - name: Set default org
