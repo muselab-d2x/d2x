@@ -31,6 +31,7 @@ from d2x.api.gh import set_environment_variable  # Add this import
 def exchange_token(org_info: SalesforceOrgInfo, cli_options: CLIOptions):
     """Exchange refresh token for access token with detailed error handling"""
     console = cli_options.console
+    debug_info = None  # Initialize debug_info before the try block
     with Progress(
         SpinnerColumn(),
         TextColumn("[progress.description]{task.description}"),
@@ -129,7 +130,8 @@ def exchange_token(org_info: SalesforceOrgInfo, cli_options: CLIOptions):
             return token_response
 
         except Exception as e:
-            debug_info.error = str(e)
+            if debug_info is not None:
+                debug_info.error = str(e)
             error_panel = Panel(
                 f"[red]Error: {str(e)}",
                 title="[red]Authentication Failed",
