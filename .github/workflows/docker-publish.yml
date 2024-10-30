@@ -37,7 +37,7 @@ jobs:
                   if [ "${{ github.ref_name }}" == "main" ]; then
                     echo "IMAGE_TAG=latest" >> $GITHUB_ENV
                   else
-                    echo "IMAGE_TAG=${{ github.ref_name }}" >> $GITHUB_ENV
+                    echo "IMAGE_TAG=${{ github.ref_name }} | sed -e 's/\//-/g'" >> $GITHUB_ENV
                   fi
 
             - name: Build and push Docker image
