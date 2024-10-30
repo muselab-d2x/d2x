@@ -76,11 +76,6 @@ def main(cli_options: CLIOptions):
 - **Timestamp**: {token_response.issued_at.strftime('%Y-%m-%d %H:%M:%S')}
 - **Token Expiry**: {token_response.expires_in} seconds
 - **Instance URL**: {token_response.instance_url}
-
-### Quick Access
-```
-{start_url}
-```
 """
     summary(summary_md)
 
