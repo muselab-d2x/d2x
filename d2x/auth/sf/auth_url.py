@@ -14,13 +14,13 @@ from rich.progress import Progress, SpinnerColumn, TextColumn
 from rich.table import Table
 
 # Local imports
-from d2x.parse.sf.auth_url import parse_sfdx_auth_url
 from d2x.models.sf.auth import (
-    DomainType,  # Add this import
+    DomainType,
     TokenRequest,
     TokenResponse,
     HttpResponse,
     TokenExchangeDebug,
+    SfdxAuthUrlModel,
 )
 from d2x.ux.gh.actions import summary as gha_summary, output as gha_output
 from d2x.models.sf.org import SalesforceOrgInfo
@@ -151,26 +151,26 @@ def main(cli_options: CLIOptions):
         # Remove the console.status context manager
         # with console.status("[bold blue]Parsing SFDX Auth URL..."):
         #     org_info = parse_sfdx_auth_url(auth_url)
-        org_info = parse_sfdx_auth_url(auth_url)
+        org_info = SfdxAuthUrlModel(auth_url=auth_url).parse_sfdx_auth_url()
 
         table = Table(title="Salesforce Org Information", box=box.ROUNDED)
         table.add_column("Property", style="cyan")
         table.add_column("Value", style="green")
 
-        table.add_row("Org Type", org_info.org_type)
-        table.add_row("Domain Type", org_info.domain_type)
-        table.add_row("Full Domain", org_info.full_domain)
+        table.add_row("Org Type", org_info["org_type"])
+        table.add_row("Domain Type", org_info["domain_type"])
+        table.add_row("Full Domain", org_info["full_domain"])
 
-        if org_info.domain_type == DomainType.POD:
-            table.add_row("Region", org_info.region or "Classic")
-            table.add_row("Pod Number", org_info.pod_number or "N/A")
-            table.add_row("Pod Type", org_info.pod_type or "Standard")
-            table.add_row("Is Classic Pod", "✓" if org_info.is_classic_pod else "✗")
-            table.add_row("Is Hyperforce", "✓" if org_info.is_hyperforce else "✗")
+        if org_info["domain_type"] == DomainType.POD:
+            table.add_row("Region", org_info["region"] or "Classic")
+            table.add_row("Pod Number", org_info["pod_number"] or "N/A")
+            table.add_row("Pod Type", org_info["pod_type"] or "Standard")
+            table.add_row("Is Classic Pod", "✓" if org_info["is_classic_pod"] else "✗")
+            table.add_row("Is Hyperforce", "✓" if org_info["is_hyperforce"] else "✗")
         else:
-            table.add_row("MyDomain", org_info.mydomain or "N/A")
-            table.add_row("Sandbox Name", org_info.sandbox_name or "N/A")
-            table.add_row("Is Sandbox", "✓" if org_info.is_sandbox else "✗")
+            table.add_row("MyDomain", org_info["mydomain"] or "N/A")
+            table.add_row("Sandbox Name", org_info["sandbox_name"] or "N/A")
+            table.add_row("Is Sandbox", "✓" if org_info["is_sandbox"] else "✗")
 
         console.print(table)
 
@@ -182,10 +182,10 @@ def main(cli_options: CLIOptions):
 ## Salesforce Authentication Results
 
 ### Organization Details
-- **Domain**: {org_info.full_domain}
-- **Type**: {org_info.org_type}
-{"- **Region**: " + (org_info.region or "Classic") if org_info.domain_type == DomainType.POD else ""}
-{"- **Hyperforce**: " + ("Yes" if org_info.is_hyperforce else "No") if org_info.domain_type == DomainType.POD else ""}
+- **Domain**: {org_info["full_domain"]}
+- **Type**: {org_info["org_type"]}
+{"- **Region**: " + (org_info["region"] or "Classic") if org_info["domain_type"] == DomainType.POD else ""}
+{"- **Hyperforce**: " + ("Yes" if org_info["is_hyperforce"] else "No") if org_info["domain_type"] == DomainType.POD else ""}
 
 ### Authentication Status
 - **Status**: ✅ Success
@@ -197,10 +197,10 @@ def main(cli_options: CLIOptions):
         # Set action outputs
         gha_output("access_token", token_response.access_token)
         gha_output("instance_url", token_response.instance_url)
-        gha_output("org_type", org_info.org_type)
-        if org_info.domain_type == DomainType.POD:
-            gha_output("region", org_info.region or "classic")
-            gha_output("is_hyperforce", str(org_info.is_hyperforce).lower())
+        gha_output("org_type", org_info["org_type"])
+        if org_info["domain_type"] == DomainType.POD:
+            gha_output("region", org_info["region"] or "classic")
+            gha_output("is_hyperforce", str(org_info["is_hyperforce"]).lower())
 
         sys.exit(0)
 
