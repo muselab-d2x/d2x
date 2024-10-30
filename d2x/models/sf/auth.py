@@ -4,7 +4,7 @@ import urllib.parse
 from datetime import datetime, timedelta
 from enum import Enum
 from typing import Optional, Literal
-from pydantic import BaseModel, Field, SecretStr, computed_field
+from pydantic import BaseModel, Field, SecretStr, computed_field, ConfigDict
 from rich.table import Table
 from rich import box
 from d2x.base.models import CommonBaseModel
