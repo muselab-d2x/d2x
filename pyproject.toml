@@ -23,6 +23,9 @@ pip-tools = "^7.4.1"
 [tool.poetry.scripts]
 d2x = "d2x.cli.main:d2x_cli"
 
+[project]
+name = "d2x"
+
 [project.scripts]
 d2x = "d2x.cli:d2x_cli"
 

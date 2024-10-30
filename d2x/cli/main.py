@@ -6,11 +6,17 @@ import sys
 import pdb
 from d2x.base.types import OutputFormat, OutputFormatType, CLIOptions
 from typing import Optional
+from importlib.metadata import version, PackageNotFoundError
 
 # Disable rich_click's syntax highlighting
 click.SHOW_ARGUMENTS = False
 click.SHOW_METAVARS_COLUMN = False
 click.SHOW_OPTIONS = False
+
+try:
+    VERSION = version("d2x")
+except PackageNotFoundError:
+    VERSION = "dev"
 
 
 def common_options(func):
@@ -26,6 +32,7 @@ def common_options(func):
 
 
 @click.group(name="d2x")
+@click.version_option(version=VERSION, prog_name="d2x")
 def d2x_cli():
     """D2X CLI main command group"""
     pass
