@@ -1,3 +1,4 @@
+# cli.py
 import rich_click as click
 from d2x.auth.sf.login_url import main as login_url_main
 from d2x.auth.sf.auth_url import main as auth_url_main
@@ -24,44 +25,57 @@ def common_options(func):
     return func
 
 
-@click.group()
-@click.pass_context
-def d2x_cli(ctx):
-    ctx.ensure_object(dict)
+@click.group(name="d2x")
+def d2x_cli():
+    """D2X CLI main command group"""
+    pass
 
 
-@d2x_cli.command()
+@d2x_cli.group()
+def sf():
+    """Salesforce commands"""
+    pass
+
+
+@sf.group()
+def auth():
+    """Salesforce authentication commands"""
+    pass
+
+
+@auth.command()
 @common_options
-@click.pass_context
-def login_url(ctx, output_format: OutputFormatType, debug: bool):
-    """Handle login URL command."""
+def login(output_format: OutputFormatType, debug: bool):
+    """Exchange Salesforce refresh token for a current login session start url."""
     cli_options = CLIOptions(output_format=output_format, debug=debug)
-    ctx.obj["CLI_OPTIONS"] = cli_options
     try:
         login_url_main(cli_options)
     except:
-        if cli_options.debug:
+        if debug:
             type, value, tb = sys.exc_info()
             pdb.post_mortem(tb)
         else:
             raise
 
 
-@d2x_cli.command()
+@auth.command()
 @common_options
-@click.pass_context
-def auth_url(ctx, output_format: OutputFormatType, debug: bool):
-    """Handle auth URL command."""
+def url(output_format: OutputFormatType, debug: bool):
+    """Exchange SFDX_AUTH_URL for a Salesfoce access token session"""
     cli_options = CLIOptions(output_format=output_format, debug=debug)
-    ctx.obj["CLI_OPTIONS"] = cli_options
     try:
         auth_url_main(cli_options)
     except:
-        if cli_options.debug:
+        if debug:
             type, value, tb = sys.exc_info()
             pdb.post_mortem(tb)
         else:
             raise
+
+
+def get_cli():
+    """Get the CLI entry point"""
+    return d2x_cli
 
 
 if __name__ == "__main__":

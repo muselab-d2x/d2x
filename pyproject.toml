@@ -21,7 +21,10 @@ pytest = "^8.3.3"
 pip-tools = "^7.4.1"
 
 [tool.poetry.scripts]
-d2x = "d2x.cli:main"
+d2x = "d2x.cli.main:d2x_cli"
+
+[project.scripts]
+d2x = "d2x.cli:d2x_cli"
 
 [build-system]
 requires = ["poetry-core"]
@@ -30,6 +33,3 @@ build-backend = "poetry.core.masonry.api"
 [tool.pip-compile]
 generate-hashes = true
 output-file = "requirements.txt"
-
-[tool.poetry.plugins."console_scripts"]
-d2x = "d2x.cli:cli"
