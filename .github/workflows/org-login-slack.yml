@@ -21,10 +21,12 @@ jobs:
     d2x-login-url:
         name: Use d2x to generate a login url
         runs-on: ubuntu-latest
+        environment: ${{ github.event.inputs.environment }}
         steps:
             - run: pip install git+https://github.com/muselab-d2x/d2x.git@jlantz/update-auth-structure
 
-            - name: Generate Login URL for ${{ github.event.inputs.environment }}
+            - id: generate_login_url
+              name: Generate Login URL for ${{ github.event.inputs.environment }}
               env:
                   SFDX_AUTH_URL: ${{ secrets.sfdx-auth-url }}
               run: d2x sf auth login | tail -1 > login_url.txt
@@ -39,6 +41,6 @@ jobs:
                        -H "Content-Type: application/json" \
                        -d '{
                          "channel": "@${{ github.event.inputs.slack_username }}",
-                         "text": "Here'"'"'s your Salesforce login URL for ${{ github.event.inputs.environment }}: ${{ steps.read_url.outputs.login_url }}"
+                         "text": "Here'"'"'s your Salesforce login URL for ${{ github.event.inputs.environment }}: ${{ steps.generate_login_url.outputs.login_url }}"
                        }' \
                        https://slack.com/api/chat.postMessage
