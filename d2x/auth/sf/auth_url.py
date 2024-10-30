@@ -15,12 +15,21 @@ from rich.table import Table
 
 # Local imports
 from d2x.parse.sf.auth_url import parse_sfdx_auth_url
-from d2x.auth.sf.models import TokenRequest, TokenResponse, HttpResponse, TokenExchangeDebug
+from d2x.models.sf.auth import (
+    DomainType,  # Add this import
+    TokenRequest,
+    TokenResponse,
+    HttpResponse,
+    TokenExchangeDebug,
+)
 from d2x.ux.gh.actions import summary as gha_summary, output as gha_output
+from d2x.models.sf.org import SalesforceOrgInfo
+from d2x.base.types import CLIOptions
 
 
-def exchange_token(org_info, console):
+def exchange_token(org_info: SalesforceOrgInfo, cli_options: CLIOptions):
     """Exchange refresh token for access token with detailed error handling"""
+    console = cli_options.console
     with Progress(
         SpinnerColumn(),
         TextColumn("[progress.description]{task.description}"),
@@ -30,15 +39,15 @@ def exchange_token(org_info, console):
         try:
             progress.add_task("Preparing token request...", total=None)
 
-            # Create token request - only include client_secret if provided in URL
+            # Create token request using auth_info
             token_request = TokenRequest(
-                client_id=org_info.client_id,
+                client_id=org_info.auth_info.client_id,
                 client_secret=(
-                    org_info.client_secret
-                    if org_info.client_secret
+                    org_info.auth_info.client_secret.get_secret_value()
+                    if org_info.auth_info.client_secret
                     else None
                 ),
-                refresh_token=org_info.refresh_token,
+                refresh_token=org_info.auth_info.refresh_token,
             )
 
             # Prepare the request
@@ -47,14 +56,14 @@ def exchange_token(org_info, console):
             body = token_request.to_form()
 
             # Create debug info
-            debug = TokenExchangeDebug(
+            debug_info = TokenExchangeDebug(
                 url=f"https://{org_info.full_domain}{token_url_path}",
                 method="POST",
                 headers=headers,
                 request=token_request,
             )
 
-            console.print(debug.to_table())
+            console.print(debug_info.to_table())
 
             # Make request
             progress.add_task(f"Connecting to {org_info.full_domain}...", total=None)
@@ -78,7 +87,7 @@ def exchange_token(org_info, console):
             except json.JSONDecodeError:
                 pass
 
-            debug.response = http_response
+            debug_info.response = http_response
 
             if response.status != 200:
                 error_panel = Panel(
@@ -116,7 +125,7 @@ def exchange_token(org_info, console):
             return token_response
 
         except Exception as e:
-            debug.error = str(e)
+            debug_info.error = str(e)
             error_panel = Panel(
                 f"[red]Error: {str(e)}",
                 title="[red]Authentication Failed",
@@ -126,16 +135,23 @@ def exchange_token(org_info, console):
             raise
 
 
-def main():
-    console = Console(record=True)
+def get_full_domain(org_info: SalesforceOrgInfo) -> str:
+    """Construct the full domain from SalesforceOrgInfo."""
+    return org_info.full_domain.rstrip("/")
+
+
+def main(cli_options: CLIOptions):
+    """Main CLI entrypoint"""
+    console = cli_options.console
 
     try:
         # Get auth URL from environment or args
         auth_url = os.environ.get("SFDX_AUTH_URL") or sys.argv[1]
 
-        # Parse URL and display org info
-        with console.status("[bold blue]Parsing SFDX Auth URL..."):
-            org_info = parse_sfdx_auth_url(auth_url)
+        # Remove the console.status context manager
+        # with console.status("[bold blue]Parsing SFDX Auth URL..."):
+        #     org_info = parse_sfdx_auth_url(auth_url)
+        org_info = parse_sfdx_auth_url(auth_url)
 
         table = Table(title="Salesforce Org Information", box=box.ROUNDED)
         table.add_column("Property", style="cyan")
@@ -145,7 +161,7 @@ def main():
         table.add_row("Domain Type", org_info.domain_type)
         table.add_row("Full Domain", org_info.full_domain)
 
-        if org_info.domain_type == "pod":
+        if org_info.domain_type == DomainType.POD:
             table.add_row("Region", org_info.region or "Classic")
             table.add_row("Pod Number", org_info.pod_number or "N/A")
             table.add_row("Pod Type", org_info.pod_type or "Standard")
@@ -159,7 +175,7 @@ def main():
         console.print(table)
 
         # Exchange token
-        token_response = exchange_token(org_info, console)
+        token_response = exchange_token(org_info, cli_options)
 
         # Create step summary
         summary_md = f"""
@@ -168,8 +184,8 @@ def main():
 ### Organization Details
 - **Domain**: {org_info.full_domain}
 - **Type**: {org_info.org_type}
-{"- **Region**: " + (org_info.region or "Classic") if org_info.domain_type == 'pod' else ""}
-{"- **Hyperforce**: " + ("Yes" if org_info.is_hyperforce else "No") if org_info.domain_type == 'pod' else ""}
+{"- **Region**: " + (org_info.region or "Classic") if org_info.domain_type == DomainType.POD else ""}
+{"- **Hyperforce**: " + ("Yes" if org_info.is_hyperforce else "No") if org_info.domain_type == DomainType.POD else ""}
 
 ### Authentication Status
 - **Status**: ✅ Success
@@ -182,7 +198,7 @@ def main():
         gha_output("access_token", token_response.access_token)
         gha_output("instance_url", token_response.instance_url)
         gha_output("org_type", org_info.org_type)
-        if org_info.domain_type == "pod":
+        if org_info.domain_type == DomainType.POD:
             gha_output("region", org_info.region or "classic")
             gha_output("is_hyperforce", str(org_info.is_hyperforce).lower())
 
@@ -210,4 +226,9 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    import sys
+    from d2x.base.types import CLIOptions
+
+    # Assuming CLIOptions is instantiated before calling main
+    # This part is handled in cli.py
+    pass

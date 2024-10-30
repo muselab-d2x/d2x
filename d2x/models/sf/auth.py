@@ -1,12 +1,40 @@
-from pydantic import BaseModel, Field, SecretStr, computed_field
+# auth.py
+
+import urllib.parse
 from datetime import datetime, timedelta
+from enum import Enum
 from typing import Optional, Literal
+from pydantic import BaseModel, Field, SecretStr, computed_field
 from rich.table import Table
 from rich import box
-import urllib.parse
+from d2x.base.models import CommonBaseModel
 
-OrgType = Literal["production", "sandbox", "scratch", "developer", "demo"]
-DomainType = Literal["my", "lightning", "pod"]
+# Remove OutputFormatType import if not used
+# from d2x.base.types import OutputFormatType
+
+
+class OrgType(str, Enum):
+    PRODUCTION = "production"
+    SANDBOX = "sandbox"
+    SCRATCH = "scratch"
+    DEVELOPER = "developer"
+    DEMO = "demo"
+
+
+class DomainType(str, Enum):
+    POD = "pod"
+    LIGHTNING = "lightning"
+    MY = "my"
+
+
+class AuthInfo(CommonBaseModel):
+    """Authentication components for Salesforce org."""
+
+    client_id: str
+    client_secret: str
+    refresh_token: str
+    instance_url: str
+
 
 class TokenRequest(BaseModel):
     """OAuth token request parameters for Salesforce authentication"""
@@ -14,6 +42,7 @@ class TokenRequest(BaseModel):
     grant_type: str = Field(
         default="refresh_token",
         description="OAuth grant type, always 'refresh_token' for this flow",
+        pattern="^refresh_token$",  # Changed from regex to pattern
     )
     client_id: str = Field(
         description="The connected app's client ID/consumer key",
@@ -40,6 +69,7 @@ class TokenRequest(BaseModel):
 
         return urllib.parse.urlencode(data)
 
+
 class TokenResponse(BaseModel):
     """Salesforce OAuth token response"""
 
@@ -57,7 +87,7 @@ class TokenResponse(BaseModel):
     token_type: str = Field(
         default="Bearer",
         description="OAuth token type, typically 'Bearer'",
-        pattern="^Bearer$",
+        pattern="^Bearer$",  # Changed from regex to pattern
     )
     scope: Optional[str] = Field(
         default=None, description="OAuth scopes granted to the token"
@@ -84,6 +114,7 @@ class TokenResponse(BaseModel):
             data["id_token"] = "*" * 10
         return data
 
+
 class HttpResponse(BaseModel):
     """HTTP response details"""
 
@@ -94,6 +125,7 @@ class HttpResponse(BaseModel):
     parsed_body: Optional[dict] = Field(
         default=None, description="Parsed JSON response body if available"
     )
+
 
 class TokenExchangeDebug(BaseModel):
     """Debug information for token exchange"""

@@ -1,10 +1,12 @@
 import re
-from dataclasses import dataclass
-from typing import Optional, Literal
+from typing import Literal
+from d2x.models.sf.org import SalesforceOrgInfo
+from d2x.models.sf.auth import AuthInfo, OrgType, DomainType  # Add this import
 
-# Define explicit type literals for better type hints
-OrgType = Literal["production", "sandbox", "scratch", "developer", "demo"]
-DomainType = Literal["my", "lightning", "pod"]
+# Remove the following Literal definitions:
+# OrgType = Literal["production", "sandbox", "scratch", "developer", "demo"]
+# DomainType = Literal["my", "lightning", "pod"]
+# PodType and RegionType can remain if they are not defined in auth.py
 PodType = Literal["cs", "db", None]
 RegionType = Literal[
     "na",
@@ -23,74 +25,6 @@ RegionType = Literal[
     "il",
     None,
 ]
-
-
-@dataclass
-class SalesforceOrgInfo:
-    """Structured information about a Salesforce org parsed from SFDX auth URL"""
-
-    # Auth components
-    client_id: str
-    client_secret: str
-    refresh_token: str
-    instance_url: str
-
-    # Org identification
-    org_type: OrgType
-    domain_type: DomainType
-
-    # Pod/Instance information
-    region: RegionType
-    pod_number: Optional[str]
-    pod_type: PodType
-
-    # MyDomain information
-    mydomain: Optional[str]
-    sandbox_name: Optional[str]  # The name after -- for sandbox/scratch orgs
-
-    @property
-    def is_classic_pod(self) -> bool:
-        """Whether this is a classic pod (cs/db)"""
-        return bool(self.pod_type in ("cs", "db"))
-
-    @property
-    def is_hyperforce(self) -> bool:
-        """Whether this org is on Hyperforce based on region"""
-        hyperforce_regions = {
-            "au",
-            "uk",
-            "in",
-            "de",
-            "jp",
-            "sg",
-            "ca",
-            "br",
-            "fr",
-            "ae",
-            "il",
-        }
-        return bool(self.region and self.region.lower() in hyperforce_regions)
-
-    @property
-    def is_sandbox(self) -> bool:
-        """Whether this is a sandbox org"""
-        return self.org_type in ("sandbox", "scratch", "developer", "demo")
-
-    @property
-    def full_domain(self) -> str:
-        """Reconstructed full domain without protocol"""
-        if self.domain_type == "pod":
-            base = f"{self.region or self.pod_type}{self.pod_number}"
-            return f"{base}.salesforce.com"
-        elif self.domain_type == "lightning":
-            return f"{self.mydomain}.lightning.force.com"
-        else:  # my
-            base = f"{self.mydomain}"
-            if self.sandbox_name:
-                base = f"{base}--{self.sandbox_name}"
-            if self.org_type != "production":
-                return f"{base}.{self.org_type}.my.salesforce.com"
-            return f"{base}.my.salesforce.com"
 
 
 # Updated regex pattern for better metadata extraction
@@ -114,7 +48,7 @@ sfdx_auth_url_pattern = re.compile(
     r"|"
     r"\.lightning\.force\.com"  # lightning.force.com domains
     r"|"
-    r"\.my\.salesforce\.com"  # Regular my.salesforce.com
+    r"\.my\.salesforce.com"  # Regular my.salesforce.com
     r")"
     r"|"  # OR
     r"(?P<pod_type>cs|db)"  # Classic pods (cs/db)
@@ -137,28 +71,31 @@ def parse_sfdx_auth_url(auth_url: str) -> SalesforceOrgInfo:
     groups = match.groupdict()
 
     # Determine org type
-    org_type: OrgType = "production"
+    org_type: OrgType = OrgType.PRODUCTION
     if groups.get("org_suffix"):
-        org_type = groups["org_suffix"]  # type: ignore
+        org_type = OrgType(groups["org_suffix"])  # type: ignore
     elif groups.get("sandbox_name"):
-        org_type = "sandbox"
+        org_type = OrgType.SANDBOX
 
     # Determine domain type
-    domain_type: DomainType = "pod"
+    domain_type: DomainType = DomainType.POD
     if ".my.salesforce.com" in groups["instance_url"]:
-        domain_type = "my"
+        domain_type = DomainType.MY
     elif ".lightning.force.com" in groups["instance_url"]:
-        domain_type = "lightning"
+        domain_type = DomainType.LIGHTNING
 
-    return SalesforceOrgInfo(
-        # Auth components
+    auth_info = AuthInfo(
         client_id=groups["client_id"],
         client_secret=groups["client_secret"] or "",
         refresh_token=groups["refresh_token"],
         instance_url=groups["instance_url"],
-        # Org identification
+    )
+
+    return SalesforceOrgInfo(
+        auth_info=auth_info,
         org_type=org_type,
         domain_type=domain_type,
+        full_domain=groups["instance_url"],
         # Pod/Instance information
         region=groups.get("region"),  # type: ignore
         pod_number=groups.get("pod_number"),
@@ -190,18 +127,18 @@ def test_sfdx_auth_url_parser():
             print(f"Full Domain: {info.full_domain}")
             print(f"Org Type: {info.org_type}")
             print(f"Domain Type: {info.domain_type}")
-            if info.domain_type == "pod":
+            if info.domain_type == DomainType.POD:
                 print(f"Pod Details:")
                 print(f"  Region: {info.region or 'Classic'}")
-                print(f"  Number: {info.pod_number}")
+                print(f"  Number: {info.pod_number or 'N/A'}")
                 print(f"  Type: {info.pod_type or 'Standard'}")
-                print(f"  Classic: {info.is_classic_pod}")
-                print(f"  Hyperforce: {info.is_hyperforce}")
+                print(f"  Classic: {'Yes' if info.is_classic_pod else 'No'}")
+                print(f"  Hyperforce: {'Yes' if info.is_hyperforce else 'No'}")
             else:
                 print(f"MyDomain: {info.mydomain}")
                 if info.sandbox_name:
                     print(f"Sandbox Name: {info.sandbox_name}")
-                print(f"Is Sandbox: {info.is_sandbox}")
+                print(f"Is Sandbox: {'Yes' if info.is_sandbox else 'No'}")
             print("-" * 30)
         except ValueError as e:
             print(f"Error parsing URL: {e}")
