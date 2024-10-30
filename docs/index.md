@@ -31,6 +31,20 @@ Learn more about advance features of CumulusCI contained in Muselab's preview `c
 
 Check out [D2X cumulusci-next](cumulusci-next.md) for more details.
 
+## Vision for D2X
+
+D2X is designed to be the future of Salesforce DevOps, providing a scalable, secure, and highly productive framework for managing multiple Salesforce customer org configurations. The vision for D2X includes:
+
+- **Scalability**: D2X supports a growing customer base through automation, reducing manual effort and increasing efficiency.
+- **Security**: Implements GitHub Advanced Security scanning and proper secret management to eliminate exposed credentials.
+- **Cost Reduction**: Reduces per-release effort significantly, providing a high return on investment.
+- **Compliance**: Enables audit trails and standardized processes, ensuring compliance with industry standards.
+- **Quality**: Reduces deployment errors through automation, improving overall quality and customer satisfaction.
+
+For more details on the architecture, implementation priorities, ROI analysis, and next steps, refer to the [Vision for D2X](vision.md) document.
+
+For a hypothetical case study showing the projected benefits of the d2x vision, refer to the [Vision OEM](vision-oem.md) document.
+
 ## Troubleshooting
 
 Need help troubleshooting an error? Check out the [Troubleshooting](troubleshooting.md) section for common error messages and tips on debugging issues.
