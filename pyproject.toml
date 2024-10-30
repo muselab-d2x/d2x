@@ -1,7 +1,7 @@
 # pyproject.toml
 [tool.poetry]
 name = "d2x"
-version = "0.1.2"
+version = "0.1.3"
 description = "Composable Salesforce DevOps on GitHub"
 authors = ["Muselab LLC"]
 license = "BSD3"
