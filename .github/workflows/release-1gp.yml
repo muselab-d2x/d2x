@@ -54,7 +54,7 @@ jobs:
               if: ${{ inputs.skip-deploy == false }}
               run: cci flow run ci_master --org packaging
             - name: Build Production Package
-              run: cci flow run release_production --org packaging $([[ "${{ inputs.release-name }}" ]] && echo " -o upload_production__version_name_template '${{ inputs.release-name }}'")
+              run: eval $(echo cci flow run release_production --org packaging $([[ "${{ inputs.release-name }}" ]] && echo " -o upload_production__version_name_template '${{ inputs.release-name }}'"))
               shell: bash
             - name: Run Release Test in Scratch Org
               if: ${{ inputs.skip-test == false }}
