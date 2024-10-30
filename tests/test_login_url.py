@@ -4,6 +4,7 @@ from d2x.auth.sf.login_url import generate_login_url, main as login_url_main
 from d2x.models.sf.org import SalesforceOrgInfo
 from d2x.base.types import CLIOptions
 from d2x.models.sf.auth import AuthInfo
+import json
 
 class TestGenerateLoginUrl(unittest.TestCase):
     @patch("d2x.auth.sf.login_url.get_environment_variable")
