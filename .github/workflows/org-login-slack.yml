@@ -22,7 +22,7 @@ jobs:
         name: Use d2x to generate a login url
         runs-on: ubuntu-latest
         steps:
-            - run: pip install d2x
+            - run: pip install git+https://github.com/muselab-d2x/d2x.git@jlantz/update-auth-structure
 
             - name: Generate Login URL for ${{ github.event.inputs.environment }}
               env:
