@@ -18,7 +18,7 @@ class OrgType(str, Enum):
     SANDBOX = "sandbox"
     SCRATCH = "scratch"
     DEVELOPER = "developer"
-    DEMO
+    DEMO = "demo"
 
 
 class DomainType(str, Enum):
