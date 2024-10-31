@@ -1,0 +1,59 @@
+name: Delete Environment
+
+on:
+  workflow_call:
+    inputs:
+      env-name:
+        required: true
+        type: string
+      sf-auth-url:
+        required: true
+        type: string
+    secrets:
+      dev-hub-auth-url:
+        required: true
+      github-token:
+        required: true
+
+jobs:
+  delete-environment:
+    name: "Delete Environment"
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/muselab-d2x/d2x:cumulusci-next
+      options: --user root
+      credentials:
+        username: ${{ github.actor }}
+        password: ${{ secrets.github-token }}
+      env:
+        DEV_HUB_AUTH_URL: "${{ secrets.dev-hub-auth-url }}"
+        CUMULUSCI_SERVICE_github: '{ "username": "${{ github.actor }}", "token": "${{ secrets.github-token }}", "email": "NOTUSED" }'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Auth to DevHub
+        run: /usr/local/bin/devhub.sh
+
+      - name: Delete Environment
+        run: cci org scratch_delete ${{ inputs.env-name }}
+        shell: bash
+
+      - name: Revoke Salesforce Token
+        run: |
+          python -c "
+import os
+from d2x.auth.sf.auth_url import revoke_sf_token
+from rich.console import Console
+
+console = Console()
+sf_auth_url = os.environ.get('SF_AUTH_URL')
+access_token = os.environ.get('ACCESS_TOKEN')
+instance_url = os.environ.get('INSTANCE_URL')
+
+revoke_sf_token(instance_url, access_token, console)
+"
+        env:
+          SF_AUTH_URL: ${{ inputs.sf-auth-url }}
+          ACCESS_TOKEN: ${{ steps.auth_to_devhub.outputs.access_token }}
+          INSTANCE_URL: ${{ steps.auth_to_devhub.outputs.instance_url }}

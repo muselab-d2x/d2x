@@ -266,6 +266,74 @@ def exchange_token(org_info: SalesforceOrgInfo, console: Console) -> TokenRespon
             raise
 
 
+def revoke_sf_token(instance_url: str, access_token: str, console: Console) -> None:
+    """Revoke Salesforce token by making API call"""
+    with Progress(
+        SpinnerColumn(),
+        TextColumn("[progress.description]{task.description}"),
+        console=console,
+        transient=True,
+    ) as progress:
+        try:
+            progress.add_task("Preparing token revocation request...", total=None)
+
+            # Prepare the request
+            revoke_url_path = "/services/oauth2/revoke"
+            headers = {"Content-Type": "application/x-www-form-urlencoded"}
+            body = urllib.parse.urlencode({"token": access_token})
+
+            # Make request
+            progress.add_task(f"Connecting to {instance_url}...", total=None)
+            conn = http.client.HTTPSConnection(instance_url)
+
+            task = progress.add_task("Revoking token...", total=None)
+            conn.request("POST", revoke_url_path, body, headers)
+            response = conn.getresponse()
+            response_data = response.read()
+
+            # Create response object
+            http_response = HttpResponse(
+                status=response.status,
+                reason=response.reason,
+                headers=dict(response.getheaders()),
+                body=response_data.decode("utf-8"),
+            )
+
+            if response.status != 200:
+                error_panel = Panel(
+                    f"[red]HTTP Status: {http_response.status} {http_response.reason}\n\n"
+                    f"[yellow]Response Headers:[/]\n"
+                    f"{http_response.headers}\n\n"
+                    f"[yellow]Response Body:[/]\n"
+                    f"{http_response.body}",
+                    title="[red]Token Revocation Failed",
+                    border_style="red",
+                )
+                console.print(error_panel)
+                raise RuntimeError(
+                    f"Token revocation failed: {response.status} {response.reason}"
+                )
+
+            progress.update(task, description="Token revocation successful!")
+
+            # Display success
+            success_panel = Panel(
+                f"[green]Successfully revoked token for {instance_url}",
+                title="[green]Token Revocation Success",
+                border_style="green",
+            )
+            console.print(success_panel)
+
+        except Exception as e:
+            error_panel = Panel(
+                f"[red]Error: {str(e)}",
+                title="[red]Token Revocation Failed",
+                border_style="red",
+            )
+            console.print(error_panel)
+            raise
+
+
 def main():
     console = Console(record=True)
 
