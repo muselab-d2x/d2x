@@ -26,6 +26,10 @@ Meeting AppExchange security requirements is crucial for ISVs. D2X helps you mee
 - **Secret Management**: Securely manage secrets and credentials.
 - **Audit Trails**: Maintain detailed audit trails for all changes.
 
+### 4. Custom Setup UX and GitHub Actions Workflows
+
+For ISVs, and potentially for other partners, there's a huge potential to build custom setup UX into their package and trigger GitHub Actions workflows to get an OAuth connection to the target org and run automation with configuration passed via JSON in the UX.
+
 ## Value Proposition
 
 ### 1. Increased Productivity
