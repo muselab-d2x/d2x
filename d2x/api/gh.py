@@ -1,6 +1,5 @@
 import os
 import requests
-<<<<<<< HEAD
 
 GITHUB_REPO = os.environ.get("GITHUB_REPOSITORY")
 
@@ -19,8 +18,6 @@ def get_repo_full_name() -> str:
     if not repo:
         raise ValueError("GITHUB_REPOSITORY environment variable not set")
     return repo
-=======
->>>>>>> a0ec5867346bac9c0fa1f28ccaa67a572bfa52a6
 
 
 def set_environment_variable(env_name: str, var_name: str, var_value: str) -> None:
