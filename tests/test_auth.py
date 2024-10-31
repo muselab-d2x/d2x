@@ -1,3 +1,4 @@
+import re
 import pytest
 from pydantic import ValidationError
 from d2x.models.sf.auth import LoginUrlModel, SfdxAuthUrlModel
