@@ -1,0 +1,88 @@
+name: Create Feature Test Package
+
+on:
+  workflow_call:
+    inputs:
+      org:
+        required: false
+        default: feature
+        type: string
+      debug:
+        required: false
+        default: false
+        type: boolean
+      docker_image:
+        required: false
+        default: ghcr.io/muselab-d2x/d2x
+        type: string
+      docker_tag:
+        type: string
+        required: false
+        default: cumulusci-next-snapshots
+    secrets:
+      dev-hub-auth-url:
+        required: false
+      dev-hub-username:
+        required: false
+      dev-hub-client-id:
+        required: false
+      dev-hub-private-key:
+        required: false
+      gh-email:
+        required: true
+      github-token:
+        required: true
+      github-app-id:
+        required: false
+      github-app-key:
+        required: false
+
+jobs:
+  create-feature-test-package:
+    name: "Create Feature Test Package"
+    runs-on: ubuntu-latest
+    container:
+      image: ${{ inputs.docker_image }}:${{ inputs.docker_tag }}
+      options: --user root
+      credentials:
+        username: "${{ github.actor }}"
+        password: "${{ secrets.github-token }}"
+    steps:
+      - name: D2X Image Details
+        run: |
+          echo "D2X Docker Image: ${{ inputs.docker_image }}"
+          echo "D2X Docker Tag: ${{ inputs.docker_tag }}"
+          echo "D2X Docker Image: `${{ inputs.docker_image }}:${{ inputs.docker_tag }}`" >> $GITHUB_STEP_SUMMARY
+        shell: bash
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Auth to DevHub
+        run: /usr/local/bin/devhub.sh
+        env:
+          DEV_HUB_AUTH_URL: "${{ secrets.dev-hub-auth-url }}"
+          DEV_HUB_USERNAME: "${{ secrets.dev-hub-username }}"
+          DEV_HUB_CLIENT_ID: "${{ secrets.dev-hub-client-id }}"
+          DEV_HUB_PRIVATE_KEY: "${{ secrets.dev-hub-private-key }}"
+      - name: Set ${{ inputs.org }} org as default org
+        run: cci org default ${{ inputs.org }}
+      - name: Build Feature Test Package
+        env:
+          GITHUB_TOKEN: "${{ secrets.github-token }}"
+          CUMULUSCI_SERVICE_github: '{ "username": "${{ github.actor }}", "token": "${{ secrets.github-token }}", "email": "${{ secrets.gh-email }}" }'
+          GITHUB_APP_ID: "${{ secrets.github-app-id }}"
+          GITHUB_APP_KEY: "${{ secrets.github-app-key }}"
+        run: cci flow run build_feature_test_package $([[ "${{ inputs.debug }}" == "true" ]] && echo " --debug") | tee cumulusci-flow.log
+        shell: bash
+      - name: Set Commit Status
+        env:
+          GITHUB_TOKEN: "${{ secrets.github-token }}"
+        run: |
+          VERSION=$(cat cumulusci-flow.log | grep -o -E -m 1 "04t[a-zA-Z0-9]{15}")
+          gh api \
+            --method POST \
+            -H "Accept: application/vnd.github.v3+json" \
+            '/repos/${{ github.repository }}/statuses/${{ github.sha }}' \
+            -f state='success' \
+            -f description="version_id: $VERSION" \
+            -f context='Build Feature Test Package'
+        shell: bash
