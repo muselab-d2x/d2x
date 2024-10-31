@@ -21,6 +21,7 @@ cryptography = "^43.0.3"
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.3.3"
 pip-tools = "^7.4.1"
+pytest-cov = "^4.0.0"
 
 [tool.poetry.scripts]
 d2x = "d2x.cli.main:d2x_cli"
@@ -38,3 +39,6 @@ build-backend = "poetry.core.masonry.api"
 [tool.pip-compile]
 generate-hashes = true
 output-file = "requirements.txt"
+
+[tool.pytest.ini_options]
+addopts = "--cov=d2x --cov-report=term-missing"
