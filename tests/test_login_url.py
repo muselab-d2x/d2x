@@ -1,3 +1,4 @@
+import json
 import unittest
 from unittest.mock import patch
 from d2x.auth.sf.login_url import generate_login_url, main as login_url_main
