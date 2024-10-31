@@ -1,0 +1,35 @@
+name: Test GitHub Auth
+
+on:
+  push:
+    branches:
+      - "**"
+
+jobs:
+  test-github-auth:
+    runs-on: ubuntu-latest
+    environment: test
+    container:
+      image: ghcr.io/muselab-d2x/d2x:cumulusci-next-snapshots
+      options: --user root
+      credentials:
+        username: ${{ github.actor }}
+        password: ${{ secrets.github-token }}
+      env:
+        DEV_HUB_AUTH_URL: "${{ secrets.dev-hub-auth-url }}"
+        CUMULUSCI_SERVICE_github: '{ "username": "${{ github.actor }}", "token": "${{ secrets.github-token }}", "email": "${{ secrets.gh-email }}" }'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Auth to DevHub
+        run: /usr/local/bin/devhub.sh
+      - name: Test GitHub Auth
+        run: |
+          d2x auth url
+          d2x auth login
+        shell: bash
+      - name: Record API Requests
+        run: |
+          pip install vcrpy
+          vcrpy --record-mode=once --filter-headers Authorization --filter-headers X-Auth-Token --filter-headers X-API-Key
+        shell: bash

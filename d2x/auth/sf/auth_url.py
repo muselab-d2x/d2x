@@ -25,11 +25,13 @@ from d2x.models.sf.auth import (
 from d2x.ux.gh.actions import summary as gha_summary, output as gha_output
 from d2x.models.sf.org import SalesforceOrgInfo
 from d2x.base.types import CLIOptions
+from d2x.api.gh import set_environment_variable  # Add this import
 
 
 def exchange_token(org_info: SalesforceOrgInfo, cli_options: CLIOptions):
     """Exchange refresh token for access token with detailed error handling"""
     console = cli_options.console
+    debug_info = None  # Initialize debug_info before the try block
     with Progress(
         SpinnerColumn(),
         TextColumn("[progress.description]{task.description}"),
@@ -122,10 +124,14 @@ def exchange_token(org_info: SalesforceOrgInfo, cli_options: CLIOptions):
             )
             console.print(success_panel)
 
+            # Store access token in GitHub Environment
+            set_environment_variable("salesforce", "ACCESS_TOKEN", token_response.access_token.get_secret_value())
+
             return token_response
 
         except Exception as e:
-            debug_info.error = str(e)
+            if debug_info is not None:
+                debug_info.error = str(e)
             error_panel = Panel(
                 f"[red]Error: {str(e)}",
                 title="[red]Authentication Failed",
