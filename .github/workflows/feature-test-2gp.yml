@@ -85,7 +85,7 @@ jobs:
                   GITHUB_APP_ID: "${{ secrets.github-app-id }}"
                   GITHUB_APP_KEY: "${{ secrets.github-app-key }}"
               run: |
-                cci flow run ci_feature_2gp --use-snapshots
+                  cci flow run ci_feature_2gp --use-snapshots
               shell: bash
 
             - name: Save Org to GitHub Environment
@@ -96,10 +96,9 @@ jobs:
                   GITHUB_APP_KEY: ${{ secrets.github-app-key }}
                   GITHUB_TOKEN: ${{ secrets.github-token }}
               with:
-                org-alias: ${{ inputs.org }}
-                create-environment: 'true'
-                environment-name: ${{ inputs.environment_name }}
-
+                  org-alias: ${{ inputs.org }}
+                  create-environment: "true"
+                  environment-name: ${{ inputs.environment_name }}
 
             - name: Capture CumulusCI Build History
               if: always()
@@ -136,7 +135,7 @@ jobs:
                       echo "Feature Test step failed. Failing the job."
                       exit 1
                   fi
-                  
+
                   # Check for any failed steps
                   FAILED_STEPS=$(cat $GITHUB_OUTPUT | grep -c "failure")
                   echo "Failed steps: $FAILED_STEPS"
@@ -144,6 +143,6 @@ jobs:
                       echo "One or more steps failed. Failing the job."
                       exit 1
                   fi
-                  
+
                   echo "All steps completed successfully."
               shell: bash
