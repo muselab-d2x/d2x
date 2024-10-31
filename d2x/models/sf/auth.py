@@ -1,5 +1,5 @@
 # auth.py
-
+import re
 import urllib.parse
 from datetime import datetime, timedelta
 from enum import Enum
@@ -169,3 +169,85 @@ class TokenExchangeDebug(BaseModel):
         )
 
         return table
+
+
+class LoginUrlModel(CommonBaseModel):
+    """Model to generate login URL and token"""
+
+    access_token: str
+    login_url: str
+    ret_url: str = "/"
+
+    def get_login_url_and_token(self) -> tuple[str, str]:
+        """Generate login URL and token"""
+        ret_url_encoded = urllib.parse.quote(self.ret_url) if self.ret_url else "%2F"
+        login_url_formatted = f"{self.login_url}/secur/frontdoor.jsp?sid={self.access_token}&retURL={ret_url_encoded}"
+        return login_url_formatted, self.access_token
+
+
+class SfdxAuthUrlModel(CommonBaseModel):
+    """Model to parse SFDX auth URL"""
+
+    auth_url: str
+
+    def parse_sfdx_auth_url(self) -> dict:
+        """Parse SFDX auth URL and extract detailed org information"""
+        sfdx_auth_url_pattern = re.compile(
+            r"^force://"
+            r"(?P<client_id>[a-zA-Z0-9]{0,64})"
+            r":"
+            r"(?P<client_secret>[a-zA-Z0-9._~\-]*)"
+            r":"
+            r"(?P<refresh_token>[a-zA-Z0-9._~\-]+)"
+            r"@"
+            r"(?P<instance_url>"
+            r"(?:https?://)?"
+            r"(?P<mydomain>[a-zA-Z0-9\-]+)?"
+            r"(?:--(?P<sandbox_name>[a-zA-Z0-9\-]+))?"
+            r"(?:(?P<org_suffix>sandbox|scratch|developer|demo)?\.my\.salesforce\.com"
+            r"|\.lightning\.force\.com"
+            r"|\.my\.salesforce.com"
+            r"|(?P<pod_type>cs|db)"
+            r"|(?P<region>(?:na|eu|ap|au|uk|in|de|jp|sg|ca|br|fr|ae|il))"
+            r")"
+            r"(?P<pod_number>[0-9]+)?"
+            r"(?:\.salesforce\.com)?"
+            r")$"
+        )
+
+        match = sfdx_auth_url_pattern.match(self.auth_url)
+        if not match:
+            raise ValueError("Invalid SFDX auth URL format")
+
+        groups = match.groupdict()
+
+        org_type = OrgType.PRODUCTION
+        if groups.get("org_suffix"):
+            org_type = OrgType(groups["org_suffix"])
+        elif groups.get("sandbox_name"):
+            org_type = OrgType.SANDBOX
+
+        domain_type = DomainType.POD
+        if ".my.salesforce.com" in groups["instance_url"]:
+            domain_type = DomainType.MY
+        elif ".lightning.force.com" in groups["instance_url"]:
+            domain_type = DomainType.LIGHTNING
+
+        auth_info = AuthInfo(
+            client_id=groups["client_id"],
+            client_secret=groups["client_secret"] or "",
+            refresh_token=groups["refresh_token"],
+            instance_url=groups["instance_url"],
+        )
+
+        return {
+            "auth_info": auth_info,
+            "org_type": org_type,
+            "domain_type": domain_type,
+            "full_domain": groups["instance_url"],
+            "region": groups.get("region"),
+            "pod_number": groups.get("pod_number"),
+            "pod_type": groups.get("pod_type"),
+            "mydomain": groups.get("mydomain"),
+            "sandbox_name": groups.get("sandbox_name"),
+        }

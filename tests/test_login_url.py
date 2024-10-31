@@ -8,7 +8,7 @@ from d2x.models.sf.auth import AuthInfo
 
 
 class TestGenerateLoginUrl(unittest.TestCase):
-    @patch("d2x.auth.sf.login_url.get_environment_variable")
+    @patch("d2x.api.gh.get_environment_variable")  # Updated patch target
     def test_generate_login_url_success(self, mock_get_env_var):
         # Mock the SalesforceOrgInfo
         org_info = SalesforceOrgInfo(
@@ -39,7 +39,7 @@ class TestGenerateLoginUrl(unittest.TestCase):
         self.assertIn("https://test.salesforce.com", login_url)
         self.assertIn("test_access_token", login_url)
 
-    @patch("d2x.auth.sf.login_url.get_environment_variable")
+    @patch("d2x.api.gh.get_environment_variable")  # Updated patch target
     def test_generate_login_url_failure(self, mock_get_env_var):
         # Mock the SalesforceOrgInfo
         org_info = SalesforceOrgInfo(

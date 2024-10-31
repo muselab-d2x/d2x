@@ -1,7 +1,6 @@
 # cli.py
 import rich_click as click
-from d2x.auth.sf.login_url import main as login_url_main
-from d2x.auth.sf.auth_url import main as auth_url_main
+from d2x.models.sf.auth import LoginUrlModel, SfdxAuthUrlModel
 import sys
 import pdb
 from d2x.base.types import OutputFormat, OutputFormatType, CLIOptions
