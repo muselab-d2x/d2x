@@ -67,7 +67,7 @@ The two-stage credential management system provides enterprise-grade security wh
 -   Compliance reporting
 -   Role-based access control
 
-[Learn more about enterprise features](./audiences/enterprise.md)
+[Learn more about enterprise features](./enterprise.md)
 
 ## 📦 ISVs & Package Developers
 
@@ -121,7 +121,9 @@ D2X's composable automation approach means ISVs can build once, reuse everywhere
 -   Standardized security review preparation
 -   Streamlined customer org deployments
 
-[Learn more about ISV features](./audiences/isv.md)
+For ISVs, and potentially for other partners, there's a huge potential to build custom setup UX into their package and trigger GitHub Actions workflows to get an OAuth connection to the target org and run automation with configuration passed via JSON in the UX.
+
+[Learn more about ISV features](./isv.md)
 
 ## 🤝 Consulting Partners
 
@@ -167,7 +169,7 @@ Start with proven patterns and customize for each client's needs:
 -   Client-specific customizations
 -   Knowledge transfer automation
 
-[Learn more about partner features](./audiences/partner.md)
+[Learn more about partner features](./partner.md)
 
 ## 🌱 Small Teams & Nonprofits
 
@@ -213,7 +215,7 @@ D2X grows with your team:
 -   Secure by default
 -   Clear upgrade paths
 
-[Learn more about nonprofit features](./audiences/nonprofit.md)
+[Learn more about nonprofit features](./nonprofit.md)
 
 ## 🎯 Choose Your Path
 
