@@ -4,7 +4,6 @@ if [ -f ~/.dev_hub_authenticated ]; then
     exit 0
 fi
 
-
 if [ -z "$DEV_HUB_AUTH_URL" ]; then
     if [ -z "$DEV_HUB_USERNAME" ]; then
         echo "DEV_HUB_USERNAME is not set, length is $(echo $(($(echo $DEV_HUB_USERNAME|wc -c)-1))). You must set either DEV_HUB_AUTH_URL or DEV_HUB_USERNAME, DEV_HUB_CLIENT_ID, and DEV_HUB_PRIVATE_KEY."
