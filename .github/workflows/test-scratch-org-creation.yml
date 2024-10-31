@@ -1,9 +1,7 @@
 name: 🧪 Test Scratch Org Creation Commands Without Credentials
 
 on:
-  push:
-    branches:
-      - main
+  pull-request:
 
 jobs:
   test-scratch-org-creation:
