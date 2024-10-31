@@ -3,3 +3,6 @@ theme:
   name: material
 extra_css:
   - stylesheets/extra.css
+plugins:
+  - search
+  - mkdocs-mermaid2-plugin
