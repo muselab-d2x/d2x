@@ -3,7 +3,7 @@ import re
 import urllib.parse
 from datetime import datetime, timedelta
 from enum import Enum
-from typing import Optional, Literal
+from typing import Optional
 from pydantic import BaseModel, Field, SecretStr, computed_field
 from rich.table import Table
 from rich import box
@@ -18,7 +18,7 @@ class OrgType(str, Enum):
     SANDBOX = "sandbox"
     SCRATCH = "scratch"
     DEVELOPER = "developer"
-    DEMO = "demo"
+    DEMO = "demo"  # Assigned value to DEMO
 
 
 class DomainType(str, Enum):
@@ -31,7 +31,7 @@ class AuthInfo(CommonBaseModel):
     """Authentication components for Salesforce org."""
 
     client_id: str
-    client_secret: str
+    client_secret: SecretStr  # Changed from str to SecretStr
     refresh_token: str
     instance_url: str
 

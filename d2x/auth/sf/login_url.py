@@ -26,23 +26,25 @@ def main(cli_options: CLIOptions):
             "Salesforce Auth Url not found. Set the SFDX_AUTH_URL environment variable."
         )
 
+
     org_info = SfdxAuthUrlModel(auth_url=auth_url).parse_sfdx_auth_url()
 
     from d2x.auth.sf.auth_url import exchange_token
 
     try:
-        token_response = exchange_token(org_info, cli_options)
+        access_token = get_environment_variable("salesforce", "ACCESS_TOKEN")
     except Exception as e:
-        console.print(f"[red]Error: {e}")
+        console.print(f"[red]Error retrieving access token: {e}")
         sys.exit(1)
 
     start_url = generate_login_url(
-        instance_url=token_response.instance_url,
-        access_token=token_response.access_token.get_secret_value(),
+        instance_url=org_info.auth_info.instance_url,
+        access_token=access_token,
     )
 
     output("access_token", token_response.access_token.get_secret_value())
     output("instance_url", token_response.instance_url)
+
     output("start_url", start_url)
     output("org_type", org_info["org_type"])
 
@@ -65,7 +67,7 @@ def main(cli_options: CLIOptions):
 - **Status**: ✅ Success
 - **Timestamp**: {token_response.issued_at.strftime('%Y-%m-%d %H:%M:%S')}
 - **Token Expiry**: {token_response.expires_in} seconds
-- **Instance URL**: {token_response.instance_url}
+- **Instance URL**: {org_info.auth_info.instance_url}
 """
     summary(summary_md)
 
