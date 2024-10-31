@@ -174,14 +174,3 @@ stateDiagram-v2
     Production --> Development: Backport
     Development --> [*]: Synced
 ```
-
-[Learn more about change management](./workflows/changes.md)
-
-## 🎓 Implementation Examples
-
-Ready to implement these patterns? Start here:
-
--   [Basic Deployment Setup](./examples/basic-deployment.md)
--   [Complex Testing Pipeline](./examples/test-pipeline.md)
--   [Enterprise Change Management](./examples/change-management.md)
--   [Security Implementation](./examples/security-setup.md)

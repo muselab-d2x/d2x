@@ -99,7 +99,7 @@ flowchart TB
 -   Automated security scanning
 -   Pull request reviews
 
-[Learn more about repository setup](./architecture/repositories.md)
+[Learn more about repository features](./architecture/repositories.md)
 
 ## ⚡ Actions & Workflows
 
@@ -179,12 +179,3 @@ flowchart LR
 -   Deployment frameworks
 
 [Learn more about integrations](./architecture/integrations.md)
-
-## Implementation Examples
-
-Ready to implement? Check out our guides:
-
--   [Environment Setup Guide](./guides/environment-setup.md)
--   [Repository Configuration](./guides/repository-config.md)
--   [Workflow Implementation](./guides/workflow-setup.md)
--   [Integration Configuration](./guides/integration-setup.md)
