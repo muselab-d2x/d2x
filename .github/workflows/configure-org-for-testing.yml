@@ -1,4 +1,4 @@
-name: Configure Org for Testing
+name: 🛠️ Configure Org for Testing
 
 on:
     workflow_call:
@@ -31,7 +31,7 @@ on:
 
 jobs:
     configure-org-for-testing:
-        name: "Configure Org for Testing"
+        name: "🛠️ Configure Org for Testing"
         runs-on: ubuntu-latest
         container:
             image: ghcr.io/muselab-d2x/d2x:cumulusci-next-snapshots

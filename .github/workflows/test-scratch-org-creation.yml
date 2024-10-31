@@ -1,14 +1,13 @@
-name: Test Scratch Org Creation
+name: 🧪 Test Scratch Org Creation Commands Without Credentials
 
 on:
   push:
     branches:
       - main
-      - 'feature/*'
 
 jobs:
   test-scratch-org-creation:
-    name: "Test Scratch Org Creation"
+    name: "🧪 Test Scratch Org Creation"
     runs-on: ubuntu-latest
     strategy:
       matrix:

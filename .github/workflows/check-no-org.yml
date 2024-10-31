@@ -1,4 +1,4 @@
-name: Check No Org
+name: 🛠️ Check No Org
 
 on:
     workflow_call:
@@ -14,7 +14,7 @@ on:
 
 jobs:
     check-no-org:
-        name: "Check No Org"
+        name: "🛠️ Check No Org"
         runs-on: ubuntu-latest
         container:
             image: ghcr.io/muselab-d2x/d2x:cumulusci-next-snapshots

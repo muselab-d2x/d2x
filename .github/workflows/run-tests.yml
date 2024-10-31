@@ -1,4 +1,4 @@
-name: Run Tests
+name: 🧪 Run Tests
 
 on:
     workflow_call:
@@ -31,7 +31,7 @@ on:
 
 jobs:
     run-tests:
-        name: "Run Tests"
+        name: "🧪 Run Tests"
         runs-on: ubuntu-latest
         container:
             image: ghcr.io/muselab-d2x/d2x:cumulusci-next-snapshots

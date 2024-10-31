@@ -1,4 +1,4 @@
-name: Create Org
+name: 🏗️ Create Org
 
 on:
     workflow_call:
@@ -36,7 +36,7 @@ on:
 
 jobs:
     create-org:
-        name: "Create Org"
+        name: "🏗️ Create Org"
         runs-on: ubuntu-latest
         container:
             image: ghcr.io/muselab-d2x/d2x:cumulusci-next-snapshots

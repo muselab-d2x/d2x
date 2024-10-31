@@ -1,4 +1,4 @@
-name: Dispose Org
+name: 🗑️ Dispose Org
 
 on:
   workflow_call:
@@ -41,7 +41,7 @@ on:
 
 jobs:
   dispose-org:
-    name: "Dispose Org"
+    name: "🗑️ Dispose Org"
     runs-on: ubuntu-latest
     container:
       image: ghcr.io/muselab-d2x/d2x:cumulusci-next-snapshots

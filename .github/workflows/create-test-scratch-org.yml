@@ -1,4 +1,4 @@
-name: Create Test Scratch Org
+name: 🏗️ Create Test Scratch Org
 
 on:
     workflow_call:
@@ -36,7 +36,7 @@ on:
 
 jobs:
     create-test-scratch-org:
-        name: "Create Test Scratch Org"
+        name: "🏗️ Create Test Scratch Org"
         runs-on: ubuntu-latest
         container:
             image: ghcr.io/muselab-d2x/d2x:cumulusci-next-snapshots

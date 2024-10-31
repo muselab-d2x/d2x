@@ -1,4 +1,4 @@
-name: Create Feature Test Package
+name: 📦✨ Create Feature Test Package
 
 on:
   workflow_call:
@@ -39,7 +39,7 @@ on:
 
 jobs:
   create-feature-test-package:
-    name: "Create Feature Test Package"
+    name: "📦✨ Create Feature Test Package"
     runs-on: ubuntu-latest
     container:
       image: ${{ inputs.docker_image }}:${{ inputs.docker_tag }}
