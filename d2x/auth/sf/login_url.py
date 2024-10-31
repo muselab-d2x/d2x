@@ -5,6 +5,7 @@ from d2x.models.sf.auth import LoginUrlModel, SfdxAuthUrlModel
 from d2x.ux.gh.actions import summary, output
 from d2x.base.types import CLIOptions
 from typing import Optional
+from d2x.api.gh import get_environment_variable  # Add get_environment_variable import
 
 
 def generate_login_url(instance_url: str, access_token: str) -> str:
@@ -26,7 +27,6 @@ def main(cli_options: CLIOptions):
             "Salesforce Auth Url not found. Set the SFDX_AUTH_URL environment variable."
         )
 
-
     org_info = SfdxAuthUrlModel(auth_url=auth_url).parse_sfdx_auth_url()
 
     from d2x.auth.sf.auth_url import exchange_token
@@ -42,8 +42,8 @@ def main(cli_options: CLIOptions):
         access_token=access_token,
     )
 
-    output("access_token", token_response.access_token.get_secret_value())
-    output("instance_url", token_response.instance_url)
+    output("access_token", access_token)  # Use access_token directly
+    output("instance_url", org_info.auth_info.instance_url)
 
     output("start_url", start_url)
     output("org_type", org_info["org_type"])

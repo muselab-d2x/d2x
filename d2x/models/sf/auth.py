@@ -181,9 +181,7 @@ class LoginUrlModel(CommonBaseModel):
     def get_login_url_and_token(self) -> tuple[str, str]:
         """Generate login URL and token"""
         ret_url_encoded = urllib.parse.quote(self.ret_url) if self.ret_url else "%2F"
-        login_url_formatted = (
-            f"{self.login_url}/secur/frontdoor.jsp?sid={self.access_token}&retURL={ret_url_encoded}"
-        )
+        login_url_formatted = f"{self.login_url}/secur/frontdoor.jsp?sid={self.access_token}&retURL={ret_url_encoded}"
         return login_url_formatted, self.access_token
 
 

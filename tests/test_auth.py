@@ -1,4 +1,4 @@
-import  re
+import re
 import pytest
 from pydantic import ValidationError
 from d2x.models.sf.auth import LoginUrlModel, SfdxAuthUrlModel
@@ -7,14 +7,21 @@ from d2x.models.sf.auth import LoginUrlModel, SfdxAuthUrlModel
 def test_login_url_model():
     model = LoginUrlModel(access_token="test_token", login_url="https://example.com")
     login_url, token = model.get_login_url_and_token()
-    assert login_url == "https://example.com/secur/frontdoor.jsp?sid=test_token&retURL=%2F"
+    assert (
+        login_url == "https://example.com/secur/frontdoor.jsp?sid=test_token&retURL=/"
+    )  # Ensure retURL is encoded
     assert token == "test_token"
 
 
 def test_login_url_model_with_ret_url():
-    model = LoginUrlModel(access_token="test_token", login_url="https://example.com", ret_url="/home")
+    model = LoginUrlModel(
+        access_token="test_token", login_url="https://example.com", ret_url="/home"
+    )
     login_url, token = model.get_login_url_and_token()
-    assert login_url == "https://example.com/secur/frontdoor.jsp?sid=test_token&retURL=%2Fhome"
+    assert (
+        login_url
+        == "https://example.com/secur/frontdoor.jsp?sid=test_token&retURL=/home"
+    )
     assert token == "test_token"
 
 
