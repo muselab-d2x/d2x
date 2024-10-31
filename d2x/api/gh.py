@@ -1,24 +1,33 @@
 import os
 import requests
-from cryptography.hazmat.primitives.kdf.scrypt import Scrypt
-from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
-from cryptography.hazmat.primitives import hashes
-from cryptography.hazmat.primitives.kdf.hkdf import HKDF
-from cryptography.hazmat.primitives.kdf.concatkdf import ConcatKDFHash
-from cryptography.hazmat.primitives.kdf.concatkdf import ConcatKDFHMAC
-from cryptography.hazmat.primitives.kdf.x963kdf import X963KDF
-from cryptography.hazmat.primitives.kdf.kbkdf import KBKDFHMAC, KBKDFCMAC
-from cryptography.hazmat.primitives.kdf.kbkdf import CounterLocation
-from cryptography.hazmat.primitives.kdf.kbkdf import Mode
+
+GITHUB_REPO = os.environ.get("GITHUB_REPOSITORY")
+
+
+def get_github_token() -> str:
+    """Get the GitHub token from the environment"""
+    token = os.environ.get("GITHUB_TOKEN")
+    if not token:
+        raise ValueError("GITHUB_TOKEN environment variable not set")
+    return token
+
+
+def get_repo_full_name() -> str:
+    """Get the full name of the GitHub repository"""
+    repo = os.environ.get("GITHUB_REPOSITORY")
+    if not repo:
+        raise ValueError("GITHUB_REPOSITORY environment variable not set")
+    return repo
 
 
 def set_environment_variable(env_name: str, var_name: str, var_value: str) -> None:
     """Set a variable in a GitHub Environment"""
     token = os.environ.get("GITHUB_TOKEN")
+    repo = os.environ.get("GITHUB_REPOSITORY")
     if not token:
         raise ValueError("GITHUB_TOKEN environment variable not set")
 
-    url = f"https://api.github.com/repos/{os.environ['GITHUB_REPOSITORY']}/environments/{env_name}/variables/{var_name}"
+    url = f"https://api.github.com/repos/{GITHUB_REPO}/environments/{env_name}/variables/{var_name}"
     headers = {
         "Authorization": f"Bearer {token}",
         "Accept": "application/vnd.github.v3+json",
@@ -35,7 +44,7 @@ def get_environment_variable(env_name: str, var_name: str) -> str:
     if not token:
         raise ValueError("GITHUB_TOKEN environment variable not set")
 
-    url = f"https://api.github.com/repos/{os.environ['GITHUB_REPOSITORY']}/environments/{env_name}/variables/{var_name}"
+    url = f"https://api.github.com/repos/{GITHUB_REPO}/environments/{env_name}/variables/{var_name}"
     headers = {
         "Authorization": f"Bearer {token}",
         "Accept": "application/vnd.github.v3+json",
@@ -53,14 +62,14 @@ def set_environment_secret(env_name: str, secret_name: str, secret_value: str) -
     if not token:
         raise ValueError("GITHUB_TOKEN environment variable not set")
 
-    url = f"https://api.github.com/repos/{os.environ['GITHUB_REPOSITORY']}/environments/{env_name}/secrets/{secret_name}"
+    url = f"https://api.github.com/repos/{GITHUB_REPO}/environments/{env_name}/secrets/{secret_name}"
     headers = {
         "Authorization": f"Bearer {token}",
         "Accept": "application/vnd.github.v3+json",
     }
     data = {"encrypted_value": secret_value}
 
-    response = requests.put(url, headers=headers, json(data))
+    response = requests.put(url, headers=headers, json=data)
     response.raise_for_status()
 
 
@@ -70,7 +79,7 @@ def get_environment_secret(env_name: str, secret_name: str) -> str:
     if not token:
         raise ValueError("GITHUB_TOKEN environment variable not set")
 
-    url = f"https://api.github.com/repos/{os.environ['GITHUB_REPOSITORY']}/environments/{env_name}/secrets/{secret_name}"
+    url = f"https://api.github.com/repos/{GITHUB_REPO}/environments/{env_name}/secrets/{secret_name}"
     headers = {
         "Authorization": f"Bearer {token}",
         "Accept": "application/vnd.github.v3+json",
