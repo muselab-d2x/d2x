@@ -53,3 +53,11 @@ From wikis to projects, every feature serves a purpose:
 -   Status checks
 -   Automated reviews
 -   Documentation
+
+### Network Graph
+
+The Network graph in GitHub is a powerful tool that allows you to visualize the relationships between repositories, including forks and branches. It provides a clear and interactive way to understand how different repositories are connected and how changes flow between them.
+
+[Learn more about the Network graph](./network-graph.md)
+
+[Learn more about advanced Network graph features](./advanced-network-graph.md)
