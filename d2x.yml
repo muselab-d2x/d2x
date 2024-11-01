@@ -1,0 +1,50 @@
+plans:
+  ci_feature_2gp:
+    name: "CI Feature 2GP"
+    description: "Rebuild of the feature_2gp workflow into a modular plan structure"
+    collect:
+      steps:
+        - key: "collect_org_info"
+          type: "soql"
+          config:
+            query: "SELECT Id, Name FROM Organization"
+        - key: "collect_metadata"
+          type: "metadata"
+          config:
+            types: ["CustomObject", "ApexClass"]
+    check:
+      actions:
+        - key: "check_org_info"
+          type: "info"
+          config:
+            message: "Org information collected successfully"
+        - key: "check_metadata"
+          type: "warning"
+          config:
+            message: "Metadata collection completed with warnings"
+    run:
+      dependencies:
+        - "dependency1"
+        - "dependency2"
+      deploy_metadata:
+        - "metadata1"
+        - "metadata2"
+      install_packages:
+        - "package1"
+        - "package2"
+      setup_steps:
+        - step_type: "cci"
+          config:
+            flow: "setup_flow"
+      config_steps:
+        - step_type: "sf"
+          config:
+            command: "sfdx force:config:set"
+      data_steps:
+        - step_type: "d2x"
+          config:
+            command: "d2x data load"
+      testing_steps:
+        - step_type: "cci"
+          config:
+            flow: "run_tests"
