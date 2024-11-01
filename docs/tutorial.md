@@ -18,7 +18,7 @@ To do this, you can use sfdx either on your computer or via Codespaces.
 
 **via Codespaces** If you don't already have sfdx installed on your computer and connected to your DevHub, you can [use a Codespace](#launching-a-development-environment) to connect to the DevHub so you can get the sfdxAuthUrl. Simply launch a new Codespace from your D2X project repository then run: sfdx org login device --set-default-dev-hub --alias DevHub
 
-**via sfdx** Assuming you already have sfdx installed on your computer and connected to your DevHub as the alias DevHub, you should be able to get the Sfdx Auth Url (starts with force://) by running sfdx org display -o DevHub --verbose andy copying the auth url (starts with force://, ends with .salesforce.com)
+**via sfdx** Assuming you already have sfdx installed on your computer and connected to your DevHub as the alias DevHub, you should be able to get the Sfdx Auth Url (starts with force://) by running sfdx org display -o DevHub --verbose and copying the auth url (starts with force://, ends with .salesforce.com)
 
 ## GitHub Token
 
@@ -114,7 +114,7 @@ Add the files, commit the changes, and push the new branch to GitHub:
 ```
 git add force-app/
 git commit -m "Added field"
-git push --set-upstream-to feature/add-field
+git push --set-upstream origin feature/add-field
 ```
 
 ## Feature Builds

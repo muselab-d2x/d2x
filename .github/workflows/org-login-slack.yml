@@ -1,49 +1,140 @@
-name: Org Login URL to Slack DM
+# File: .github/workflows/request-login-url.yml
+
+name: Request Org Login URL
 
 on:
-    workflow_call:
-        inputs:
-            environment:
-                description: The name of the environment
-                required: true
-                type: string
-            slack_username:
-                description: Slack username to send the login URL
-                required: true
-                type: string
-        secrets:
-            slack-bot-token:
-                required: true
-            github-token:
-                required: true
+  workflow_call:
+    inputs:
+      org:
+        description: "The name of the org to get the login URL for. NOTE: Do not select orgs starting with 'Snapshot:'"
+        required: true
+        type: string
+      slack_username:
+        description: "The Slack username to send the DM to"
+        required: true
+        type: string
+      environment:
+        description: "Select the environment to use (e.g., DevHub)"
+        required: true
+        type: environment
+    secrets:
+      SFDX_AUTH_URL:
+        description: "Salesforce DX Auth URL"
+        required: true
+      SLACK_BOT_TOKEN:
+        description: "Slack Bot Token"
+        required: true
 
 jobs:
-    d2x-login-url:
-        name: Use d2x to generate a login url
-        runs-on: ubuntu-latest
-        environment: ${{ github.event.inputs.environment }}
-        steps:
-            - run: pip install git+https://github.com/muselab-d2x/d2x.git@jlantz/update-auth-structure
+  send-login-url:
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+    steps:
+      - name: Check SFDX_AUTH_URL
+        run: |
+          if [ -z "${{ secrets.SFDX_AUTH_URL }}" ]; then
+            echo "Error: SFDX_AUTH_URL is not set."
+            exit 1
+          fi
 
-            - id: generate_login_url
-              name: Generate Login URL for ${{ github.event.inputs.environment }}
-              env:
-                  SFDX_AUTH_URL: ${{ secrets.sfdx-auth-url }}
-              run: |
-                  set -eo pipefail
-                  d2x sf auth login | tail -1 > login_url.txt
+      - name: Cache d2x
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
 
-            - name: Send Slack DM
-              if: success()
-              env:
-                  SLACK_BOT_TOKEN: ${{ secrets.slack-bot-token }}
-              run: |
-                  echo "login_url=$(cat login_url.txt)" >> $GITHUB_OUTPUT
-                  rm login_url.txt
-                  curl -X POST -H "Authorization: Bearer $SLACK_BOT_TOKEN" \
-                       -H "Content-Type: application/json" \
-                       -d '{
-                         "channel": "@${{ github.event.inputs.slack_username }}",
-                         "text": "Here'"'"'s your Salesforce login URL for ${{ github.event.inputs.environment }}: ${{ steps.generate_login_url.outputs.login_url }}"
-                       }' \
-                       https://slack.com/api/chat.postMessage
+      - name: Install d2x
+        run: |
+          pip install git+https://github.com/muselab-d2x/d2x.git@jlantz/update-auth-structure
+          d2x --version
+
+      - id: generate_login_url
+        name: Generate Login URL
+        env:
+          SFDX_AUTH_URL: ${{ secrets.SFDX_AUTH_URL }}
+        run: |
+          set -eo pipefail
+          # Generate the login URL and store it in a variable
+          login_url=$(d2x sf auth login | tail -1)
+          # Store the login URL in a temporary file (do not print it)
+          echo "$login_url" > login_url.txt
+
+      - name: Send Slack DM
+        env:
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+          ORG: ${{ inputs.org }}
+          SLACK_USERNAME: ${{ inputs.slack_username }}
+        run: |
+          set -e
+
+          # Validate inputs
+          if [ -z "$ORG" ] || [ -z "$SLACK_USERNAME" ]; then
+            echo "Error: ORG and SLACK_USERNAME must be provided."
+            exit 1
+          fi
+
+          # Read the login URL from the file (do not print it)
+          login_url=$(cat login_url.txt)
+
+          # Clean up the login URL file immediately
+          rm login_url.txt
+
+          # Retrieve the user ID based on the Slack username
+          USER_INFO=$(curl -s -X POST -H "Authorization: Bearer $SLACK_BOT_TOKEN" \
+            -H "Content-Type: application/x-www-form-urlencoded" \
+            --data-urlencode "username=$SLACK_USERNAME" \
+            https://slack.com/api/users.lookupByUsername)
+
+          USER_ID=$(echo "$USER_INFO" | jq -r '.user.id')
+
+          if [ "$USER_ID" == "null" ] || [ -z "$USER_ID" ]; then
+            error_message=$(echo "$USER_INFO" | jq -r '.error')
+            echo "Error: Failed to retrieve Slack user ID - $error_message"
+            exit 1
+          fi
+
+          # Construct the Slack message (do not print the login URL)
+          TEXT="Here is your Salesforce login URL for ${ORG}."
+
+          # Send the login URL as a private message
+          JSON_DATA=$(jq -n \
+            --arg channel "$USER_ID" \
+            --arg text "$TEXT" \
+            --arg login_url "$login_url" \
+            '{
+              channel: $channel,
+              text: $text,
+              blocks: [
+                {
+                  type: "section",
+                  text: {
+                    type: "mrkdwn",
+                    text: $text
+                  }
+                },
+                {
+                  type: "section",
+                  text: {
+                    type: "mrkdwn",
+                    text: "<\($login_url)|Click here to log in>"
+                  }
+                }
+              ]
+            }')
+
+          # Send the message via Slack API
+          response=$(curl -s -X POST -H "Authorization: Bearer $SLACK_BOT_TOKEN" \
+               -H "Content-Type: application/json" \
+               -d "$JSON_DATA" \
+               https://slack.com/api/chat.postMessage)
+
+          # Enhanced error handling
+          if [[ $(echo "$response" | jq -r '.ok') != "true" ]]; then
+            error_message=$(echo "$response" | jq -r '.error')
+            echo "Error: Failed to send Slack DM - $error_message"
+            exit 1
+          fi
+
+          echo "Slack message sent successfully."

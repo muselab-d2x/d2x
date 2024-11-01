@@ -1,12 +1,8 @@
-name: Release 2GP
+name: Beta Test
 
 on:
     workflow_call:
         inputs:
-            env-name:
-                required: false
-                type: string
-                default: DevHub Production
             debug:
                 required: false
                 default: false
@@ -18,37 +14,37 @@ on:
                 required: true
             github-token:
                 required: true
+            github-app-id:
+                required: false
+            github-app-key:
+                required: false
 
 jobs:
     beta-test:
-        name: "Release 2GP"
+        name: "Beta Test in Scratch Org"
         runs-on: ubuntu-latest
         environment: ${{ inputs.env-name }}
         container:
-            image: ghcr.io/muselab-d2x/d2x:cumulusci-next-snapshots
+            image: ghcr.io/muselab-d2x/d2x:cumulusci-next
             options: --user root
             credentials:
                 username: ${{ github.actor }}
                 password: ${{ secrets.github-token }}
             env:
                 DEV_HUB_AUTH_URL: "${{ secrets.dev-hub-auth-url }}"
+                PACKAGING_ORG_AUTH_URL: "${{ secrets.packaging-org-auth-url }}"
                 CUMULUSCI_SERVICE_github: '{ "username": "${{ github.actor }}", "token": "${{ secrets.github-token }}", "email": "${{ secrets.gh-email }}" }'
+                GITHUB_APP_ID: "${{ secrets.github-app-id }}"
+                GITHUB_APP_KEY: "${{ secrets.github-app-key }}"
         steps:
             - name: Checkout
-              uses: actions/checkout@v4
+              uses: actions/checkout@v2
             - name: Auth to DevHub
               run: /usr/local/bin/devhub.sh
-            - name: Set default org
-              run: cci org default release
-            - name: Install Dependencies for Resolution
-              run: cci flow run dependencies $([[ "${{ inputs.debug }}" == "true" ]] && echo " --debug")
-            - name: Promote Latest Beta
-              run: cci flow run release_2gp_production $([[ "${{ inputs.debug }}" == "true" ]] && echo " --debug")
-              shell: bash
-            - name: Run Release Test
-              run: cci flow run ci_release
+            - name: Run Beta Test
+              run: cci flow run ci_beta --org beta
             - name: Delete Scratch Org
               if: ${{ always() }}
               run: |
-                  cci org scratch_delete release
+                  cci org scratch_delete beta
               shell: bash

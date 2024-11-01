@@ -7,6 +7,11 @@ on:
                 required: true
                 default: 1GP Packaging Beta
                 type: string
+
+            run-test:
+                description: If true, run the ci_beta flow to test the beta as part of the job. Set to false to split ci_beta into a separate workflow
+                default: true
+                type: boolean
             debug:
                 required: false
                 default: false
@@ -20,6 +25,11 @@ on:
                 required: true
             github-token:
                 required: true
+            github-app-id:
+                required: false
+            github-app-key:
+                required: false
+
 
 jobs:
     beta-test:
@@ -36,9 +46,13 @@ jobs:
                 DEV_HUB_AUTH_URL: "${{ secrets.dev-hub-auth-url }}"
                 PACKAGING_ORG_AUTH_URL: "${{ secrets.packaging-org-auth-url }}"
                 CUMULUSCI_SERVICE_github: '{ "username": "${{ github.actor }}", "token": "${{ secrets.github-token }}", "email": "${{ secrets.gh-email }}" }'
+
+                GITHUB_APP_ID: "${{ secrets.github-app-id }}"
+                GITHUB_APP_KEY: "${{ secrets.github-app-key }}"
+
         steps:
             - name: Checkout
-              uses: actions/checkout@v2
+              uses: actions/checkout@v4
             - name: Auth to DevHub
               run: /usr/local/bin/devhub.sh
             - name: Deploy to Packaging Org
@@ -47,9 +61,10 @@ jobs:
               run: cci flow run release_beta --org packaging $([[ "${{ inputs.debug }}" == "true" ]] && echo " --debug")
               shell: bash
             - name: Run Beta Test
+              if: ${{ inputs.run-test }}
               run: cci flow run ci_beta --org beta
             - name: Delete Scratch Org
-              if: ${{ always() }}
+              if: ${{ always() }} && ${{ inputs.run-test }}
               run: |
                   cci org scratch_delete beta
               shell: bash

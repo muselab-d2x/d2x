@@ -1,4 +1,5 @@
-name: 2GP Feature Test
+name: Run Tests
+
 on:
     workflow_call:
         inputs:
@@ -10,23 +11,6 @@ on:
                 required: false
                 default: false
                 type: boolean
-            docker_image:
-                required: false
-                default: ghcr.io/muselab-d2x/d2x
-                type: string
-            docker_tag:
-                type: string
-                required: false
-                default: cumulusci-next-snapshots
-            keep_org:
-                required: false
-                type: boolean
-                default: false
-                description: "If true, the org will not be deleted at the end of the workflow"
-            environment_name:
-                required: false
-                type: string
-                description: "If set, a GitHub environment will be created with this name"
         secrets:
             dev-hub-auth-url:
                 required: false
@@ -46,11 +30,11 @@ on:
                 required: false
 
 jobs:
-    feature-test-2gp:
-        name: "Feature Test 2GP"
+    run-tests:
+        name: "Run Tests"
         runs-on: ubuntu-latest
         container:
-            image: ${{ inputs.docker_image }}:${{ inputs.docker_tag }}
+            image: ghcr.io/muselab-d2x/d2x:cumulusci-next-snapshots
             options: --user root
             credentials:
                 username: "${{ github.actor }}"
@@ -58,9 +42,9 @@ jobs:
         steps:
             - name: D2X Image Details
               run: |
-                  echo "D2X Docker Image: ${{ inputs.docker_image }}"
-                  echo "D2X Docker Tag: ${{ inputs.docker_tag }}"
-                  echo "D2X Docker Image: ${{ inputs.docker_image }}:${{ inputs.docker_tag }}" >> $GITHUB_STEP_SUMMARY
+                  echo "D2X Docker Image: ghcr.io/muselab-d2x/d2x"
+                  echo "D2X Docker Tag: cumulusci-next-snapshots"
+                  echo "D2X Docker Image: ghcr.io/muselab-d2x/d2x:cumulusci-next-snapshots" >> $GITHUB_STEP_SUMMARY
               shell: bash
 
             - name: Checkout
@@ -77,28 +61,16 @@ jobs:
             - name: Set ${{ inputs.org }} org as default org
               run: cci org default ${{ inputs.org }}
 
-            - name: Run Feature Test
-              id: feature_test
+            - name: Run Tests
+              id: run_tests
               env:
                   GITHUB_TOKEN: "${{ secrets.github-token }}"
                   CUMULUSCI_SERVICE_github: '{ "username": "${{ github.actor }}", "token": "${{ secrets.github-token }}", "email": "${{ secrets.gh-email }}" }'
                   GITHUB_APP_ID: "${{ secrets.github-app-id }}"
                   GITHUB_APP_KEY: "${{ secrets.github-app-key }}"
               run: |
-                  cci flow run ci_feature_2gp --use-snapshots
+                  cci flow run ci_feature_2gp --start-from run-tests
               shell: bash
-
-            - name: Save Org to GitHub Environment
-              if: always() && ${{ inputs.environment_name != '' }}
-              uses: muselab-d2x/d2x-org-to-env@v1.1
-              env:
-                  GITHUB_APP_ID: ${{ secrets.github-app-id }}
-                  GITHUB_APP_KEY: ${{ secrets.github-app-key }}
-                  GITHUB_TOKEN: ${{ secrets.github-token }}
-              with:
-                  org-alias: ${{ inputs.org }}
-                  create-environment: "true"
-                  environment-name: ${{ inputs.environment_name }}
 
             - name: Capture CumulusCI Build History
               if: always()
@@ -124,15 +96,15 @@ jobs:
                   path: cci_build_history.json
 
             - name: Delete Scratch Org
-              if: always() && !inputs.keep_org
+              if: always()
               run: cci org scratch_delete ${{ inputs.org }}
               shell: bash
 
             - name: Check Job Status
               if: always()
               run: |
-                  if [[ "${{ steps.feature_test.outcome }}" == "failure" ]]; then
-                      echo "Feature Test step failed. Failing the job."
+                  if [[ "${{ steps.run_tests.outcome }}" == "failure" ]]; then
+                      echo "Run Tests step failed. Failing the job."
                       exit 1
                   fi
 
