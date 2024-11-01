@@ -1,0 +1,45 @@
+name: 🧪 Test Scratch Org Creation Commands Without Credentials
+
+on:
+  push:
+
+jobs:
+  test-scratch-org-creation:
+    name: "🧪 Test Scratch Org Creation"
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        scratchdef_path: [null, 'path/to/scratchdef.json']
+        cli_options: [null, '--option1 value1 --option2 value2']
+        scratch_profile_name: [null, 'feature']
+        scratchdef_json: [null, '{"orgName": "TestOrg", "edition": "Developer"}']
+    container:
+      image: ghcr.io/muselab-d2x/d2x:cumulusci-next-snapshots
+      options: --user root
+      credentials:
+        username: "${{ github.actor }}"
+        password: "${{ secrets.GITHUB_TOKEN }}"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Attempt Scratch Org Creation
+        run: |
+          if [ -n "${{ matrix.scratchdef_path }}" ]; then
+            cci org scratch ${{ matrix.scratch_profile_name }} -f ${{ matrix.scratchdef_path }} ${{ matrix.cli_options }}
+          elif [ -n "${{ matrix.scratchdef_json }}" ]; then
+            echo "${{ matrix.scratchdef_json }}" > scratchdef.json
+            cci org scratch ${{ matrix.scratch_profile_name }} -f scratchdef.json ${{ matrix.cli_options }}
+          else
+            cci org scratch ${{ matrix.scratch_profile_name }} ${{ matrix.cli_options }}
+          fi
+        continue-on-error: true
+
+      - name: Check Expected Output
+        run: |
+          if [ $? -eq 0 ]; then
+            echo "Scratch org creation should have failed but succeeded."
+            exit 1
+          else
+            echo "Scratch org creation failed as expected."
+          fi

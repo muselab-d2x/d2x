@@ -1,0 +1,76 @@
+name: 🏗️ Create Scratch Org
+
+on:
+    workflow_call:
+        inputs:
+            scratchdef_path:
+                description: "Path to the scratch definition file"
+                required: false
+                type: string
+            cli_options:
+                description: "CLI options for creating the scratch org"
+                required: false
+                type: string
+            scratch_profile_name:
+                description: "CumulusCI scratch profile name"
+                required: false
+                default: feature
+                type: string
+            scratchdef_json:
+                description: "Scratch definition as JSON"
+                required: false
+                type: string
+        secrets:
+            dev-hub-auth-url:
+                required: true
+            dev-hub-username:
+                required: true
+            dev-hub-client-id:
+                required: true
+            dev-hub-private-key:
+                required: true
+            gh-email:
+                required: true
+            github-token:
+                required: true
+
+jobs:
+    create-scratch-org:
+        name: "🏗️ Create Scratch Org"
+        runs-on: ubuntu-latest
+        container:
+            image: ghcr.io/muselab-d2x/d2x:cumulusci-next-snapshots
+            options: --user root
+            credentials:
+                username: "${{ github.actor }}"
+                password: "${{ secrets.github-token }}"
+            env:
+                DEV_HUB_AUTH_URL: "${{ secrets.dev-hub-auth-url }}"
+                DEV_HUB_USERNAME: "${{ secrets.dev-hub-username }}"
+                DEV_HUB_CLIENT_ID: "${{ secrets.dev-hub-client-id }}"
+                DEV_HUB_PRIVATE_KEY: "${{ secrets.dev-hub-private-key }}"
+                CUMULUSCI_SERVICE_github: '{ "username": "${{ github.actor }}", "token": "${{ secrets.github-token }}", "email": "${{ secrets.gh-email }}" }'
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
+
+            - name: Auth to DevHub
+              run: /usr/local/bin/devhub.sh
+
+            - name: Create Scratch Org
+              run: |
+                  if [ -n "${{ inputs.scratchdef_path }}" ]; then
+                      cci org scratch ${{ inputs.scratch_profile_name }} -f ${{ inputs.scratchdef_path }} ${{ inputs.cli_options }}
+                  elif [ -n "${{ inputs.scratchdef_json }}" ]; then
+                      echo "${{ inputs.scratchdef_json }}" > scratchdef.json
+                      cci org scratch ${{ inputs.scratch_profile_name }} -f scratchdef.json ${{ inputs.cli_options }}
+                  else
+                      cci org scratch ${{ inputs.scratch_profile_name }} ${{ inputs.cli_options }}
+                  fi
+
+            - name: Create Access Token Session Environment
+              run: |
+                  ACCESS_TOKEN=$(cci org info ${{ inputs.scratch_profile_name }} --json | jq -r '.access_token')
+                  INSTANCE_URL=$(cci org info ${{ inputs.scratch_profile_name }} --json | jq -r '.instance_url')
+                  echo "ACCESS_TOKEN=${ACCESS_TOKEN}" >> $GITHUB_ENV
+                  echo "INSTANCE_URL=${INSTANCE_URL}" >> $GITHUB_ENV

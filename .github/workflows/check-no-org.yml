@@ -1,0 +1,38 @@
+name: 🛠️ Check No Org
+
+on:
+    workflow_call:
+        inputs:
+            debug:
+                description: "Enable debug logging output for CumulusCI"
+                required: false
+                default: false
+                type: boolean
+        secrets:
+            github-token:
+                required: true
+
+jobs:
+    check-no-org:
+        name: "🛠️ Check No Org"
+        runs-on: ubuntu-latest
+        container:
+            image: ghcr.io/muselab-d2x/d2x:cumulusci-next-snapshots
+            options: --user root
+            credentials:
+                username: "${{ github.actor }}"
+                password: "${{ secrets.github-token }}"
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
+            - name: Run Checks
+              run: |
+                  set -e {
+                      cci task run check_no_org \
+                          $([[ "${{ inputs.debug }}" == "true" ]] && echo " --debug")
+                  } || {
+                      echo "::error::Failed to run checks. Running cci error info..."
+                      cci error info
+                      exit 1
+                  }
+              shell: bash
