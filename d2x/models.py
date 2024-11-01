@@ -42,6 +42,8 @@ class RunPhase(CommonBaseModel):
     testing_steps: Optional[List[RunStep]] = Field(default=None, description="List of testing steps to perform")
 
 class Plan(CommonBaseModel):
+    name: str = Field(..., description="Name of the plan")
+    description: Optional[str] = Field(default=None, description="Description of the plan")
     collect: CollectPhase
     check: CheckPhase
     run: RunPhase
