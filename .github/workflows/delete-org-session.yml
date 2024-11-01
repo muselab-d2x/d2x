@@ -1,0 +1,47 @@
+name: Delete Org Session
+
+on:
+    workflow_call:
+        inputs:
+            environment_name:
+                description: "The name of the GitHub Environment to delete the org session from"
+                required: true
+                type: string
+            github_auth_environment:
+                description: "The name of the GitHub Environment to get the GitHub Access token from"
+                required: true
+                type: string
+        secrets:
+            github-token:
+                required: true
+
+jobs:
+    delete-org-session:
+        name: "Delete Org Session"
+        runs-on: ubuntu-latest
+        steps:
+            - name: Get GitHub Access Token
+              run: |
+                  echo "Retrieving GitHub Access Token from environment: ${{ inputs.github_auth_environment }}"
+                  GITHUB_ACCESS_TOKEN=$(gh api \
+                      -H "Authorization: token ${{ secrets.github-token }}" \
+                      "/repos/${{ github.repository }}/environments/${{ inputs.github_auth_environment }}/variables/GITHUB_ACCESS_TOKEN" \
+                      | jq -r '.value')
+                  echo "GITHUB_ACCESS_TOKEN=${GITHUB_ACCESS_TOKEN}" >> $GITHUB_ENV
+              shell: bash
+
+            - name: Delete Org Session
+              run: |
+                  echo "Deleting org session from environment: ${{ inputs.environment_name }}"
+                  gh api \
+                      -X DELETE \
+                      -H "Authorization: token ${{ env.GITHUB_ACCESS_TOKEN }}" \
+                      "/repos/${{ github.repository }}/environments/${{ inputs.environment_name }}/variables/ACCESS_TOKEN"
+              shell: bash
+
+            - name: Add Job Summary
+              run: |
+                  echo "## Org Session Deletion Summary" >> $GITHUB_STEP_SUMMARY
+                  echo "Environment: ${{ inputs.environment_name }}" >> $GITHUB_STEP_SUMMARY
+                  echo "Status: Org session deleted successfully" >> $GITHUB_STEP_SUMMARY
+              shell: bash
