@@ -1,0 +1,120 @@
+name: Run Tests
+
+on:
+    workflow_call:
+        inputs:
+            org:
+                required: false
+                default: feature
+                type: string
+            debug:
+                required: false
+                default: false
+                type: boolean
+        secrets:
+            dev-hub-auth-url:
+                required: false
+            dev-hub-username:
+                required: false
+            dev-hub-client-id:
+                required: false
+            dev-hub-private-key:
+                required: false
+            gh-email:
+                required: true
+            github-token:
+                required: true
+            github-app-id:
+                required: false
+            github-app-key:
+                required: false
+
+jobs:
+    run-tests:
+        name: "Run Tests"
+        runs-on: ubuntu-latest
+        container:
+            image: ghcr.io/muselab-d2x/d2x:cumulusci-next-snapshots
+            options: --user root
+            credentials:
+                username: "${{ github.actor }}"
+                password: "${{ secrets.github-token }}"
+        steps:
+            - name: D2X Image Details
+              run: |
+                  echo "D2X Docker Image: ghcr.io/muselab-d2x/d2x"
+                  echo "D2X Docker Tag: cumulusci-next-snapshots"
+                  echo "D2X Docker Image: ghcr.io/muselab-d2x/d2x:cumulusci-next-snapshots" >> $GITHUB_STEP_SUMMARY
+              shell: bash
+
+            - name: Checkout
+              uses: actions/checkout@v4
+
+            - name: Auth to DevHub
+              run: /usr/local/bin/devhub.sh
+              env:
+                  DEV_HUB_AUTH_URL: "${{ secrets.dev-hub-auth-url }}"
+                  DEV_HUB_USERNAME: "${{ secrets.dev-hub-username }}"
+                  DEV_HUB_CLIENT_ID: "${{ secrets.dev-hub-client-id }}"
+                  DEV_HUB_PRIVATE_KEY: "${{ secrets.dev-hub-private-key }}"
+
+            - name: Set ${{ inputs.org }} org as default org
+              run: cci org default ${{ inputs.org }}
+
+            - name: Run Tests
+              id: run_tests
+              env:
+                  GITHUB_TOKEN: "${{ secrets.github-token }}"
+                  CUMULUSCI_SERVICE_github: '{ "username": "${{ github.actor }}", "token": "${{ secrets.github-token }}", "email": "${{ secrets.gh-email }}" }'
+                  GITHUB_APP_ID: "${{ secrets.github-app-id }}"
+                  GITHUB_APP_KEY: "${{ secrets.github-app-key }}"
+              run: |
+                  cci flow run ci_feature_2gp --start-from run-tests
+              shell: bash
+
+            - name: Capture CumulusCI Build History
+              if: always()
+              run: |
+                  cci history list
+                  cci history dependencies
+                  cci history dependencies --json > cci_dependencies_history.json
+                  cci history list --json > cci_build_history.json
+              shell: bash
+
+            - name: Upload CumulusCI Dependencies History
+              if: always()
+              uses: actions/upload-artifact@v4
+              with:
+                  name: cci-dependencies-history
+                  path: cci_dependencies_history.json
+
+            - name: Upload CumulusCI Build History
+              if: always()
+              uses: actions/upload-artifact@v4
+              with:
+                  name: cci-build-history
+                  path: cci_build_history.json
+
+            - name: Delete Scratch Org
+              if: always()
+              run: cci org scratch_delete ${{ inputs.org }}
+              shell: bash
+
+            - name: Check Job Status
+              if: always()
+              run: |
+                  if [[ "${{ steps.run_tests.outcome }}" == "failure" ]]; then
+                      echo "Run Tests step failed. Failing the job."
+                      exit 1
+                  fi
+
+                  # Check for any failed steps
+                  FAILED_STEPS=$(cat $GITHUB_OUTPUT | grep -c "failure")
+                  echo "Failed steps: $FAILED_STEPS"
+                  if [[ $FAILED_STEPS -gt 0 ]]; then
+                      echo "One or more steps failed. Failing the job."
+                      exit 1
+                  fi
+
+                  echo "All steps completed successfully."
+              shell: bash

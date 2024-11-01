@@ -1,0 +1,75 @@
+name: Dispose Org
+
+on:
+  workflow_call:
+    inputs:
+      org_name:
+        description: "The name of the scratch org to dispose of"
+        required: true
+        type: string
+      keep_org:
+        description: "If true, the org will not be deleted"
+        required: false
+        default: false
+        type: boolean
+      create_snapshot:
+        description: "If true, a snapshot will be created before disposing of the org"
+        required: false
+        default: false
+        type: boolean
+      snapshot_name:
+        description: "The name of the snapshot to create"
+        required: false
+        type: string
+    secrets:
+      dev-hub-auth-url:
+        required: false
+      dev-hub-username:
+        required: false
+      dev-hub-client-id:
+        required: false
+      dev-hub-private-key:
+        required: false
+      gh-email:
+        required: true
+      github-token:
+        required: true
+      github-app-id:
+        required: false
+      github-app-key:
+        required: false
+
+jobs:
+  dispose-org:
+    name: "Dispose Org"
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/muselab-d2x/d2x:cumulusci-next-snapshots
+      options: --user root
+      credentials:
+        username: "${{ github.actor }}"
+        password: "${{ secrets.github-token }}"
+      env:
+        DEV_HUB_AUTH_URL: "${{ secrets.dev-hub-auth-url }}"
+        DEV_HUB_USERNAME: "${{ secrets.dev-hub-username }}"
+        DEV_HUB_CLIENT_ID: "${{ secrets.dev-hub-client-id }}"
+        DEV_HUB_PRIVATE_KEY: "${{ secrets.dev-hub-private-key }}"
+        CUMULUSCI_SERVICE_github: '{ "username": "${{ github.actor }}", "token": "${{ secrets.github-token }}", "email": "${{ secrets.gh-email }}" }'
+        GITHUB_APP_ID: "${{ secrets.github-app-id }}"
+        GITHUB_APP_KEY: "${{ secrets.github-app-key }}"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Auth to DevHub
+        run: /usr/local/bin/devhub.sh
+
+      - name: Create Snapshot
+        if: ${{ inputs.create_snapshot }}
+        run: |
+          cci task run create_snapshot --snapshot-name ${{ inputs.snapshot_name }}
+
+      - name: Delete Scratch Org
+        if: ${{ !inputs.keep_org }}
+        run: cci org scratch_delete ${{ inputs.org_name }}
+        shell: bash
