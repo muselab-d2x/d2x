@@ -11,6 +11,10 @@ on:
                 required: false
                 default: false
                 type: boolean
+            flow_name:
+                required: false
+                default: ci_feature_2gp
+                type: string
         secrets:
             dev-hub-auth-url:
                 required: false
@@ -69,7 +73,7 @@ jobs:
                   GITHUB_APP_ID: "${{ secrets.github-app-id }}"
                   GITHUB_APP_KEY: "${{ secrets.github-app-key }}"
               run: |
-                  cci flow run ci_feature_2gp --start-from run-tests
+                  cci flow run ${{ inputs.flow_name }} --start-from run-tests
               shell: bash
 
             - name: Capture CumulusCI Build History
