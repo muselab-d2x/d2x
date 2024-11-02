@@ -18,6 +18,14 @@ from rich.table import Table
 # Local imports
 from d2x.parse.sf.auth_url import parse_sfdx_auth_url, SalesforceOrgInfo
 from d2x.ux.gh.actions import summary as gha_summary, output as gha_output
+from d2x.api.sf.metadata.tracking import (
+    get_valid_target_directories,
+    run_retrieve_task,
+    commit_changes_to_github,
+    get_salesforce_connection,
+    get_latest_revision_numbers,
+    compare_revisions,
+)
 
 
 # Type definitions
