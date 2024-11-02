@@ -1,12 +1,17 @@
 # cli.py
 import rich_click as click
-from d2x.models.sf.auth import LoginUrlModel, SfdxAuthUrlModel
 import sys
 import pdb
 from d2x.base.types import OutputFormat, OutputFormatType, CLIOptions
-from typing import Optional
 from importlib.metadata import version, PackageNotFoundError
-from d2x.env.gh import set_environment_variable, get_environment_variable, set_environment_secret, get_environment_secret
+from d2x.auth.sf.auth_url import auth_url_main
+from d2x.auth.sf.auth_url import login_url_main
+from d2x.env.gh import (
+    set_environment_variable,
+    get_environment_variable,
+    set_environment_secret,
+    get_environment_secret,
+)
 
 # Disable rich_click's syntax highlighting
 click.SHOW_ARGUMENTS = False
@@ -91,7 +96,13 @@ def env():
 @click.argument("var_name")
 @click.argument("var_value")
 @common_options
-def set_var(env_name: str, var_name: str, var_value: str, output_format: OutputFormatType, debug: bool):
+def set_var(
+    env_name: str,
+    var_name: str,
+    var_value: str,
+    output_format: OutputFormatType,
+    debug: bool,
+):
     """Set an environment variable"""
     cli_options = CLIOptions(output_format=output_format, debug=debug)
     try:
@@ -127,7 +138,13 @@ def get_var(env_name: str, var_name: str, output_format: OutputFormatType, debug
 @click.argument("secret_name")
 @click.argument("secret_value")
 @common_options
-def set_secret(env_name: str, secret_name: str, secret_value: str, output_format: OutputFormatType, debug: bool):
+def set_secret(
+    env_name: str,
+    secret_name: str,
+    secret_value: str,
+    output_format: OutputFormatType,
+    debug: bool,
+):
     """Set an environment secret"""
     cli_options = CLIOptions(output_format=output_format, debug=debug)
     try:
@@ -144,7 +161,9 @@ def set_secret(env_name: str, secret_name: str, secret_value: str, output_format
 @click.argument("env_name")
 @click.argument("secret_name")
 @common_options
-def get_secret(env_name: str, secret_name: str, output_format: OutputFormatType, debug: bool):
+def get_secret(
+    env_name: str, secret_name: str, output_format: OutputFormatType, debug: bool
+):
     """Get an environment secret"""
     cli_options = CLIOptions(output_format=output_format, debug=debug)
     try:
