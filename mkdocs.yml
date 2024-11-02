@@ -1,0 +1,29 @@
+site_name: D2X Documentation
+theme:
+  name: material
+  logo: assets/images/d2x-logo.svg
+extra_css:
+  - stylesheets/d2x.css
+plugins:
+  - search
+  - mermaid2
+nav:
+  - Home: index.md
+  - Audiences:
+    - Overview: audiences/index.md
+    - Enterprise Organizations: audiences/enterprise.md
+    - ISV & Package Developers: audiences/isv.md
+    - SI Partners: audiences/partner.md
+    - Small Teams & Nonprofits: audiences/small.md
+  - Workflows:
+    - Overview: workflows/index.md
+  - Architecture:
+    - Overview: architecture/index.md
+  - GitHub Features:
+    - Overview: github/index.md
+  - Community:
+    - Overview: community/index.md
+  - Current D2X Docs:
+    - Overview: index.md#previous-docs
+    - Tutorial: tutorial.md
+    - Troubleshooting: reference.md

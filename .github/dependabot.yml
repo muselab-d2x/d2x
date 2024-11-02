@@ -1,0 +1,19 @@
+version: 2
+updates:
+  # Enable version updates for GitHub Actions
+  - package-ecosystem: "github-actions"
+    # Look for `.github/workflows` in the `root` directory
+    directory: "/"
+    # Check for updates once a week
+    schedule:
+      interval: "weekly"
+    # Specify which branch to create pull requests against
+    target-branch: "cumulusci-next-snapshots"
+    # Add labels to pull requests
+    labels:
+      - "dependencies"
+    # Assign pull requests to specific users
+    assignees:
+      - "jlantz"
+    # Limit the number of open pull requests for version updates
+    open-pull-requests-limit: 10

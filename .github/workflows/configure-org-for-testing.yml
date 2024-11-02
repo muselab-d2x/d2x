@@ -1,0 +1,73 @@
+name: Configure Org for Testing
+
+on:
+    workflow_call:
+        inputs:
+            org:
+                required: false
+                default: feature
+                type: string
+            debug:
+                required: false
+                default: false
+                type: boolean
+        secrets:
+            dev-hub-auth-url:
+                required: false
+            dev-hub-username:
+                required: false
+            dev-hub-client-id:
+                required: false
+            dev-hub-private-key:
+                required: false
+            gh-email:
+                required: true
+            github-token:
+                required: true
+            github-app-id:
+                required: false
+            github-app-key:
+                required: false
+
+jobs:
+    configure-org-for-testing:
+        name: "Configure Org for Testing"
+        runs-on: ubuntu-latest
+        container:
+            image: ghcr.io/muselab-d2x/d2x:cumulusci-next-snapshots
+            options: --user root
+            credentials:
+                username: "${{ github.actor }}"
+                password: "${{ secrets.github-token }}"
+        steps:
+            - name: D2X Image Details
+              run: |
+                  echo "D2X Docker Image: ghcr.io/muselab-d2x/d2x"
+                  echo "D2X Docker Tag: cumulusci-next-snapshots"
+                  echo "D2X Docker Image: ghcr.io/muselab-d2x/d2x:cumulusci-next-snapshots" >> $GITHUB_STEP_SUMMARY
+              shell: bash
+
+            - name: Checkout
+              uses: actions/checkout@v4
+
+            - name: Auth to DevHub
+              run: /usr/local/bin/devhub.sh
+              env:
+                  DEV_HUB_AUTH_URL: "${{ secrets.dev-hub-auth-url }}"
+                  DEV_HUB_USERNAME: "${{ secrets.dev-hub-username }}"
+                  DEV_HUB_CLIENT_ID: "${{ secrets.dev-hub-client-id }}"
+                  DEV_HUB_PRIVATE_KEY: "${{ secrets.dev-hub-private-key }}"
+
+            - name: Set ${{ inputs.org }} org as default org
+              run: cci org default ${{ inputs.org }}
+
+            - name: Configure Org for Testing
+              id: configure_org
+              env:
+                  GITHUB_TOKEN: "${{ secrets.github-token }}"
+                  CUMULUSCI_SERVICE_github: '{ "username": "${{ github.actor }}", "token": "${{ secrets.github-token }}", "email": "${{ secrets.gh-email }}" }'
+                  GITHUB_APP_ID: "${{ secrets.github-app-id }}"
+                  GITHUB_APP_KEY: "${{ secrets.github-app-key }}"
+              run: |
+                  cci flow run ci_feature_2gp --skip-from run-tests
+              shell: bash

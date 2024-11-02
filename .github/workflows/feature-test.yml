@@ -1,32 +1,36 @@
 name: Unmanaged Feature Test
 
 on:
-  workflow_call:
-    inputs:
-      org:
-        type: string
-        default: feature
-    secrets:
-      # Either dev-hub-auth-url or dev-hub-username, dev-hub-client-id, and dev-hub-private-key are required
-      dev-hub-auth-url:
-        required: false
-      dev-hub-username:
-        required: false
-      dev-hub-client-id:
-        required: false
-      dev-hub-private-key:
-        required: false
-      gh-email:
-        required: true      
-      github-token:
-        required: true
+    workflow_call:
+        inputs:
+            org:
+                type: string
+                default: feature
+        secrets:
+            # Either dev-hub-auth-url or dev-hub-username, dev-hub-client-id, and dev-hub-private-key are required
+            dev-hub-auth-url:
+                required: false
+            dev-hub-username:
+                required: false
+            dev-hub-client-id:
+                required: false
+            dev-hub-private-key:
+                required: false
+            gh-email:
+                required: true
+            github-token:
+                required: true
+            github-app-id:
+                required: false
+            github-app-key:
+                required: false
 
 jobs:
     feature-test:
         name: "Feature Test"
         runs-on: ubuntu-latest
         container:
-            image: ghcr.io/muselab-d2x/d2x:cumulusci-next
+            image: ghcr.io/muselab-d2x/d2x:cumulusci-next-snapshots
             options: --user root
             credentials:
                 username: ${{ github.actor }}
@@ -36,18 +40,44 @@ jobs:
                 DEV_HUB_USERNAME: "${{ secrets.dev-hub-username }}"
                 DEV_HUB_CLIENT_ID: "${{ secrets.dev-hub-client-id }}"
                 DEV_HUB_PRIVATE_KEY: "${{ secrets.dev-hub-private-key }}"
-                CUMULUSCI_SERVICE_github: "{ \"username\": \"${{ github.actor }}\", \"token\": \"${{ secrets.github-token }}\", \"email\": \"${{ secrets.gh-email }}\" }"
+                CUMULUSCI_SERVICE_github: '{ "username": "${{ github.actor }}", "token": "${{ secrets.github-token }}", "email": "${{ secrets.gh-email }}" }'
+                GITHUB_APP_ID: "${{ secrets.github-app-id }}"
+                GITHUB_APP_KEY: "${{ secrets.github-app-key }}"
         steps:
             - name: Checkout
-              uses: actions/checkout@v2
+              uses: actions/checkout@v4
             - name: Auth to DevHub
               run: /usr/local/bin/devhub.sh
             - name: Set ${{ inputs.org }} org as default org
               run: cci org default ${{ inputs.org }}
+            - name: Enable History Tracking
+              run: cci history enable
             - name: Run Feature Test
-              run: cci flow run ci_feature
-            - name: Delete Scratch Org
-              if: ${{ always() }}
+              run: cci flow run ci_feature --use-snapshots
+            - name: Capture CumulusCI Build History
+              if: always()
               run: |
-                cci org scratch_delete ${{ inputs.org }}
+                  cci history list
+                  cci history dependencies
+                  cci history dependencies --json > cci_dependencies_history.json
+                  cci history list --json > cci_build_history.json
+              shell: bash
+
+            - name: Upload CumulusCI Dependencies History
+              if: always()
+              uses: actions/upload-artifact@v4
+              with:
+                  name: cci-dependencies-history
+                  path: cci_dependencies_history.json
+
+            - name: Upload CumulusCI Build History
+              if: always()
+              uses: actions/upload-artifact@v4
+              with:
+                  name: cci-build-history
+                  path: cci_build_history.json
+
+            - name: Delete Scratch Org
+              if: always()
+              run: cci org scratch_delete ${{ inputs.org }}
               shell: bash

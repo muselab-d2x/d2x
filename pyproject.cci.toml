@@ -1,0 +1,19 @@
+[tool.poetry]
+name = "d2x-cumulusci"
+version = "0.1.0"
+description = "CumulusCI Helper"
+authors = ["Muselab LLC"]
+license = "BSD3"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.10"
+pydantic = "^1.8.2"
+cumulusci = "^3.42.0"  # Example version, adjust as needed
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.3.3"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

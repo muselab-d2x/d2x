@@ -11,17 +11,19 @@ on:
                 required: true
             github-token:
                 required: true
+
             github-app-id:
                 required: false
             github-app-key:
                 required: false
+
 
 jobs:
     beta-test:
         name: "Beta Test"
         runs-on: ubuntu-latest
         container:
-            image: ghcr.io/muselab-d2x/d2x:cumulusci-next
+            image: ghcr.io/muselab-d2x/d2x:cumulusci-next-snapshots
             options: --user root
             credentials:
                 username: ${{ github.actor }}
@@ -30,11 +32,13 @@ jobs:
                 DEV_HUB_AUTH_URL: "${{ secrets.dev-hub-auth-url }}"
                 PACKAGING_ORG_AUTH_URL: "${{ secrets.packaging-org-auth-url }}"
                 CUMULUSCI_SERVICE_github: '{ "username": "${{ github.actor }}", "token": "${{ secrets.github-token }}", "email": "${{ secrets.gh-email }}" }'
+
                 GITHUB_APP_ID: "${{ secrets.github-app-id }}"
                 GITHUB_APP_KEY: "${{ secrets.github-app-key }}"
+
         steps:
             - name: Checkout
-              uses: actions/checkout@v2
+              uses: actions/checkout@v4
             - name: Auth to DevHub
               run: /usr/local/bin/devhub.sh
             - name: Deploy to Packaging Org

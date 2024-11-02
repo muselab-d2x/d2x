@@ -1,0 +1,7 @@
+# Python
+__pycache__/
+*.pyc
+.DS_Store
+.swp
+site
+coverage.xml

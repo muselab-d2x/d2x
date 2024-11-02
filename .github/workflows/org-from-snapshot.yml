@@ -1,0 +1,88 @@
+name: Create Org From Snapshot
+on:
+    workflow_call:
+        inputs:
+            snapshot_name:
+                description: "The Name of the snapshot to use to create the org"
+                required: true
+                type: string
+            org_name:
+                description: "The name of the scratch org profile to use for the source org. If not provided, the org named 'feature' will be used."
+                required: false
+                default: feature
+                type: string
+            environment_name:
+                description: "The name of the GitHub Environment to create for the org"
+                required: true
+                type: string
+            debug:
+                description: "Enable debug logging output for CumulusCI"
+                required: false
+                default: false
+                type: boolean
+        secrets:
+            dev-hub-auth-url:
+                required: false
+            dev-hub-username:
+                required: false
+            dev-hub-client-id:
+                required: false
+            dev-hub-private-key:
+                required: false
+            gh-email:
+                required: true
+            github-token:
+                required: true
+            github-app-id:
+                required: false
+            github-app-key:
+                required: false
+
+jobs:
+    create-org-from-snapshot:
+        name: "Create Org From Snapshot"
+        runs-on: ubuntu-latest
+        container:
+            image: ghcr.io/muselab-d2x/d2x:cumulusci-next-snapshots
+            options: --user root
+            credentials:
+                username: "${{ github.actor }}"
+                password: "${{ secrets.github-token }}"
+            env:
+                DEV_HUB_AUTH_URL: ${{ secrets.dev-hub-auth-url }}
+                DEV_HUB_USERNAME: ${{ secrets.dev-hub-username }}
+                DEV_HUB_CLIENT_ID: ${{ secrets.dev-hub-client-id }}
+                DEV_HUB_PRIVATE_KEY: ${{ secrets.dev-hub-private-key }}
+                GITHUB_APP_ID: ${{ secrets.github-app-id }}
+                GITHUB_APP_KEY: ${{ secrets.github-app-key }}
+                CUMULUSCI_SERVICE_github: '{ "username": "${{ github.actor }}", "token": "${{ secrets.github-token }}", "email": "${{ secrets.gh-email }}" }'
+
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
+            - name: Auth to DevHub
+              run: /usr/local/bin/devhub.sh
+            - name: Import Devhub For Testing
+              run: cci org import DevHub DevHub
+            - name: Test Github Environment Creation
+              run: cci task run github_org_to_env --environment-name DevHub --org DevHub --debug
+            - name: Create Scratch Org From Snapshot
+              run: cci org from_snapshot --default ${{ inputs.org_name }} ${{ inputs.snapshot_name }} ${{ inputs.org_name }}${{ inputs.snapshot_name }}
+            - name: Save Org as GitHub Environment
+              run: cci task run github_org_to_env --environment-name ${{ inputs.environment_name }}
+            - name: Capture CumulusCI Build History
+              if: always()
+              run: |
+                  cci error info
+                  cci history list
+                  cci history dependencies
+                  cci history dependencies --json --indent 4 > cci_dependencies_history.json
+                  cci history list --json --indent 4 > cci_build_history.json
+              shell: bash
+
+            - name: Upload CumulusCI Dependencies History
+              if: always()
+              uses: actions/upload-artifact@v4
+              with:
+                  name: cci-dependencies-history
+                  path: cci_dependencies_history.json
