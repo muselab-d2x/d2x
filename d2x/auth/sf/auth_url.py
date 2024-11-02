@@ -12,6 +12,7 @@ from rich.console import Console
 from rich.panel import Panel
 from rich.progress import Progress, SpinnerColumn, TextColumn
 from rich.table import Table
+from simple_salesforce import Salesforce
 
 # Local imports
 from d2x.models.sf.auth import (
@@ -23,7 +24,7 @@ from d2x.models.sf.auth import (
     SfdxAuthUrlModel,
 )
 from d2x.ux.gh.actions import summary as gha_summary, output as gha_output
-from d2x.models.sf.org import SalesforceOrgInfo
+from d2x.models.sf.org import SalesforceOrgInfo, ScratchOrg
 from d2x.base.types import CLIOptions
 from d2x.api.gh import (
     set_environment_variable,
@@ -62,7 +63,7 @@ def exchange_token(org_info: SalesforceOrgInfo, cli_options: CLIOptions):
 
             # Create debug info
             debug_info = TokenExchangeDebug(
-                url=f"https://{org_info.full_domain}{token_url_path}",
+                url=f"https://{org_info.org.full_domain}{token_url_path}",
                 method="POST",
                 headers=headers,
                 request=token_request,
@@ -71,8 +72,8 @@ def exchange_token(org_info: SalesforceOrgInfo, cli_options: CLIOptions):
             console.print(debug_info.to_table())
 
             # Make request
-            progress.add_task(f"Connecting to {org_info.full_domain}...", total=None)
-            conn = http.client.HTTPSConnection(org_info.full_domain)
+            progress.add_task(f"Connecting to {org_info.org.full_domain}...", total=None)
+            conn = http.client.HTTPSConnection(org_info.org.full_domain)
 
             task = progress.add_task("Exchanging tokens...", total=None)
             conn.request("POST", token_url_path, body, headers)
@@ -116,7 +117,7 @@ def exchange_token(org_info: SalesforceOrgInfo, cli_options: CLIOptions):
 
             # Display success
             success_panel = Panel(
-                f"[green]Successfully authenticated to {org_info.full_domain}\n"
+                f"[green]Successfully authenticated to {org_info.org.full_domain}\n"
                 f"[blue]Token Details:[/]\n"
                 f"  Issued At: {token_response.issued_at.strftime('%Y-%m-%d %H:%M:%S')}\n"
                 f"  Expires At: {token_response.expires_at.strftime('%Y-%m-%d %H:%M:%S')}\n"
@@ -148,9 +149,56 @@ def exchange_token(org_info: SalesforceOrgInfo, cli_options: CLIOptions):
             raise
 
 
+def create_scratch_org(org_info: ScratchOrg, cli_options: CLIOptions):
+    """Create a scratch org using simple-salesforce"""
+    console = cli_options.console
+    with Progress(
+        SpinnerColumn(),
+        TextColumn("[progress.description]{task.description}"),
+        console=console,
+        transient=True,
+    ) as progress:
+        try:
+            progress.add_task("Creating scratch org...", total=None)
+
+            # Authenticate to Salesforce using simple-salesforce
+            sf = Salesforce(
+                username=org_info.auth_info.client_id,
+                password=org_info.auth_info.client_secret.get_secret_value(),
+                security_token=org_info.auth_info.refresh_token,
+                domain=org_info.full_domain,
+            )
+
+            # Create scratch org
+            result = sf.restful("sobjects/ScratchOrg", method="POST", json=org_info.dict())
+
+            # Display success
+            success_panel = Panel(
+                f"[green]Successfully created scratch org\n"
+                f"[blue]Org Details:[/]\n"
+                f"  Org ID: {result['id']}\n"
+                f"  Status: {result['status']}\n"
+                f"  Expiration Date: {result['expirationDate']}",
+                title="[green]Scratch Org Creation Success",
+                border_style="green",
+            )
+            console.print(success_panel)
+
+            return result
+
+        except Exception as e:
+            error_panel = Panel(
+                f"[red]Error: {str(e)}",
+                title="[red]Scratch Org Creation Failed",
+                border_style="red",
+            )
+            console.print(error_panel)
+            raise
+
+
 def get_full_domain(org_info: SalesforceOrgInfo) -> str:
     """Construct the full domain from SalesforceOrgInfo."""
-    return org_info.full_domain.rstrip("/")
+    return org_info.org.full_domain.rstrip("/")
 
 
 def main(cli_options: CLIOptions):
