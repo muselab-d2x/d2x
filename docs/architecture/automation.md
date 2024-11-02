@@ -40,5 +40,6 @@ D2X workflows are built from smaller, reusable components that can be:
 - **Testing**: Automate testing of Salesforce applications and integrations.
 - **Validation**: Validate configurations and deployments to ensure they meet requirements.
 - **Notification**: Send notifications and alerts based on workflow outcomes.
+- **Metadata Tracking**: Track and manage Salesforce metadata changes using functions organized under `d2x/api/sf/metadata/tracking`.
 
 [Back to Architecture Overview](./index.md)
