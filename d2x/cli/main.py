@@ -7,6 +7,8 @@ from d2x.base.types import OutputFormat, OutputFormatType, CLIOptions
 from typing import Optional
 from importlib.metadata import version, PackageNotFoundError
 from d2x.env.gh import set_environment_variable, get_environment_variable, set_environment_secret, get_environment_secret
+from d2x.auth.sf.auth_url import create_scratch_org, exchange_token
+from d2x.models.sf.org import SalesforceOrgInfo, ScratchOrg
 
 # Disable rich_click's syntax highlighting
 click.SHOW_ARGUMENTS = False
@@ -72,6 +74,68 @@ def url(output_format: OutputFormatType, debug: bool):
     cli_options = CLIOptions(output_format=output_format, debug=debug)
     try:
         auth_url_main(cli_options)
+    except:
+        if debug:
+            type, value, tb = sys.exc_info()
+            pdb.post_mortem(tb)
+        else:
+            raise
+
+
+@sf.group()
+def org():
+    """Salesforce org commands"""
+    pass
+
+
+@org.command()
+@common_options
+def create(output_format: OutputFormatType, debug: bool):
+    """Create a Salesforce scratch org"""
+    cli_options = CLIOptions(output_format=output_format, debug=debug)
+    try:
+        # Assuming org_info is obtained from somewhere, e.g., environment variable or input
+        org_info = ScratchOrg(
+            org_type="scratch",
+            domain_type="my",
+            full_domain="example.my.salesforce.com",
+            auth_info=AuthInfo(
+                client_id="your_client_id",
+                client_secret="your_client_secret",
+                refresh_token="your_refresh_token",
+                instance_url="https://example.my.salesforce.com",
+            ),
+        )
+        create_scratch_org(org_info, cli_options)
+    except:
+        if debug:
+            type, value, tb = sys.exc_info()
+            pdb.post_mortem(tb)
+        else:
+            raise
+
+
+@org.command()
+@common_options
+def exchange(output_format: OutputFormatType, debug: bool):
+    """Exchange auth code for an OAuth grant"""
+    cli_options = CLIOptions(output_format=output_format, debug=debug)
+    try:
+        # Assuming org_info is obtained from somewhere, e.g., environment variable or input
+        org_info = SalesforceOrgInfo(
+            auth_info=AuthInfo(
+                client_id="your_client_id",
+                client_secret="your_client_secret",
+                refresh_token="your_refresh_token",
+                instance_url="https://example.my.salesforce.com",
+            ),
+            org=ScratchOrg(
+                org_type="scratch",
+                domain_type="my",
+                full_domain="example.my.salesforce.com",
+            ),
+        )
+        exchange_token(org_info, cli_options)
     except:
         if debug:
             type, value, tb = sys.exc_info()
