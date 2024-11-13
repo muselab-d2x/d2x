@@ -10,13 +10,13 @@ on:
             skip-deploy:
                 required: false
                 description: If true, don't deploy to the packaging org. Just release what's in the org currently
-                type: boolean
-                default: false
+                type: string
+                default: 'false'
             skip-test:
                 required: false
                 description: If true, don't test the package. Just upload and pass the build if the upload and GitHub Release are created successfully
-                type: boolean
-                default: false    
+                type: string
+                default: 'false'    
         secrets:
             dev-hub-auth-url:
                 required: true
@@ -51,14 +51,14 @@ jobs:
                 echo "Release Name: ${{ inputs.release-name }}" | tee -a "${GITHUB_STEP_SUMMARY}"
                 echo 'Command: cci flow run release_production --org packaging $([[ "${{ inputs.release-name }}" ]] && echo " -o upload_production__version_name_template \${{ inputs.release-name }}")' | tee -a "${GITHUB_STEP_SUMMARY}"
             - name: Deploy to Packaging Org
-              if: ${{ inputs.skip-deploy == false }}
+              if: ${{ inputs.skip-deploy != 'true' }}
               run: cci flow run ci_master --org packaging
             - name: Build Production Package
               run: |
                 cci flow run release_production --org packaging $([[ "${{ inputs.release-name }}" ]] && echo " -o upload_production__version_name_template ${{ inputs.release-name }}")
               shell: bash
             - name: Run Release Test in Scratch Org
-              if: ${{ inputs.skip-test == false }}
+              if: ${{ inputs.skip-test != 'true' }}
               run: cci flow run ci_release --org release
             - name: Delete Scratch Org
               if: ${{ always() }} && ${{ inputs.skip-test == false }}
