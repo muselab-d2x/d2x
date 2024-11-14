@@ -3,9 +3,24 @@ FROM salesforce/cli:latest-full AS base
 
 LABEL org.opencontainers.image.source="https://github.com/muselab-d2x/d2x"
 
-# Install Python
-RUN apt-get update && apt-get upgrade -y && apt-get install -y python3-pip
-
+# Install Python 3.12
+RUN apt-get update && \
+    apt-get install -y software-properties-common && \
+    add-apt-repository ppa:deadsnakes/ppa && \
+    apt-get update && \
+    apt-get install -y python3.12 python3.12-venv python3.12-dev && \
+    ln -sf /usr/bin/python3.12 /usr/bin/python && \
+    \
+    # Remove old Python 3.10 packages to save space
+    apt-get remove -y python3.10 python3.10-venv python3.10-dev && \
+    apt-get autoremove -y && \
+    \
+    # Install pip for Python 3.12
+    apt-get install -y python3-pip && \
+    ln -sf /usr/bin/pip3 /usr/bin/pip && \
+    \
+    # Clean up APT caches to reduce image size
+    rm -rf /var/lib/apt/lists/*
 RUN python --version
 
 # Install GitHub CLI
