@@ -3,24 +3,37 @@ FROM salesforce/cli:latest-full AS base
 
 LABEL org.opencontainers.image.source="https://github.com/muselab-d2x/d2x"
 
-# Install Python 3.12
+
+# Install dependencies and Python 3.12
 RUN apt-get update && \
-    apt-get install -y software-properties-common && \
+    apt-get install -y --no-install-recommends software-properties-common && \
     add-apt-repository ppa:deadsnakes/ppa && \
     apt-get update && \
-    apt-get install -y python3.12 python3.12-venv python3.12-dev && \
-    ln -sf /usr/bin/python3.12 /usr/bin/python && \
-    \
-    # Remove old Python 3.10 packages to save space
-    apt-get remove -y python3.10 python3.10-venv python3.10-dev && \
-    apt-get autoremove -y && \
+    apt-get install -y --no-install-recommends \
+        python3.12 \
+        python3.12-venv \
+        python3.12-dev && \
     \
     # Install pip for Python 3.12
-    apt-get install -y python3-pip && \
+    apt-get install -y --no-install-recommends python3-pip && \
+    \
+    # Set up python alternatives
+    update-alternatives --install /usr/bin/python python /usr/bin/python3.12 1 && \
+    update-alternatives --set python /usr/bin/python3.12 && \
+    \
     ln -sf /usr/bin/pip3 /usr/bin/pip && \
+    \
+    # Remove old Python 3.10 packages to save space
+    apt-get remove -y --purge \
+        python3.10 \
+        python3.10-venv \
+        python3.10-dev && \
+    apt-get autoremove -y && \
     \
     # Clean up APT caches to reduce image size
     rm -rf /var/lib/apt/lists/*
+
+# Verify Python installation
 RUN python --version
 
 # Install GitHub CLI
