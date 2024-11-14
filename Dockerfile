@@ -1,61 +1,53 @@
-# Base stage
-FROM salesforce/cli:latest-full AS base
+# ========================
+# Base Stage
+# ========================
+FROM python:3.12-slim AS base
 
 LABEL org.opencontainers.image.source="https://github.com/muselab-d2x/d2x"
 
-# Install dependencies and Python 3.12
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Install system dependencies
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends software-properties-common && \
-    add-apt-repository ppa:deadsnakes/ppa && \
-    apt-get update && \
     apt-get install -y --no-install-recommends \
-        python3.12 \
-        python3.12-venv \
-        python3.12-dev \
-        python3.12-distutils && \
-    \
-    # Install pip for Python 3.12 via get-pip.py
-    curl -sS https://bootstrap.pypa.io/get-pip.py -o /tmp/get-pip.py && \
-    python3.12 /tmp/get-pip.py && \
-    rm /tmp/get-pip.py && \
-    \
-    # Create symbolic links for python and python3 to point to python3.12
-    ln -sf /usr/bin/python3.12 /usr/bin/python && \
-    ln -sf /usr/bin/python3.12 /usr/bin/python3 && \
-    \
-    # Create symbolic link for pip to /usr/bin/pip
-    ln -sf /usr/local/bin/pip /usr/bin/pip && \
-    \
-    # Remove old Python 3.10 packages to save space
-    # Note: Be cautious with removal to avoid breaking dependencies
-    apt-get remove -y --purge \
-        python3.10 \
-        python3.10-venv \
-        python3.10-dev && \
-    apt-get autoremove -y && \
-    \
-    # Clean up APT caches to reduce image size
+    curl \
+    gnupg \
+    lsb-release \
+    software-properties-common \
+    apt-transport-https \
+    ca-certificates \
+    xz-utils \
+    openjdk-17-jdk-headless \
+    git \
+    jq && \
     rm -rf /var/lib/apt/lists/*
 
-# Verify Python installation
-RUN python --version && \
-    python3 --version && \
-    pip --version
-
-# Install GitHub CLI
-RUN curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | gpg --dearmor -o /usr/share/keyrings/githubcli-archive-keyring.gpg && \
-    echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | tee /etc/apt/sources.list.d/github-cli.list > /dev/null && \
-    apt-get update && \
-    apt-get install -y gh && \
+# Install Node.js from NodeSource repository
+RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && \
+    apt-get install -y nodejs && \
     rm -rf /var/lib/apt/lists/*
 
-# Optional: Install pipx for isolated tool installations
+# Ensure npm is at the latest version
+RUN npm install -g npm@latest
+
+# Ensure that /usr/local/lib/nodejs/bin is in PATH
+ENV PATH="/usr/local/lib/nodejs/bin:${PATH}"
+
+# Install Salesforce CLI via official TAR file
+RUN curl -fsSL https://developer.salesforce.com/media/salesforce-cli/sf/channels/stable/sf-linux-x64.tar.xz -o sf-linux-x64.tar.xz && \
+    mkdir -p /usr/local/sf && \
+    tar xJf sf-linux-x64.tar.xz -C /usr/local/sf --strip-components 1 && \
+    rm sf-linux-x64.tar.xz
+
+# Ensure that sf CLI is in PATH
+ENV PATH="/usr/local/sf/bin:${PATH}"
+
+# Install pipx for isolated tool installations
 RUN python -m pip install --upgrade pip && \
     python -m pip install --user pipx && \
     /root/.local/bin/pipx ensurepath
 
-# Install CumulusCI and Cookiecutter using pipx (optional)
-# This ensures these tools are installed in isolated environments
+# Install CumulusCI and Cookiecutter using pipx (isolated environments)
 RUN /root/.local/bin/pipx install git+https://github.com/muselab-d2x/CumulusCI@d2x-merge-cci4 && \
     /root/.local/bin/pipx install cookiecutter
 
@@ -72,14 +64,18 @@ RUN echo 'export PATH=~/.local/bin:$PATH' >> /root/.bashrc && \
     echo '/usr/local/bin/devhub.sh' >> /root/.bashrc && \
     echo '/usr/local/bin/devhub.sh' >> /home/d2x/.bashrc
 
-# Stage for full browser support (ChromeDriver + Playwright)
+# ========================
+# Browser Support Stage
+# ========================
 FROM base AS browser
 
 # Install Playwright and its dependencies
 RUN cci robot install_playwright && \
     npx playwright install-deps
 
-# Final stage for no browser automation support
+# ========================
+# No-Browser Stage
+# ========================
 FROM base AS no-browser
 
 # Switch to d2x user
@@ -87,3 +83,6 @@ USER d2x
 
 # Default command
 CMD ["bash"]
+
+
+
