@@ -27,6 +27,7 @@ RUN apt-get update && \
     ln -sf /usr/local/bin/pip /usr/bin/pip && \
     \
     # Remove old Python 3.10 packages to save space
+    # Note: Be cautious with removal to avoid breaking dependencies
     apt-get remove -y --purge \
         python3.10 \
         python3.10-venv \
@@ -48,8 +49,15 @@ RUN curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | g
     apt-get install -y gh && \
     rm -rf /var/lib/apt/lists/*
 
-# Install CumulusCI and Cookiecutter
-RUN pip install --no-cache-dir git+https://github.com/muselab-d2x/CumulusCI@d2x-merge-cci4 cookiecutter
+# Optional: Install pipx for isolated tool installations
+RUN python -m pip install --upgrade pip && \
+    python -m pip install --user pipx && \
+    /root/.local/bin/pipx ensurepath
+
+# Install CumulusCI and Cookiecutter using pipx (optional)
+# This ensures these tools are installed in isolated environments
+RUN /root/.local/bin/pipx install git+https://github.com/muselab-d2x/CumulusCI@d2x-merge-cci4 && \
+    /root/.local/bin/pipx install cookiecutter
 
 # Copy devhub auth script and make it executable
 COPY devhub.sh /usr/local/bin/devhub.sh
