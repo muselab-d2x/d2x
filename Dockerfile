@@ -11,17 +11,20 @@ RUN apt-get update && \
     apt-get install -y --no-install-recommends \
         python3.12 \
         python3.12-venv \
-        python3.12-dev && \
+        python3.12-dev \
+        python3.12-distutils && \
     \
-    # Install pip for Python 3.12
-    apt-get install -y --no-install-recommends python3-pip && \
+    # Install pip for Python 3.12 via get-pip.py
+    curl -sS https://bootstrap.pypa.io/get-pip.py -o /tmp/get-pip.py && \
+    python3.12 /tmp/get-pip.py && \
+    rm /tmp/get-pip.py && \
     \
     # Create symbolic links for python and python3 to point to python3.12
     ln -sf /usr/bin/python3.12 /usr/bin/python && \
     ln -sf /usr/bin/python3.12 /usr/bin/python3 && \
     \
-    # Create symbolic link for pip to pip3
-    ln -sf /usr/bin/pip3 /usr/bin/pip && \
+    # Create symbolic link for pip to /usr/bin/pip
+    ln -sf /usr/local/bin/pip /usr/bin/pip && \
     \
     # Remove old Python 3.10 packages to save space
     apt-get remove -y --purge \
