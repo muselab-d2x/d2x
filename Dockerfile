@@ -62,7 +62,8 @@ RUN useradd -r -m -s /bin/bash -c "D2X User" d2x
 RUN echo 'export PATH=~/.local/bin:$PATH' >> /root/.bashrc && \
     echo 'export PATH=~/.local/bin:$PATH' >> /home/d2x/.bashrc && \
     echo '/usr/local/bin/devhub.sh' >> /root/.bashrc && \
-    echo '/usr/local/bin/devhub.sh' >> /home/d2x/.bashrc
+    echo '/usr/local/bin/devhub.sh' >> /home/d2x/.bashrc && \
+    export PATH="/root/.local/bin:$PATH"
 
 # ========================
 # Browser Support Stage
@@ -70,7 +71,8 @@ RUN echo 'export PATH=~/.local/bin:$PATH' >> /root/.bashrc && \
 FROM base AS browser
 
 # Install Playwright and its dependencies
-RUN cci robot install_playwright && \
+RUN export PATH="/root/.local/bin:$PATH" && \
+    /root/.local/bin/cci robot install_playwright && \
     npx playwright install-deps
 
 # ========================
