@@ -40,7 +40,7 @@ ENV PATH="/usr/local/sf/bin:/usr/local/bin:${PATH}"
 # Install CumulusCI
 RUN pip install --no-cache-dir \
     docutils \
-    "git+https://github.com/muselab-d2x/CumulusCI@d2x-merge-cci4" \
+    "git+https://github.com/muselab-d2x/CumulusCI@d2x" \
     cookiecutter
 
 # Copy devhub auth script and make it executable
