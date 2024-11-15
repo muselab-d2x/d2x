@@ -7,31 +7,20 @@ LABEL org.opencontainers.image.source="https://github.com/muselab-d2x/d2x"
 
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Install system dependencies
+# Install minimal system dependencies
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
     curl \
-    gnupg \
-    lsb-release \
-    software-properties-common \
-    apt-transport-https \
-    ca-certificates \
-    xz-utils \
-    openjdk-17-jdk-headless \
     git \
-    jq && \
+    openjdk-17-jdk-headless \
+    xz-utils && \
     rm -rf /var/lib/apt/lists/*
 
-# Install Node.js from NodeSource repository
+# Install Node.js
 RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && \
     apt-get install -y nodejs && \
-    rm -rf /var/lib/apt/lists/*
-
-# Ensure npm is at the latest version
-RUN npm install -g npm@latest
-
-# Ensure that /usr/local/lib/nodejs/bin is in PATH
-ENV PATH="/usr/local/lib/nodejs/bin:${PATH}"
+    rm -rf /var/lib/apt/lists/* && \
+    npm install -g npm@latest
 
 # Install Salesforce CLI via official TAR file
 RUN curl -fsSL https://developer.salesforce.com/media/salesforce-cli/sf/channels/stable/sf-linux-x64.tar.xz -o sf-linux-x64.tar.xz && \
@@ -39,10 +28,9 @@ RUN curl -fsSL https://developer.salesforce.com/media/salesforce-cli/sf/channels
     tar xJf sf-linux-x64.tar.xz -C /usr/local/sf --strip-components 1 && \
     rm sf-linux-x64.tar.xz
 
-# Ensure that sf CLI is in PATH
-ENV PATH="/usr/local/sf/bin:${PATH}"
+ENV PATH="/usr/local/sf/bin:/usr/local/bin:${PATH}"
 
-# Install CumulusCI and Cookiecutter
+# Install CumulusCI
 RUN pip install --no-cache-dir \
     docutils \
     "git+https://github.com/muselab-d2x/CumulusCI@d2x-merge-cci4" \
