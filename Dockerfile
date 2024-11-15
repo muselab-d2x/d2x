@@ -48,8 +48,9 @@ RUN python -m pip install --upgrade pip && \
     /root/.local/bin/pipx ensurepath
 
 # Install CumulusCI and Cookiecutter using pipx (isolated environments)
-RUN /root/.local/bin/pipx install git+https://github.com/muselab-d2x/CumulusCI@d2x-merge-cci4 && \
-    /root/.local/bin/pipx install cookiecutter
+RUN /root/.local/bin/pipx install "docutils" && \
+    /root/.local/bin/pipx install "git+https://github.com/muselab-d2x/CumulusCI@d2x-merge-cci4" --include-deps && \
+    /root/.local/bin/pipx install "cookiecutter"
 
 # Copy devhub auth script and make it executable
 COPY devhub.sh /usr/local/bin/devhub.sh
