@@ -42,15 +42,11 @@ RUN curl -fsSL https://developer.salesforce.com/media/salesforce-cli/sf/channels
 # Ensure that sf CLI is in PATH
 ENV PATH="/usr/local/sf/bin:${PATH}"
 
-# Install pipx for isolated tool installations
-RUN python -m pip install --upgrade pip && \
-    python -m pip install --user pipx && \
-    /root/.local/bin/pipx ensurepath
-
-# Install CumulusCI and Cookiecutter using pipx (isolated environments)
-RUN /root/.local/bin/pipx install "docutils" && \
-    /root/.local/bin/pipx install "git+https://github.com/muselab-d2x/CumulusCI@d2x-merge-cci4" --include-deps && \
-    /root/.local/bin/pipx install "cookiecutter"
+# Install CumulusCI and Cookiecutter
+RUN pip install --no-cache-dir \
+    docutils \
+    "git+https://github.com/muselab-d2x/CumulusCI@d2x-merge-cci4" \
+    cookiecutter
 
 # Copy devhub auth script and make it executable
 COPY devhub.sh /usr/local/bin/devhub.sh
@@ -60,11 +56,8 @@ RUN chmod +x /usr/local/bin/devhub.sh
 RUN useradd -r -m -s /bin/bash -c "D2X User" d2x
 
 # Setup PATH for root and d2x user
-RUN echo 'export PATH=~/.local/bin:$PATH' >> /root/.bashrc && \
-    echo 'export PATH=~/.local/bin:$PATH' >> /home/d2x/.bashrc && \
-    echo '/usr/local/bin/devhub.sh' >> /root/.bashrc && \
-    echo '/usr/local/bin/devhub.sh' >> /home/d2x/.bashrc && \
-    export PATH="/root/.local/bin:$PATH"
+RUN echo '/usr/local/bin/devhub.sh' >> /root/.bashrc && \
+    echo '/usr/local/bin/devhub.sh' >> /home/d2x/.bashrc
 
 # ========================
 # Browser Support Stage
@@ -72,8 +65,7 @@ RUN echo 'export PATH=~/.local/bin:$PATH' >> /root/.bashrc && \
 FROM base AS browser
 
 # Install Playwright and its dependencies
-RUN export PATH="/root/.local/bin:$PATH" && \
-    /root/.local/bin/cci robot install_playwright && \
+RUN cci robot install_playwright && \
     npx playwright install-deps
 
 # ========================
