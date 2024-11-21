@@ -52,7 +52,30 @@ jobs:
             - name: Auth to DevHub
               run: /usr/local/bin/devhub.sh
             - name: Deploy to Packaging Org
+              id: deploy_to_packaging_org
               run: cci flow run ci_master --org packaging $([[ "${{ inputs.debug }}" == "true" ]] && echo " --debug")
+            - name: Parse Metadata Deletions
+              id: parse_metadata_deletions
+              run: |
+                python /usr/local/bin/parse_metadata_deletions.py "${{ steps.deploy_to_packaging_org.outputs.stdout }}"
+              continue-on-error: false
+            - name: Report Metadata Deletions
+              if: steps.parse_metadata_deletions.outcome == 'success'
+              run: |
+                echo "## Metadata Deletions" >> $GITHUB_STEP_SUMMARY
+                cat metadata_deletions.json >> $GITHUB_STEP_SUMMARY
+              shell: bash
+            - name: Create JSON Artifact
+              if: steps.parse_metadata_deletions.outcome == 'success'
+              uses: actions/upload-artifact@v2
+              with:
+                name: metadata_deletions
+                path: metadata_deletions.json
+            - name: Create GitHub Check
+              if: steps.parse_metadata_deletions.outcome == 'success' && secrets.github-app-id && secrets.github-app-key
+              run: |
+                bash scripts/create_github_check.sh metadata_deletions.json
+              shell: bash
             - name: Build Beta Package
               run: cci flow run release_beta --org packaging $([[ "${{ inputs.debug }}" == "true" ]] && echo " --debug")
               shell: bash
