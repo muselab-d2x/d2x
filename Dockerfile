@@ -43,15 +43,13 @@ RUN pip install --no-cache-dir \
     "git+https://github.com/muselab-d2x/CumulusCI@d2x" \
     cookiecutter
 
-# Copy devhub auth script and make it executable
-COPY devhub.sh /usr/local/bin/devhub.sh
-RUN chmod +x /usr/local/bin/devhub.sh
+# Copy scripts directory and make scripts executable
+COPY scripts /usr/local/bin/
+RUN chmod +x /usr/local/bin/devhub.sh /usr/local/bin/parse_metadata_deletions.py /usr/local/bin/create_github_check.py
 
-# Create d2x user
-RUN useradd -r -m -s /bin/bash -c "D2X User" d2x
-
-# Setup PATH for root and d2x user
-RUN echo '/usr/local/bin/devhub.sh' >> /root/.bashrc && \
+# Create d2x user, setup PATH for root and d2x user
+RUN useradd -r -m -s /bin/bash -c "D2X User" d2x && \
+    echo '/usr/local/bin/devhub.sh' >> /root/.bashrc && \
     echo '/usr/local/bin/devhub.sh' >> /home/d2x/.bashrc
 
 # ========================
@@ -73,6 +71,3 @@ USER d2x
 
 # Default command
 CMD ["bash"]
-
-
-
