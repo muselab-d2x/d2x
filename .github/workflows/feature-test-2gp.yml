@@ -68,6 +68,16 @@ jobs:
               env:
                   GITHUB_TOKEN: '${{ secrets.github-token }}'
               run: cci flow run ci_feature_2gp
+            - name: Upload Apex test results
+              if: always()
+              uses: actions/upload-artifact@v4
+              with:
+                name: apex-test-results
+                path: |
+                  test_results.json
+                  test_results.xml
+                if-no-files-found: warn
+                retention-days: 7
             - name: Delete Scratch Org
               if: ${{ always() }}
               run: |
